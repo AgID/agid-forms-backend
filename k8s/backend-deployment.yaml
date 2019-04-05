@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: backend
+  name: backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: backend
+    spec:
+      containers:
+      - args:
+        - yarn
+        - hot-reload
+        env:
+        - name: NODE_ENV
+          value: dev
+        image: node:8.9.4-alpine
+        name: spid-proxy
+        ports:
+        - containerPort: 443
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/src/app
+          name: backend-claim0
+        - mountPath: /usr/src/app/certs
+          name: backend-claim1
+        workingDir: /usr/src/app
+      restartPolicy: Always
+      volumes:
+      - name: backend-claim0
+        persistentVolumeClaim:
+          claimName: backend-claim0
+      - name: backend-claim1
+        persistentVolumeClaim:
+          claimName: backend-claim1
+status: {}
