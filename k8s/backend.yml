@@ -1,0 +1,93 @@
+#
+# The app proxy
+#
+---
+#
+# Deploy the pods
+#
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      name: backend
+      namespace: default
+      labels:
+        app: backend
+    spec:
+      containers:
+      - image: "gunzip/spid-proxy"
+        name: backend
+        ports:
+        - name: http-port
+          containerPort: 80
+        env:
+        - name: "AUTHENTICATION_BASE_PATH"
+          value: ""
+        - name: "NODE_ENV"
+          value: "development"
+        - name: "REDIS_URL"
+          value: "redis-master.default.svc.cluster.local"
+        - name: "REDIS_PORT"
+          value: "6379"
+        - name: "REDIS_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: redis_password
+        - name: "SAML_CALLBACK_URL"
+          value: "https://backend.68.183.242.251.xip.io/assertionConsumerService"
+        - name: "SAML_ISSUER"
+          value: "https://spid.agid.gov.it/cd"
+        - name: "SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX"
+          value: "0"
+        - name: "SPID_TESTENV_URL"
+          value: "https://spid-testenv2.68.183.242.251.xip.io"
+        - name: "TOKEN_DURATION_IN_SECONDS"
+          # 30 days
+          value: "2592000"
+        volumeMounts:
+          - name: certs
+            mountPath: "/usr/src/app/certs"
+            readOnly: true
+        livenessProbe:
+          httpGet:
+            path: "/ping"
+            port: 80
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 10
+          failureThreshold: 5
+      volumes:
+      - name: certs
+        secret:
+          # cert.pem, key.pem
+          secretName: spid-cert
+
+---
+#
+# A service exposing the app to the cluster.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: default
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 80

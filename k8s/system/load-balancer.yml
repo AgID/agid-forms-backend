@@ -1,0 +1,22 @@
+#
+# Expose the ingress to the world via a load balancer service and static IP
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-service
+  namespace: default
+spec:
+  # The LoadBalancer resource will be automatically created, allocating
+  # a public IP address, in case you need a specific IP address you should
+  # create the public IP adddress resource yourself and uncomment the
+  # loadBalancerIP attribute.
+  type: LoadBalancer
+  # loadBalancerIP: 1.1.1.1
+  ports:
+    - port: 80
+      name: http
+    - port: 443
+      name: https
+  selector:
+    app: nginx-ingress-controller

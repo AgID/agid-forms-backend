@@ -1,16 +1,8 @@
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 
-import {
-  getNodeEnvironmentFromProcessEnv,
-  NodeEnvironmentEnum
-} from "italia-ts-commons/lib/environment";
+import { getNodeEnvironmentFromProcessEnv } from "italia-ts-commons/lib/environment";
 
-import * as redis from "redis";
-import RedisClustr = require("redis-clustr");
-import RedisSessionStorage from "./services/redis_session_storage";
-
-import { EINVAL } from "constants";
 import { log } from "./utils/logger";
 
 // Without this the environment variables loaded by dotenv
@@ -72,22 +64,17 @@ export const SPID_TESTENV_URL =
 export const clientProfileRedirectionUrl =
   process.env.CLIENT_REDIRECTION_URL || "/profile.html?token={token}";
 
-if (!clientProfileRedirectionUrl.includes("{token}")) {
-  log.error("CLIENT_REDIRECTION_URL must contains a {token} placeholder");
-  process.exit(EINVAL);
-}
+// tslint:disable-next-line: no-commented-code
+// if (!clientProfileRedirectionUrl.includes("{token}")) {
+//   log.error("CLIENT_REDIRECTION_URL must contains a {token} placeholder");
+//   process.exit(EINVAL);
+// }
 
-export const clientErrorRedirectionUrl =
+export const CLIENT_ERROR_REDIRECTION_URL =
   process.env.CLIENT_ERROR_REDIRECTION_URL || "/error.html";
 
-export const clientLoginRedirectionUrl =
+export const CLIENT_REDIRECTION_URL =
   process.env.CLIENT_REDIRECTION_URL || "/login";
-
-//
-// Redis server settings.
-//
-
-const DEFAULT_REDIS_PORT = "6379";
 
 // Set default session duration to 30 days
 const DEFAULT_TOKEN_DURATION_IN_SECONDS = 3600 * 24 * 30;
@@ -96,56 +83,5 @@ export const TOKEN_DURATION_IN_SECONDS = process.env.TOKEN_DURATION_IN_SECONDS
   : DEFAULT_TOKEN_DURATION_IN_SECONDS;
 log.info("Session token duration set to %s seconds", TOKEN_DURATION_IN_SECONDS);
 
-//
-// Register a session storage service backed by Redis.
-//
-
-function createSimpleRedisClient(): redis.RedisClient {
-  const redisUrl = process.env.REDIS_URL || "redis://redis";
-  log.info("Creating SIMPLE redis client", { url: redisUrl });
-  return redis.createClient(redisUrl);
-}
-
-function createClusterRedisClient():
-  | redis.RedisClient
-  | RedisClustr
-  | undefined {
-  const redisUrl = process.env.REDIS_URL;
-  const redisPassword = process.env.REDIS_PASSWORD;
-  const redisPort: number = parseInt(
-    process.env.REDIS_PORT || DEFAULT_REDIS_PORT,
-    10
-  );
-
-  if (redisUrl === undefined || redisPassword === undefined) {
-    log.error(
-      "Missing required environment variables needed to connect to Redis host (REDIS_URL, REDIS_PASSWORD)."
-    );
-    process.exit(1);
-    return;
-  }
-
-  log.info("Creating CLUSTER redis client", { url: redisUrl });
-  return new RedisClustr({
-    redisOptions: {
-      auth_pass: redisPassword,
-      tls: {
-        servername: redisUrl
-      }
-    },
-    servers: [
-      {
-        host: redisUrl,
-        port: redisPort
-      }
-    ]
-  });
-}
-
-// Use the Docker Redis instance when developing
-export const REDIS_CLIENT =
-  NODE_ENVIRONMENT === NodeEnvironmentEnum.DEVELOPMENT
-    ? createSimpleRedisClient()
-    : createClusterRedisClient();
-
-export const SESSION_STORAGE = RedisSessionStorage;
+export const AUTHENTICATION_BASE_PATH =
+  process.env.AUTHENTICATION_BASE_PATH || "";

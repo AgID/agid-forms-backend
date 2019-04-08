@@ -30,6 +30,7 @@ import { SessionToken } from "../types/token";
 import { log } from "../utils/logger";
 
 import { clientProfileRedirectionUrl } from "../config";
+import { SuccessResponse } from "../types/success_response";
 
 const getClientProfileRedirectionUrl = (token: string): UrlFromString => {
   const url = clientProfileRedirectionUrl.replace("{token}", token);
@@ -101,10 +102,7 @@ export default class AuthenticationController {
 
     const user = errorOrUser.value;
 
-    const errorOrResponse = await this.sessionStorage.del(
-      user.session_token,
-      user.wallet_token
-    );
+    const errorOrResponse = await this.sessionStorage.del(user.session_token);
 
     if (isLeft(errorOrResponse)) {
       const error = errorOrResponse.value;

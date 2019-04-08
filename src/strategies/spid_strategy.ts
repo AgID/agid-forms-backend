@@ -7,7 +7,7 @@ import * as SpidStrategy from "spid-passport";
 import { SpidUser } from "../types/user";
 import { log } from "../utils/logger";
 
-const spidStrategy = (
+const makeSpidStrategy = (
   samlKey: string,
   samlCallbackUrl: string,
   samlIssuer: string,
@@ -151,4 +151,4 @@ const spidStrategy = (
   );
 };
 
-export default spidStrategy;
+export default makeSpidStrategy;

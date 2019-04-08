@@ -1,23 +1,201 @@
 /**
- * Main entry point for the Digital Citizenship proxy.
+ * Main entry point for the SPID proxy.
  */
 
+import * as bodyParser from "body-parser";
+import * as express from "express";
+import * as helmet from "helmet";
 import * as http from "http";
 import * as https from "https";
-import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
-import { newApp } from "./app";
+import * as t from "io-ts";
+import * as morgan from "morgan";
+import * as passport from "passport";
 
-import { NODE_ENVIRONMENT, SERVER_PORT } from "./config";
+import expressEnforcesSsl = require("express-enforces-ssl");
+import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
+import { toExpressHandler } from "italia-ts-commons/lib/express";
+import {
+  AUTHENTICATION_BASE_PATH,
+  CLIENT_ERROR_REDIRECTION_URL,
+  CLIENT_REDIRECTION_URL,
+  NODE_ENVIRONMENT,
+  SAML_ACCEPTED_CLOCK_SKEW_MS,
+  SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX,
+  SAML_CALLBACK_URL,
+  SAML_CERT,
+  SAML_ISSUER,
+  SAML_KEY,
+  SERVER_PORT,
+  SPID_AUTOLOGIN,
+  SPID_TESTENV_URL,
+  TOKEN_DURATION_IN_SECONDS
+} from "./config";
+import AuthenticationController from "./controllers/authentication";
+import SessionController from "./controllers/session";
+import RedisSessionStorage from "./services/redis_session_storage";
+import TokenService from "./services/token";
+import bearerTokenStrategy from "./strategies/bearer_token";
+import makeSpidStrategy from "./strategies/spid_strategy";
 import { log } from "./utils/logger";
+import {
+  createClusterRedisClient,
+  createSimpleRedisClient
+} from "./utils/redis";
+import { withSpidAuth } from "./utils/spid_auth";
 
 const port = SERVER_PORT;
 const env = NODE_ENVIRONMENT;
 
-export const authenticationBasePath = container.resolve<string>(
-  "AuthenticationBasePath"
+//
+// Create Redis session storage
+//
+
+const maybeRedisClient =
+  NODE_ENVIRONMENT === NodeEnvironmentEnum.DEVELOPMENT
+    ? createSimpleRedisClient()
+    : createClusterRedisClient();
+
+const redisClient = maybeRedisClient.getOrElseL(() => {
+  throw new Error("Cannot get Redis client.");
+});
+
+const sessionStorage = new RedisSessionStorage(
+  redisClient,
+  TOKEN_DURATION_IN_SECONDS
 );
 
-const app = newApp(env, authenticationBasePath);
+//
+//  Configure SPID authentication
+//
+
+const spidAuth = passport.authenticate("spid", { session: false });
+
+const spidStrategy = makeSpidStrategy(
+  SAML_KEY,
+  SAML_CALLBACK_URL,
+  SAML_ISSUER,
+  SAML_ACCEPTED_CLOCK_SKEW_MS,
+  SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX,
+  SPID_AUTOLOGIN,
+  SPID_TESTENV_URL
+);
+
+const bearerTokenAuth = passport.authenticate("bearer", { session: false });
+
+//
+//  Configure controllers
+//
+const tokenService = new TokenService();
+
+const acsController = new AuthenticationController(
+  sessionStorage,
+  SAML_CERT,
+  spidStrategy,
+  tokenService
+);
+
+const sessionController = new SessionController();
+
+// Setup Passport.
+
+// Add the strategy to authenticate proxy clients.
+passport.use(bearerTokenStrategy(sessionStorage, ["/logout"]));
+
+// Add the strategy to authenticate the proxy to SPID.
+passport.use(spidStrategy);
+
+// Create and setup the Express app.
+const app = express();
+
+// Redirect unsecure connections.
+if (env !== NodeEnvironmentEnum.DEVELOPMENT) {
+  // Trust proxy uses proxy X-Forwarded-Proto for ssl.
+  app.enable("trust proxy");
+  app.use(/\/((?!ping).)*/, expressEnforcesSsl());
+}
+
+// Add security to http headers.
+app.use(helmet());
+
+// Add a request logger.
+const loggerFormat =
+  ":date[iso] [info]: :method :url :status - :response-time ms";
+app.use(morgan(loggerFormat));
+
+// Parse the incoming request body. This is needed by Passport spid strategy.
+app.use(bodyParser.json());
+
+// Parse an urlencoded body.
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Define the folder that contains the public assets.
+app.use(express.static("public"));
+
+// Initializes Passport for incoming requests.
+app.use(passport.initialize());
+
+// Setup routing.
+app.get("/login", spidAuth);
+
+app.get(
+  `${AUTHENTICATION_BASE_PATH}/session`,
+  bearerTokenAuth,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(sessionController.getSessionState)(
+      req,
+      res,
+      sessionController
+    );
+  }
+);
+
+app.post(
+  `${AUTHENTICATION_BASE_PATH}/assertionConsumerService`,
+  withSpidAuth(
+    acsController,
+    CLIENT_ERROR_REDIRECTION_URL,
+    CLIENT_REDIRECTION_URL
+  )
+);
+
+app.post(
+  `${AUTHENTICATION_BASE_PATH}/logout`,
+  bearerTokenAuth,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(acsController.logout)(req, res, acsController);
+  }
+);
+
+app.post(
+  `${AUTHENTICATION_BASE_PATH}/slo`,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(acsController.slo)(req, res, acsController);
+  }
+);
+
+app.get(
+  `${AUTHENTICATION_BASE_PATH}/metadata`,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(acsController.metadata)(req, res, acsController);
+  }
+);
+
+// tslint:disable-next-line: no-var-requires
+const packageJson = require("../package.json");
+const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
+
+app.get("/info", (_, res) => {
+  res.status(200).json({ version });
+});
+
+// Liveness probe for Kubernetes.
+// @see
+// https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-http-request
+app.get("/ping", (_, res) => res.status(200).send("ok"));
+
+//
+//  Start HTTP server
+//
 
 // In test and production environments the HTTPS is terminated by the Kubernetes Ingress controller. In dev we don't use
 // Kubernetes so the proxy has to run on HTTPS to behave correctly.

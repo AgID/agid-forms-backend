@@ -12,11 +12,12 @@ import { User } from "../types/user";
 import { log } from "../utils/logger";
 import { ISessionStorage } from "./ISessionStorage";
 
+import RedisClustr = require("redis-clustr");
 const sessionKeyPrefix = "SESSION-";
 
 export default class RedisSessionStorage implements ISessionStorage {
   constructor(
-    private readonly redisClient: redis.RedisClient,
+    private readonly redisClient: redis.RedisClient | RedisClustr,
     private readonly tokenDurationSecs: number
   ) {}
 

@@ -1,0 +1,41 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: Proxy API
+  description: SPID proxy API gateway.
+host: localhost
+basePath: /api/v1
+schemes:
+  - https
+security:
+  - Bearer: []
+paths: []
+definitions:
+  SpidLevel:
+    type: string
+    description: A SPID level.
+    x-extensible-enum:
+      - https://www.spid.gov.it/SpidL1
+      - https://www.spid.gov.it/SpidL2
+      - https://www.spid.gov.it/SpidL3
+  EmailAddress:
+    type: string
+    format: email
+    example: foobar@example.com
+  FiscalCode:
+    type: string
+    description: User's fiscal code.
+    format: FiscalCode
+    x-import: italia-ts-commons/lib/strings
+    example: SPNDNL80R13C555X
+  PublicSession:
+    type: object
+    title: User session data
+    description: Describe the current session of an authenticated user.
+    properties:
+      spidLevel:
+          $ref: '#/definitions/SpidLevel'
+      walletToken:
+        type: string
+    required:
+      - spidLevel
