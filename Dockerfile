@@ -9,12 +9,11 @@ COPY /patches /usr/src/app/patches
 COPY /package.json /usr/src/app/package.json
 COPY /tsconfig.json /usr/src/app/tsconfig.json
 COPY /yarn.lock /usr/src/app/yarn.lock
-
-# COPY /api.yaml /usr/src/app/api.yaml
+COPY /api_proxy.yaml /usr/src/app/api_proxy.yaml
 
 RUN sudo chmod -R 777 /usr/src/app \
   && yarn install \
-  # && yarn generate:models \
+  && yarn generate:proxy-models \
   && yarn build
 
 FROM node:8.11.3-alpine
