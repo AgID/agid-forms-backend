@@ -8,7 +8,7 @@ data:
     #
     # Identity provider configuration
     #
-    base_url: "https://spid-testenv2.68.183.242.251.xip.io"
+    base_url: "https://spid-testenv2.danilospinelli.com"
 
     # To sign SAML messages
     key_file: "/app/conf/idp.key"
@@ -174,7 +174,7 @@ data:
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         <AssertionConsumerService index="0" isDefault="true"
         Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-          Location="https://backend.68.183.242.251.xip.io/assertionConsumerService"/>
+          Location="https://backend.danilospinelli.com/assertionConsumerService"/>
         <AttributeConsumingService index="0">
           <ServiceName xml:lang="it">Required attributes</ServiceName>
           <RequestedAttribute Name="fiscalNumber" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified" FriendlyName="Codice fiscale"/>

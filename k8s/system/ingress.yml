@@ -150,20 +150,20 @@ metadata:
 spec:
   tls:
     - hosts:
-      - backend.68.183.242.251.xip.io
-      secretName: backend-cert-lep
+      - backend.danilospinelli.com
+      secretName: cms-backend-cert-lep
     - hosts:
-      - spid-testenv2.68.183.242.251.xip.io
+      - spid-testenv2.danilospinelli.com
       secretName: spid-testenv2-cert-lep
   rules:
-  - host: backend.68.183.242.251.xip.io
+  - host: backend.danilospinelli.com
     http:
       paths:
       - path: /
         backend:
           serviceName: backend
           servicePort: 80
-  - host: spid-testenv2.68.183.242.251.xip.io
+  - host: spid-testenv2.danilospinelli.com
     http:
       paths:
       - path: /
