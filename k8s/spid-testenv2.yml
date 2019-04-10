@@ -125,46 +125,28 @@ data:
     }
 
   sp_metadata.xml: |
-    <?xml version="1.0"?>
-    <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
-      xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://spid.agid.gov.it/cd" ID="https___spid_agid_gov_it_cd">
+    <?xml version="1.0"?><EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://spid.agid.gov.it/cd" ID="https___spid_agid_gov_it_cd">
       <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" AuthnRequestsSigned="true" WantAssertionsSigned="true">
         <KeyDescriptor>
           <ds:KeyInfo>
             <ds:X509Data>
-              <ds:X509Certificate>MIIF3jCCA8YCCQCLemwz8XhcFjANBgkqhkiG9w0BAQsFADCBsDELMAkGA1UEBhMC
-                  SVQxDTALBgNVBAgMBFJvbWUxDTALBgNVBAcMBFJvbWUxLjAsBgNVBAoMJVByZXNp
-                  ZGVuemEgZGVsIENvbnNpZ2xpbyBkZWkgTWluaXN0cmkxDTALBgNVBAsMBEFnSUQx
-                  FzAVBgNVBAMMDiouaW8uaXRhbGlhLml0MSswKQYJKoZIhvcNAQkBFhxpbmZvQHRl
-                  YW1kaWdpdGFsZS5nb3Zlcm5vLml0MB4XDTE4MDcwNjA5NDI1OVoXDTE5MDcwNjA5
-                  NDI1OVowgbAxCzAJBgNVBAYTAklUMQ0wCwYDVQQIDARSb21lMQ0wCwYDVQQHDARS
-                  b21lMS4wLAYDVQQKDCVQcmVzaWRlbnphIGRlbCBDb25zaWdsaW8gZGVpIE1pbmlz
-                  dHJpMQ0wCwYDVQQLDARBZ0lEMRcwFQYDVQQDDA4qLmlvLml0YWxpYS5pdDErMCkG
-                  CSqGSIb3DQEJARYcaW5mb0B0ZWFtZGlnaXRhbGUuZ292ZXJuby5pdDCCAiIwDQYJ
-                  KoZIhvcNAQEBBQADggIPADCCAgoCggIBALKykON1jznDc5XmVzOWm5aDBrIpUWpL
-                  vdG7WRuNs7xG98SU8jM/kxFWbWoXkJMrdwhMqEb7OPdYrqSFDbcGgm6wo3NA+jHd
-                  bKtLXFguzhiSQufmWe1yNFe4WBh3rS0SLLmRa7mhqiYzDStCUENhzy0HVGQmv+bz
-                  zOkNZVr9VsnuidcDSYIfKOZyMznGpGwOczztPEUGTbR/hjVFfAhegscjEGZPXBm0
-                  TaeNFBYTIQ0Kc3jh9+E7cyco3K/q/Oi6aRUWI4tsiIb67L65/HPkS3kvgaLr8JM0
-                  D66MyaMmNYmCjGe2uco87ZSx9O/s08sytgLqXz1MbpMK1jh0OGUzA8egRe3SldIE
-                  IhpFS7ddBoDwQxvc/PEBD/yChLM5U8CGQBGOr9TiA18+XqFIaW19SS6tN9gpRb9Z
-                  xowpv+mlT/SPfuIp+vKBLJSoJUHHyNqgbZwyUkP+k8J5043Hg7JacvkIju5UzeaL
-                  /jOdiDjuwm2R+ASQ9wERxAjyyFcc8vjGZ0u7sU+nc9OyIHU5+9+Od1hOxWi2AQRU
-                  mFjCTjy4JrUVRyezzF4/3UkfVoihmdT3ikEz/5AeityJX4t3AxENIrQc4Ub6iKch
-                  Z7QRytTH+qHO9lHwluGD0pjSl4dxWchMPcKluhj1wxDmYZdHjMwYP2sPRSax3+f3
-                  386g/v2wK105AgMBAAEwDQYJKoZIhvcNAQELBQADggIBAFhra93E50jmPvOvrTbQ
-                  pSRt5iwxxK33lv9h7OvALjjVBtIQ0HHr4GafpCyNfIFkBMzVKLlxgV9LsUy53IFz
-                  E/Ltl9zWxrbZapnVNvNvdP+oLm843nKqK9D/SipBSyOBXNsbl7JhL5KLEp79heJo
-                  TvvmnznwN8l5f+/V+LPCKEsMxkw5ed3LT4gfInFDB0UKnKiRxF5uMVKeTBvpRXI6
-                  NEz3rYQdB1QFsHlQYQkbLPGBn86Ceqn1AzxLW3doTm8rJkroSFcgaLlyycdftHgu
-                  jhA1nNKrlI8QmtbTt6TE8ufgx+RM705ihv227Z+hHk4pOhKRz3FV+L0OpnbT7gsR
-                  IvSb6TewMgVjy3WTcgXRQW3Fdch+eI00T8v0nlshU12XaQ6bYDTrWwmB7PSYPJZs
-                  DcjRbGSOXPXnyjejC0dtxjAVa7W7A3l1LiovblpA+1dWg+idXQ8qQI8Fp0QZlTfh
-                  wn9DoG7VKQV9viiXKfwZOvp43KfMgCp2WTfFaBtcPCi4YhN3mUJKLW1IfTcxNubu
-                  bHNwTcIHUr2vbodeVaIj1Uag4jCa4GIf+uZu10RZXut/fEaBzaKPtCC/fRXWq7n+
-                  Nx/cac6XKedSk1sRFMZ0T2s04GMj4xGFcOVe6iIHZbzPDwFWOab2D4oB8Ue1WWx7
-                  WHflWHxazaTrh65854jCl4kK
-              </ds:X509Certificate>
+              <ds:X509Certificate>MIIC8DCCAdigAwIBAgIJAM/IzMEM0QlyMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNV
+    BAYTAklUMB4XDTE5MDQwMTEzMjIyOFoXDTE5MDUwMTEzMjIyOFowDTELMAkGA1UE
+    BhMCSVQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCsB1gTehT79uPx
+    qQgh19GWIfyDgAZ1GgQE7nvEy2BThc20Gfj3j0lTGhJT1WFsgpufJ5dxLHq1MI0U
+    KDGct+IiKgjBpChNwjVkEiT18he0JgDAim9NJj5QeTlhas5H30rvpVr51AjlBuYj
+    NwpSZQAl562FOO1JAPaynYBA1Ekidl+YmyKLCpSa9jlS/IhJGT3sHSSR9v1kQya4
+    mqFZDYvoGrDQBOHyONXsEqpuTK3V2iMNF1QSvgr2DpIu7cYewnR1rnh0Xd6r6Y/w
+    9TTa6z/4WkO25ZH2UeP5x7JojS8JbYPEd36B/Ian3ujx09f+6swtjJvWrRV4YTqw
+    rnIJA4PPAgMBAAGjUzBRMB0GA1UdDgQWBBQdbnw75Q2E2mA5GE6cBfaeSYFNCzAf
+    BgNVHSMEGDAWgBQdbnw75Q2E2mA5GE6cBfaeSYFNCzAPBgNVHRMBAf8EBTADAQH/
+    MA0GCSqGSIb3DQEBCwUAA4IBAQB2c/a0Ho3IW7eXduaLNrqRpKh7a1pZc4bh4yj/
+    PPDiLcm1I226xM9vwIk3gRiKcBljEmtoDwpDqhuPVc4YAP3ITD/plGesdLr1jfbA
+    V3tqjJHGQFGaY/BWUVoxhWDVnH/pdNOTcHItBb2debZJ9YncV6KD2MMmGiwCWXQp
+    h+Sp17RxNepoUSFhKS5pPjf1e+jo5IFyf0/Ks/0f3v7BQ/jf3cKbyPD15hxAtyxo
+    bUowW85nWdktSu2rkKit336yxgNKTjKKIDUy7UIghqvQFIBybvmNWE6BA4RXLVEA
+    NIUtxN5CyRWzYP5FMuPS5A+IZP4k846rXmAHZFJolNrZHVo/
+    </ds:X509Certificate>
             </ds:X509Data>
           </ds:KeyInfo>
           <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>
@@ -172,9 +154,7 @@ data:
           <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#tripledes-cbc"/>
         </KeyDescriptor>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
-        <AssertionConsumerService index="0" isDefault="true"
-        Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-          Location="https://backend.danilospinelli.com/assertionConsumerService"/>
+        <AssertionConsumerService index="0" isDefault="true" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://backend.danilospinelli.com/assertionConsumerService"/>
         <AttributeConsumingService index="0">
           <ServiceName xml:lang="it">Required attributes</ServiceName>
           <RequestedAttribute Name="fiscalNumber" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified" FriendlyName="Codice fiscale"/>
@@ -185,64 +165,27 @@ data:
         </AttributeConsumingService>
       </SPSSODescriptor>
       <Organization>
-        <OrganizationName>AGID</OrganizationName>
-        <OrganizationDisplayName>Agenzia per l'Italia digitale</OrganizationDisplayName>
-        <OrganizationURL>https://github.com/AGID</OrganizationURL>
+        <OrganizationName>Digital citizenship proxy</OrganizationName>
+        <OrganizationDisplayName>Digital citizenship proxy</OrganizationDisplayName>
+        <OrganizationURL>https://github.com/teamdigitale/italia-backend</OrganizationURL>
       </Organization>
-      <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-        <SignedInfo>
-          <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-          <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
-          <Reference URI="#https___spid_agid_gov_it_cd">
-            <Transforms>
-              <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
-              <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-            </Transforms>
-            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-            <DigestValue>uzaeK7MAWAAtMB2Um/NnN7TRuReHT9MuvAbDPBiIifE=</DigestValue>
-          </Reference>
-        </SignedInfo>
-        <SignatureValue>nCq/730KgXmdxO6vH9ua2veiojF5HcVqZilA96rkkmEtdYEf7pJvRUsHGTa3w7nUl4ayNRWtVtNk/pft3B6O4uEDmWFtgChGbH1vh+UrhHCmLPW047//bkfCgZLU/CkIQE6y8aglN94SKQGQkSI3E9MCjn0Q/7BOdF1zktF/SMRx29AfsQdx5qx9T2YnBByjiqOGz9FmxJtRL9jaXhOZ+yY+4dVOOnKlDsEnv2+rG8RrZanGkq8JJlqI81KoLYj/SGHrn+D3EXqEpe18uHjQTWoV48RSWhJ6FOHDTdJQhGszy0JZzWpUHhwBwbHBeQlFvQkVgNFxV38qAadP+7jxBMJMAUSELKeaFwCK+JQpyGG4IibLfrzisMno9hbdJ5QYrPsTXkC1U77eUNYWw/qF2hrkXqC2NoVLz/GN4C89RtXSPbE4hNNSBF11zSdAQKU5WBhWigK406rtheHazFXtI9RnAq0Zdop48pPP3voSaY9QX8wzZAWlBsnETIYjADlTco6mIjmG8oBmjH63YkX8prmXALheAU0v31CYe/v8FBvHIqm9HT25Tp6KhJC6NuxdprKcZifnfJ7SvpNkd1oC/ZJEETmq3D2MEQAGDPT46hhxiWaEm2BowPC8IRm7mQVpv+q4DdTO5N10c0XmWCxzK22R1hdqXWySVRU/JTaR8QU=</SignatureValue>
-        <KeyInfo>
-          <X509Data>
-            <X509Certificate>MIIF3jCCA8YCCQCLemwz8XhcFjANBgkqhkiG9w0BAQsFADCBsDELMAkGA1UEBhMC
-              SVQxDTALBgNVBAgMBFJvbWUxDTALBgNVBAcMBFJvbWUxLjAsBgNVBAoMJVByZXNp
-              ZGVuemEgZGVsIENvbnNpZ2xpbyBkZWkgTWluaXN0cmkxDTALBgNVBAsMBEFnSUQx
-              FzAVBgNVBAMMDiouaW8uaXRhbGlhLml0MSswKQYJKoZIhvcNAQkBFhxpbmZvQHRl
-              YW1kaWdpdGFsZS5nb3Zlcm5vLml0MB4XDTE4MDcwNjA5NDI1OVoXDTE5MDcwNjA5
-              NDI1OVowgbAxCzAJBgNVBAYTAklUMQ0wCwYDVQQIDARSb21lMQ0wCwYDVQQHDARS
-              b21lMS4wLAYDVQQKDCVQcmVzaWRlbnphIGRlbCBDb25zaWdsaW8gZGVpIE1pbmlz
-              dHJpMQ0wCwYDVQQLDARBZ0lEMRcwFQYDVQQDDA4qLmlvLml0YWxpYS5pdDErMCkG
-              CSqGSIb3DQEJARYcaW5mb0B0ZWFtZGlnaXRhbGUuZ292ZXJuby5pdDCCAiIwDQYJ
-              KoZIhvcNAQEBBQADggIPADCCAgoCggIBALKykON1jznDc5XmVzOWm5aDBrIpUWpL
-              vdG7WRuNs7xG98SU8jM/kxFWbWoXkJMrdwhMqEb7OPdYrqSFDbcGgm6wo3NA+jHd
-              bKtLXFguzhiSQufmWe1yNFe4WBh3rS0SLLmRa7mhqiYzDStCUENhzy0HVGQmv+bz
-              zOkNZVr9VsnuidcDSYIfKOZyMznGpGwOczztPEUGTbR/hjVFfAhegscjEGZPXBm0
-              TaeNFBYTIQ0Kc3jh9+E7cyco3K/q/Oi6aRUWI4tsiIb67L65/HPkS3kvgaLr8JM0
-              D66MyaMmNYmCjGe2uco87ZSx9O/s08sytgLqXz1MbpMK1jh0OGUzA8egRe3SldIE
-              IhpFS7ddBoDwQxvc/PEBD/yChLM5U8CGQBGOr9TiA18+XqFIaW19SS6tN9gpRb9Z
-              xowpv+mlT/SPfuIp+vKBLJSoJUHHyNqgbZwyUkP+k8J5043Hg7JacvkIju5UzeaL
-              /jOdiDjuwm2R+ASQ9wERxAjyyFcc8vjGZ0u7sU+nc9OyIHU5+9+Od1hOxWi2AQRU
-              mFjCTjy4JrUVRyezzF4/3UkfVoihmdT3ikEz/5AeityJX4t3AxENIrQc4Ub6iKch
-              Z7QRytTH+qHO9lHwluGD0pjSl4dxWchMPcKluhj1wxDmYZdHjMwYP2sPRSax3+f3
-              386g/v2wK105AgMBAAEwDQYJKoZIhvcNAQELBQADggIBAFhra93E50jmPvOvrTbQ
-              pSRt5iwxxK33lv9h7OvALjjVBtIQ0HHr4GafpCyNfIFkBMzVKLlxgV9LsUy53IFz
-              E/Ltl9zWxrbZapnVNvNvdP+oLm843nKqK9D/SipBSyOBXNsbl7JhL5KLEp79heJo
-              TvvmnznwN8l5f+/V+LPCKEsMxkw5ed3LT4gfInFDB0UKnKiRxF5uMVKeTBvpRXI6
-              NEz3rYQdB1QFsHlQYQkbLPGBn86Ceqn1AzxLW3doTm8rJkroSFcgaLlyycdftHgu
-              jhA1nNKrlI8QmtbTt6TE8ufgx+RM705ihv227Z+hHk4pOhKRz3FV+L0OpnbT7gsR
-              IvSb6TewMgVjy3WTcgXRQW3Fdch+eI00T8v0nlshU12XaQ6bYDTrWwmB7PSYPJZs
-              DcjRbGSOXPXnyjejC0dtxjAVa7W7A3l1LiovblpA+1dWg+idXQ8qQI8Fp0QZlTfh
-              wn9DoG7VKQV9viiXKfwZOvp43KfMgCp2WTfFaBtcPCi4YhN3mUJKLW1IfTcxNubu
-              bHNwTcIHUr2vbodeVaIj1Uag4jCa4GIf+uZu10RZXut/fEaBzaKPtCC/fRXWq7n+
-              Nx/cac6XKedSk1sRFMZ0T2s04GMj4xGFcOVe6iIHZbzPDwFWOab2D4oB8Ue1WWx7
-              WHflWHxazaTrh65854jCl4kK
-            </X509Certificate>
-          </X509Data>
-        </KeyInfo>
-      </Signature>
-    </EntityDescriptor>
-
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI="#https___spid_agid_gov_it_cd"><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>svi6Q5x4B6hnFldjDe+j+NGIAMK1mtuS/JFP/zXc9t8=</DigestValue></Reference></SignedInfo><SignatureValue>K5oxTdjDPUNpl8pyfL1erPUNwvoCiJOOD1utwTWZVhCpeynZNZ58lpxEP+Rt6mVwPEd3d9xNNEP7jdRN8MZnISTCgf27g+cEfNcP7zwfvyXRQIky7Wbt+myCrp2Zj6mTW2OMt4zCfT/V/twSIiMGLQBmA0/ZqbVwgp+wxUs3OmB3zXQHW9Ofx6Lf8vp0C2Xj3obBx748fdrE1nHl/aXhTj3jxkVQbGRrI67VY9b8pwy2Quced3HhCfKQvFj0ty3eEPbeC9BlF6B5bO/e6RGvsGuIbRDgE3pBU5KXLi9v7Zc5nLfIdrzpEXho1RUA8HEOAa2QTn7K55DXxl6WnjgXwA==</SignatureValue><KeyInfo><X509Data><X509Certificate>MIIC8DCCAdigAwIBAgIJAM/IzMEM0QlyMA0GCSqGSIb3DQEBCwUAMA0xCzAJBgNV
+    BAYTAklUMB4XDTE5MDQwMTEzMjIyOFoXDTE5MDUwMTEzMjIyOFowDTELMAkGA1UE
+    BhMCSVQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCsB1gTehT79uPx
+    qQgh19GWIfyDgAZ1GgQE7nvEy2BThc20Gfj3j0lTGhJT1WFsgpufJ5dxLHq1MI0U
+    KDGct+IiKgjBpChNwjVkEiT18he0JgDAim9NJj5QeTlhas5H30rvpVr51AjlBuYj
+    NwpSZQAl562FOO1JAPaynYBA1Ekidl+YmyKLCpSa9jlS/IhJGT3sHSSR9v1kQya4
+    mqFZDYvoGrDQBOHyONXsEqpuTK3V2iMNF1QSvgr2DpIu7cYewnR1rnh0Xd6r6Y/w
+    9TTa6z/4WkO25ZH2UeP5x7JojS8JbYPEd36B/Ian3ujx09f+6swtjJvWrRV4YTqw
+    rnIJA4PPAgMBAAGjUzBRMB0GA1UdDgQWBBQdbnw75Q2E2mA5GE6cBfaeSYFNCzAf
+    BgNVHSMEGDAWgBQdbnw75Q2E2mA5GE6cBfaeSYFNCzAPBgNVHRMBAf8EBTADAQH/
+    MA0GCSqGSIb3DQEBCwUAA4IBAQB2c/a0Ho3IW7eXduaLNrqRpKh7a1pZc4bh4yj/
+    PPDiLcm1I226xM9vwIk3gRiKcBljEmtoDwpDqhuPVc4YAP3ITD/plGesdLr1jfbA
+    V3tqjJHGQFGaY/BWUVoxhWDVnH/pdNOTcHItBb2debZJ9YncV6KD2MMmGiwCWXQp
+    h+Sp17RxNepoUSFhKS5pPjf1e+jo5IFyf0/Ks/0f3v7BQ/jf3cKbyPD15hxAtyxo
+    bUowW85nWdktSu2rkKit336yxgNKTjKKIDUy7UIghqvQFIBybvmNWE6BA4RXLVEA
+    NIUtxN5CyRWzYP5FMuPS5A+IZP4k846rXmAHZFJolNrZHVo/
+    </X509Certificate></X509Data></KeyInfo></Signature></EntityDescriptor>
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
