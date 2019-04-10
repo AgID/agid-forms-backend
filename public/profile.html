@@ -18,6 +18,8 @@
 
   <a href="index.html">Home</a>
 
+  <div id="profile"></div>
+
   <div>
     <form id="logout">
       <input type="submit" name="Logout" value="Logout" class="btn btn-danger">
@@ -43,14 +45,15 @@
   .then(
     function(response) {
       if (response.status !== 200) {
-        console.log("Looks like there was a problem. Status Code: " +
-          response.status);
+        var msg = "Looks like there was a problem. Status Code: " +
+          response.status;
+        console.error(msg);
+        $("#profile").text(msg);
         return;
       }
-
-      // Examine the text in the response
       response.json().then(function(data) {
         console.log(data);
+        $("#profile").text(JSON.stringify(data));
       })
     }
   )

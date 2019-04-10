@@ -9,42 +9,35 @@ import { IVerifyOptions } from "passport-http-bearer";
 import { ISessionStorage } from "../services/ISessionStorage";
 import { SessionToken } from "../types/token";
 import { User } from "../types/user";
-
+import { log } from "../utils/logger";
 /**
  * Passthrough a bearer token for specified paths.
  */
-const bearerTokenStrategy = (
-  sessionStorage: ISessionStorage,
-  paths: ReadonlyArray<string>
-) => {
+const bearerTokenStrategy = (sessionStorage: ISessionStorage) => {
   const options = {
     passReqToCallback: true,
     realm: "Proxy API",
     scope: "request"
   };
   return new passport.Strategy(options, (
-    req: express.Request,
+    _: express.Request,
     token: string,
     // tslint:disable-next-line:no-any
     done: (error: any, user?: any, options?: IVerifyOptions | string) => void
   ) => {
-    const path = req.route.path;
-
-    if (-1 !== paths.indexOf(path)) {
-      sessionStorage.getBySessionToken(token as SessionToken).then(
-        (errorOrUser: Either<Error, User>) => {
-          errorOrUser.fold(
-            () => done(undefined, false),
-            user => done(undefined, user)
-          );
-        },
-        () => {
-          done(undefined, false);
-        }
-      );
-    } else {
-      done(undefined, false);
-    }
+    // req.route.path
+    sessionStorage.getBySessionToken(token as SessionToken).then(
+      (errorOrUser: Either<Error, User>) => {
+        log.info("getBySessionToken %s", JSON.stringify(errorOrUser));
+        errorOrUser.fold(
+          () => done(undefined, false),
+          user => done(undefined, user)
+        );
+      },
+      () => {
+        done(undefined, false);
+      }
+    );
   });
 };
 

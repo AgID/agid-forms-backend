@@ -97,7 +97,7 @@ const profileController = new ProfileController();
 // Setup Passport.
 
 // Add the strategy to authenticate proxy clients.
-passport.use(bearerTokenStrategy(sessionStorage, ["/logout"]));
+passport.use(bearerTokenStrategy(sessionStorage));
 
 // Add the strategy to authenticate the proxy to SPID.
 passport.use(spidStrategy);
