@@ -85,3 +85,5 @@ log.info("Session token duration set to %s seconds", TOKEN_DURATION_IN_SECONDS);
 
 export const AUTHENTICATION_BASE_PATH =
   process.env.AUTHENTICATION_BASE_PATH || "";
+
+export const API_BASE_PATH = process.env.API_BASE_PATH || "/api/v1";

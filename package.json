@@ -9,6 +9,7 @@
   "scripts": {
     "prepare": "patch-package",
     "build": "tsc",
+    "watch": "tsc -w",
     "build-noemit": "tsc --noEmit",
     "hot-reload": "nodemon src/server.js",
     "lint": "tslint -p . -c tslint.json -t verbose",

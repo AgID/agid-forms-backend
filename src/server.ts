@@ -15,6 +15,7 @@ import expressEnforcesSsl = require("express-enforces-ssl");
 import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
 import {
+  API_BASE_PATH,
   AUTHENTICATION_BASE_PATH,
   CLIENT_ERROR_REDIRECTION_URL,
   CLIENT_REDIRECTION_URL,
@@ -31,16 +32,14 @@ import {
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
 import AuthenticationController from "./controllers/authentication";
+import ProfileController from "./controllers/profile";
 import SessionController from "./controllers/session";
 import RedisSessionStorage from "./services/redis_session_storage";
 import TokenService from "./services/token";
 import bearerTokenStrategy from "./strategies/bearer_token";
 import makeSpidStrategy from "./strategies/spid_strategy";
 import { log } from "./utils/logger";
-import {
-  createClusterRedisClient,
-  createSimpleRedisClient
-} from "./utils/redis";
+import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { withSpidAuth } from "./utils/spid_auth";
 
 const port = SERVER_PORT;
@@ -50,14 +49,11 @@ const env = NODE_ENVIRONMENT;
 // Create Redis session storage
 //
 
-const maybeRedisClient =
-  NODE_ENVIRONMENT === NodeEnvironmentEnum.DEVELOPMENT
-    ? createSimpleRedisClient()
-    : createClusterRedisClient();
-
-const redisClient = maybeRedisClient.getOrElseL(() => {
-  throw new Error("Cannot get Redis client.");
-});
+const redisClient = createSimpleRedisClient(
+  parseInt(process.env.REDIS_PORT || DEFAULT_REDIS_PORT, 10),
+  process.env.REDIS_URL!,
+  process.env.REDIS_PASSWORD!
+);
 
 const sessionStorage = new RedisSessionStorage(
   redisClient,
@@ -95,6 +91,8 @@ const acsController = new AuthenticationController(
 );
 
 const sessionController = new SessionController();
+
+const profileController = new ProfileController();
 
 // Setup Passport.
 
@@ -177,6 +175,14 @@ app.get(
   `${AUTHENTICATION_BASE_PATH}/metadata`,
   (req: express.Request, res: express.Response) => {
     toExpressHandler(acsController.metadata)(req, res, acsController);
+  }
+);
+
+app.get(
+  `${API_BASE_PATH}/profile`,
+  bearerTokenAuth,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(profileController.getProfile)(req, res, sessionController);
   }
 );
 

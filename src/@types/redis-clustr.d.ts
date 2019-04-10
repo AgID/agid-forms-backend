@@ -11,7 +11,7 @@ interface IServer {
 
 interface IRedisOptions {
   readonly auth_pass: string;
-  readonly tls: {
+  readonly tls?: {
     readonly servername: string;
   };
 }

@@ -40,11 +40,15 @@ export default class RedisSessionStorage implements ISessionStorage {
     const setSessionTokenResult = await setSessionToken;
 
     if (isLeft(setSessionTokenResult)) {
-      return left<Error, boolean>(new Error("Error setting the token"));
+      return left<Error, boolean>(
+        new Error(`Error setting the token: ${setSessionTokenResult.value}`)
+      );
     }
 
     if (!setSessionTokenResult.value) {
-      return left<Error, boolean>(new Error("Error setting the token"));
+      return left<Error, boolean>(
+        new Error("Error setting the token (empty response)")
+      );
     }
 
     return right<Error, boolean>(true);
