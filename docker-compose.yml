@@ -22,7 +22,7 @@ services:
     ports:
       - "8088:8088"
     volumes:
-      - "./testenv2/conf:/app/conf"
+      - "./spid-local-testenv2/conf:/app/conf"
 
   redis:
     container_name: redis
