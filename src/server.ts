@@ -4,6 +4,7 @@
 
 import * as bodyParser from "body-parser";
 import * as express from "express";
+
 import * as helmet from "helmet";
 import * as http from "http";
 import * as https from "https";
@@ -11,14 +12,25 @@ import * as t from "io-ts";
 import * as morgan from "morgan";
 import * as passport from "passport";
 
+import nodeFetch from "node-fetch";
+
 import expressEnforcesSsl = require("express-enforces-ssl");
+import proxy = require("express-http-proxy");
+
+import { isLeft } from "fp-ts/lib/Either";
 import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
+import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
+import { JsonapiClient } from "./clients/jsonapi";
 import {
+  ADMIN_UID,
   API_BASE_PATH,
   AUTHENTICATION_BASE_PATH,
   CLIENT_ERROR_REDIRECTION_URL,
   CLIENT_REDIRECTION_URL,
+  JSONAPI_BASE_URL,
+  JWT_EXPIRES_IN,
+  JWT_SECRET,
   NODE_ENVIRONMENT,
   SAML_ACCEPTED_CLOCK_SKEW_MS,
   SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX,
@@ -29,18 +41,25 @@ import {
   SERVER_PORT,
   SPID_AUTOLOGIN,
   SPID_TESTENV_URL,
-  TOKEN_DURATION_IN_SECONDS
+  TOKEN_DURATION_IN_SECONDS,
+  USER_ROLE_ID,
+  WEBHOOK_USER_LOGIN_BASE_URL,
+  WEBHOOK_USER_LOGIN_PATH
 } from "./config";
 import AuthenticationController from "./controllers/authentication";
 import ProfileController from "./controllers/profile";
 import SessionController from "./controllers/session";
+import WebhookController from "./controllers/webhooks";
+import JwtService from "./services/jwt";
 import RedisSessionStorage from "./services/redis_session_storage";
 import TokenService from "./services/token";
 import bearerTokenStrategy from "./strategies/bearer_token";
 import makeSpidStrategy from "./strategies/spid_strategy";
+import { extractUserFromRequest } from "./types/user";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { withSpidAuth } from "./utils/spid_auth";
+import { userWebhook } from "./utils/webhooks";
 
 const port = SERVER_PORT;
 const env = NODE_ENVIRONMENT;
@@ -83,16 +102,35 @@ const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 //
 const tokenService = new TokenService();
 
+const userWebhookRequest = createFetchRequestForApi(userWebhook, {
+  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
+  // tslint:disable-next-line: no-any
+  fetchApi: (nodeFetch as any) as typeof fetch
+});
+
 const acsController = new AuthenticationController(
   sessionStorage,
   SAML_CERT,
   spidStrategy,
-  tokenService
+  tokenService,
+  WEBHOOK_USER_LOGIN_PATH,
+  userWebhookRequest
 );
 
 const sessionController = new SessionController();
 
 const profileController = new ProfileController();
+
+const jwtService = new JwtService(JWT_SECRET, JWT_EXPIRES_IN);
+
+const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
+
+const webhookController = new WebhookController(
+  jwtService,
+  jsonApiClient,
+  ADMIN_UID,
+  USER_ROLE_ID
+);
 
 // Setup Passport.
 
@@ -106,7 +144,7 @@ passport.use(spidStrategy);
 const app = express();
 
 // Redirect unsecure connections.
-if (env !== NodeEnvironmentEnum.DEVELOPMENT) {
+if (env === NodeEnvironmentEnum.DEVELOPMENT) {
   // Trust proxy uses proxy X-Forwarded-Proto for ssl.
   app.enable("trust proxy");
   app.use(/\/((?!ping).)*/, expressEnforcesSsl());
@@ -121,7 +159,11 @@ const loggerFormat =
 app.use(morgan(loggerFormat));
 
 // Parse the incoming request body. This is needed by Passport spid strategy.
-app.use(bodyParser.json());
+app.use(
+  bodyParser.json({
+    type: ["application/json", "application/vnd.api+json"]
+  })
+);
 
 // Parse an urlencoded body.
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -182,7 +224,18 @@ app.get(
   `${API_BASE_PATH}/profile`,
   bearerTokenAuth,
   (req: express.Request, res: express.Response) => {
-    toExpressHandler(profileController.getProfile)(req, res, sessionController);
+    toExpressHandler(profileController.getProfile)(req, res, profileController);
+  }
+);
+
+app.post(
+  WEBHOOK_USER_LOGIN_PATH,
+  (req: express.Request, res: express.Response) => {
+    toExpressHandler(webhookController.getUserMetadata)(
+      req,
+      res,
+      webhookController
+    );
   }
 );
 
@@ -198,6 +251,29 @@ app.get("/info", (_, res) => {
 // @see
 // https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-http-request
 app.get("/ping", (_, res) => res.status(200).send("ok"));
+
+// Setup proxy
+app.use(
+  "/proxy",
+  bearerTokenAuth,
+  proxy(JSONAPI_BASE_URL, {
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+      const errorOrUser = extractUserFromRequest(srcReq);
+      if (isLeft(errorOrUser)) {
+        return proxyReqOpts;
+      }
+      const user = errorOrUser.value;
+      if (!user.metadata || !user.metadata.uid) {
+        return proxyReqOpts;
+      }
+      const jwt = jwtService.getJwtForUid(parseInt(user.metadata.uid, 10));
+      return {
+        ...proxyReqOpts,
+        headers: { ...proxyReqOpts.headers, Authorization: "Bearer " + jwt }
+      };
+    }
+  })
+);
 
 //
 //  Start HTTP server

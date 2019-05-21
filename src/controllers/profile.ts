@@ -12,7 +12,7 @@ import {
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
 
-import { extractUserFromRequest, User } from "../types/user";
+import { AppUser, extractUserFromRequest } from "../types/user";
 
 export default class ProfileController {
   /**
@@ -21,7 +21,7 @@ export default class ProfileController {
    */
   public async getProfile(
     req: express.Request
-  ): Promise<IResponseSuccessJson<User> | IResponseErrorInternal> {
+  ): Promise<IResponseSuccessJson<AppUser> | IResponseErrorInternal> {
     const errorOrUser = extractUserFromRequest(req);
 
     if (isLeft(errorOrUser)) {

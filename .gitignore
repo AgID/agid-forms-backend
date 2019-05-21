@@ -2,6 +2,8 @@
 .vscode
 .idea
 
+certs
+
 # Exclude Yarn managed depencencies.
 /node_modules
 yarn-error.log

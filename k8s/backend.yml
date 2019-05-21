@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/spid-proxy
+      - image: docker.io/gunzip/spid-proxy:0.0.7
         name: backend
         ports:
         - name: http-port
@@ -42,6 +42,17 @@ spec:
           value: "redis-master.default.svc.cluster.local"
         - name: "REDIS_PORT"
           value: "6379"
+        - name: "WEBHOOK_USER_LOGIN_BASE_URL"
+          value: "http://backend.default.svc.cluster.local"
+        - name: "USER_ROLE_ID"
+          value: "31438e54-87fb-469c-acc0-21480e59a22a"
+        - name: "JSONAPI_BASE_URL"
+          value: "https://drupal.danilospinelli.com/jsonapi"
+        - name: "JWT_SECRET"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: jwt_secret
         - name: "REDIS_PASSWORD"
           valueFrom:
             secretKeyRef:

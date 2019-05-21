@@ -8,7 +8,7 @@ import * as passport from "passport-http-bearer";
 import { IVerifyOptions } from "passport-http-bearer";
 import { ISessionStorage } from "../services/ISessionStorage";
 import { SessionToken } from "../types/token";
-import { User } from "../types/user";
+import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 /**
  * Passthrough a bearer token for specified paths.
@@ -27,8 +27,8 @@ const bearerTokenStrategy = (sessionStorage: ISessionStorage) => {
   ) => {
     // req.route.path
     sessionStorage.getBySessionToken(token as SessionToken).then(
-      (errorOrUser: Either<Error, User>) => {
-        log.info("getBySessionToken %s", JSON.stringify(errorOrUser));
+      (errorOrUser: Either<Error, AppUser>) => {
+        log.debug("getBySessionToken %s", JSON.stringify(errorOrUser));
         errorOrUser.fold(
           () => done(undefined, false),
           user => done(undefined, user)

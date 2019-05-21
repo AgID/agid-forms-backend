@@ -31,7 +31,9 @@
 <script>
   const url_string = window.location.href;
   const url = new URL(url_string);
-  const token = url.searchParams.get("token") || localStorage.getItem("token");
+
+  // const token = url.searchParams.get("token") || localStorage.getItem("token");
+  const token = (url.hash && url.hash !== "") ? url.hash.substr(1).split('=')[1] : localStorage.getItem("token");
 
   console.log("token", token);
 

@@ -8,7 +8,7 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { ReadableReporter } from "italia-ts-commons/lib/reporters";
 import { isNumber } from "util";
 import { SessionToken } from "../types/token";
-import { User } from "../types/user";
+import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 import { ISessionStorage } from "./ISessionStorage";
 
@@ -24,7 +24,7 @@ export default class RedisSessionStorage implements ISessionStorage {
   /**
    * {@inheritDoc}
    */
-  public async set(user: User): Promise<Either<Error, boolean>> {
+  public async set(user: AppUser): Promise<Either<Error, boolean>> {
     const setSessionToken = new Promise<Either<Error, boolean>>(resolve => {
       // Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
       // @see https://redis.io/commands/set
@@ -59,7 +59,7 @@ export default class RedisSessionStorage implements ISessionStorage {
    */
   public async getBySessionToken(
     token: SessionToken
-  ): Promise<Either<Error, User>> {
+  ): Promise<Either<Error, AppUser>> {
     const errorOrSession = await this.loadSessionBySessionToken(token);
 
     if (isLeft(errorOrSession)) {
@@ -105,22 +105,22 @@ export default class RedisSessionStorage implements ISessionStorage {
    */
   private loadSessionBySessionToken(
     token: SessionToken
-  ): Promise<Either<Error, User>> {
+  ): Promise<Either<Error, AppUser>> {
     return new Promise(resolve => {
       this.redisClient.get(`${sessionKeyPrefix}${token}`, (err, value) => {
         if (err) {
           // Client returns an error.
-          return resolve(left<Error, User>(err));
+          return resolve(left<Error, AppUser>(err));
         }
 
         if (value === null) {
-          return resolve(left<Error, User>(new Error("Session not found")));
+          return resolve(left<Error, AppUser>(new Error("Session not found")));
         }
 
         // Try-catch is needed because parse() may throw an exception.
         try {
           const userPayload = JSON.parse(value);
-          const errorOrDeserializedUser = User.decode(userPayload);
+          const errorOrDeserializedUser = AppUser.decode(userPayload);
 
           if (isLeft(errorOrDeserializedUser)) {
             log.error(
@@ -128,15 +128,15 @@ export default class RedisSessionStorage implements ISessionStorage {
               ReadableReporter.report(errorOrDeserializedUser)
             );
             return resolve(
-              left<Error, User>(new Error("Unable to decode the user"))
+              left<Error, AppUser>(new Error("Unable to decode the user"))
             );
           }
 
           const user = errorOrDeserializedUser.value;
-          return resolve(right<Error, User>(user));
+          return resolve(right<Error, AppUser>(user));
         } catch (err) {
           return resolve(
-            left<Error, User>(new Error("Unable to parse the user json"))
+            left<Error, AppUser>(new Error("Unable to parse the user json"))
           );
         }
       });

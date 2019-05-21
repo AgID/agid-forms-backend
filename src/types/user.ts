@@ -19,8 +19,7 @@ import { Issuer } from "./issuer";
 import { isSpidL } from "./spidLevel";
 import { SessionToken } from "./token";
 
-// required attributes
-export const User = t.intersection([
+export const AppUser = t.intersection([
   t.interface({
     created_at: t.number,
     family_name: t.string,
@@ -32,6 +31,7 @@ export const User = t.intersection([
     spid_mobile_phone: NonEmptyString
   }),
   t.partial({
+    metadata: t.record(t.string, t.string),
     nameID: t.string,
     nameIDFormat: t.string,
     sessionIndex: t.string,
@@ -39,7 +39,7 @@ export const User = t.intersection([
   })
 ]);
 
-export type User = t.TypeOf<typeof User>;
+export type AppUser = t.TypeOf<typeof AppUser>;
 
 // required attributes
 export const SpidUser = t.intersection([
@@ -65,7 +65,7 @@ export type SpidUser = t.TypeOf<typeof SpidUser>;
 /**
  * Converts a SPID User to a Proxy User.
  */
-export function toAppUser(from: SpidUser, sessionToken: SessionToken): User {
+export function toAppUser(from: SpidUser, sessionToken: SessionToken): AppUser {
   return {
     created_at: new Date().getTime(),
     family_name: from.familyName,
@@ -144,8 +144,8 @@ export function validateSpidUser(value: any): Either<Error, SpidUser> {
  */
 export function extractUserFromRequest(
   from: express.Request
-): Either<Error, User> {
-  const result = User.decode(from.user);
+): Either<Error, AppUser> {
+  const result = AppUser.decode(from.user);
 
   // tslint:disable-next-line:no-identical-functions
   return result.mapLeft(err => {
@@ -158,13 +158,13 @@ export function extractUserFromRequest(
 /**
  * Extracts a user from a json string.
  */
-export function extractUserFromJson(from: string): Either<Error, User> {
+export function extractUserFromJson(from: string): Either<Error, AppUser> {
   return JSONFromString.decode(from)
     .mapLeft(
       err => new Error("Cannot parse the user JSON:" + readableReport(err))
     )
     .chain(json =>
-      User.decode(json).mapLeft(
+      AppUser.decode(json).mapLeft(
         err => new Error("Cannot decode the user JSON: " + readableReport(err))
       )
     );

@@ -120,9 +120,9 @@ const makeSpidStrategy = (
       identifierFormat: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
       issuer: samlIssuer,
       organization: {
-        URL: "https://github.com/teamdigitale/italia-backend",
-        displayName: "Digital citizenship proxy",
-        name: "Digital citizenship proxy"
+        URL: "https://github.com/AgID/agid-forms-backend",
+        displayName: "CMS proxy",
+        name: "CMS proxy"
       },
       privateCert: samlKey,
       signatureAlgorithm: "sha256"
