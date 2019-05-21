@@ -1,4 +1,4 @@
-# Kubernetes config for the Digital Citizenship project
+# Kubernetes config for the CMS project
 
 ## What is this
 
