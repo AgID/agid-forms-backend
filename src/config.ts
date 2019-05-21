@@ -1,5 +1,4 @@
 import * as dotenv from "dotenv";
-import * as fs from "fs";
 
 import { getNodeEnvironmentFromProcessEnv } from "italia-ts-commons/lib/environment";
 
@@ -18,47 +17,6 @@ export const SERVER_PORT = parseInt(
 
 // Resolve NODE_ENV environment (defaults to PRODUCTION).
 export const NODE_ENVIRONMENT = getNodeEnvironmentFromProcessEnv(process.env);
-
-// Private key used in SAML authentication to a SPID IDP.
-export const SAML_KEY = fs.readFileSync(
-  process.env.SAML_KEY_PATH || "./certs/key.pem",
-  "utf-8"
-);
-
-// Public certificate used in SAML authentication to a SPID IDP.
-export const SAML_CERT = fs.readFileSync(
-  process.env.SAML_CERT_PATH || "./certs/cert.pem",
-  "utf-8"
-);
-
-// SAML settings.
-export const SAML_CALLBACK_URL =
-  process.env.SAML_CALLBACK_URL || "http://localhost/assertionConsumerService";
-
-export const SAML_ISSUER =
-  process.env.SAML_ISSUER || "https://spid.agid.gov.it/cd";
-
-const DEFAULT_SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX = "1";
-export const SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX: number = parseInt(
-  process.env.SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX ||
-    DEFAULT_SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX,
-  10
-);
-
-const DEFAULT_SAML_ACCEPTED_CLOCK_SKEW_MS = "-1";
-export const SAML_ACCEPTED_CLOCK_SKEW_MS = parseInt(
-  process.env.SAML_ACCEPTED_CLOCK_SKEW_MS ||
-    DEFAULT_SAML_ACCEPTED_CLOCK_SKEW_MS,
-  10
-);
-
-const DEFAULT_SPID_AUTOLOGIN = "";
-export const SPID_AUTOLOGIN =
-  process.env.SPID_AUTOLOGIN || DEFAULT_SPID_AUTOLOGIN;
-
-const DEFAULT_SPID_TESTENV_URL = "https://spid-testenv2:8088";
-export const SPID_TESTENV_URL =
-  process.env.SPID_TESTENV_URL || DEFAULT_SPID_TESTENV_URL;
 
 // Redirection urls
 export const clientProfileRedirectionUrl =

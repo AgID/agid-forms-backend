@@ -1,7 +1,7 @@
 {
-  "name": "spid-proxy",
+  "name": "agid-forms-backend",
   "version": "0.1.1",
-  "description": "SPID proxy",
+  "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
     "node": "8.11.3"
@@ -25,21 +25,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gunzip/spid-proxy.git"
+    "url": "git+https://github.com/AGID/agid-forms-backend.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gunzip/spid-proxy/issues"
+    "url": "https://github.com/AGID/agid-forms-backend/issues"
   },
-  "homepage": "https://github.com/gunzip/spid-proxy#readme",
+  "homepage": "https://github.com/AGID/agid-forms-backend#readme",
   "dependencies": {
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
     "express": "^4.16.2",
     "express-enforces-ssl": "1.1.0",
     "express-http-proxy": "^1.5.1",
+    "fp-ts": "^1.8.1",
     "helmet": "3.13.0",
     "io-ts": "^1.3.0",
     "io-ts-types": "^0.3.14",
@@ -55,7 +56,6 @@
     "patch-package": "^5.1.1",
     "redis": "^2.8.0",
     "redis-clustr": "^1.6.0",
-    "spid-passport": "git://github.com/teamdigitale/spid-passport.git#v1.1.1",
     "typescript": "^3.0.3",
     "ulid": "^2.2.2",
     "winston": "^3.0.0",
@@ -76,11 +76,9 @@
     "@types/passport-http-bearer": "^1.0.33",
     "@types/passport-strategy": "^0.2.35",
     "@types/redis": "^2.8.5",
-    "@types/xmldom": "^0.1.29",
     "danger": "^4.0.2",
     "danger-plugin-digitalcitizenship": "^0.3.1",
-    "fp-ts": "^1.8.1",
-    "italia-tslint-rules": "^0.1.1",
+    "italia-tslint-rules": "^1.1.3",
     "italia-utils": "^3.14.14",
     "jest": "^23.6.0",
     "lolex": "2.7.5",
@@ -90,11 +88,6 @@
     "ts-jest": "^23.10.4",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
-    "tslint-config-prettier": "^1.15.0",
-    "tslint-immutable": "^4.7.0",
-    "tslint-language-service": "^0.9.9",
-    "tslint-plugin-prettier": "^2.0.0",
-    "tslint-sonarts": "^1.7.0",
     "typestrict": "^1.0.1"
   },
   "jest": {

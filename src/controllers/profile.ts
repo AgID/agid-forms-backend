@@ -4,33 +4,26 @@
  */
 
 import * as express from "express";
-import { isLeft } from "fp-ts/lib/Either";
+
 import {
   IResponseErrorInternal,
+  IResponseErrorValidation,
   IResponseSuccessJson,
-  ResponseErrorInternal,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
 
-import { AppUser, extractUserFromRequest } from "../types/user";
+import { AppUser, withUserFromRequest } from "../types/user";
 
 export default class ProfileController {
   /**
    * Returns the profile for the user identified by the provided fiscal
    * code.
    */
-  public async getProfile(
+  public readonly getProfile = (
     req: express.Request
-  ): Promise<IResponseSuccessJson<AppUser> | IResponseErrorInternal> {
-    const errorOrUser = extractUserFromRequest(req);
-
-    if (isLeft(errorOrUser)) {
-      // Unable to extract the user from the request.
-      const error = errorOrUser.value;
-      return ResponseErrorInternal(error.message);
-    }
-
-    const profile = errorOrUser.value;
-    return ResponseSuccessJson(profile);
-  }
+  ): Promise<
+    | IResponseSuccessJson<AppUser>
+    | IResponseErrorInternal
+    | IResponseErrorValidation
+  > => withUserFromRequest(req, async user => ResponseSuccessJson(user));
 }

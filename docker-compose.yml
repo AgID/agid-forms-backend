@@ -1,9 +1,9 @@
 version: "2"
 
 services:
-  spid-proxy:
+  agid-forms-backend:
     command: ["yarn", "hot-reload"]
-    container_name: spid-proxy
+    container_name: agid-forms-backend
     environment:
       - NODE_ENV=dev
     expose:
@@ -15,14 +15,6 @@ services:
       - ".:/usr/src/app"
       - "./certs:/usr/src/app/certs"
     working_dir: "/usr/src/app"
-
-  spid-testenv2:
-    container_name: spid-testenv2
-    image: italia/spid-testenv2:fix-c14n-issue-169
-    ports:
-      - "8088:8088"
-    volumes:
-      - "./spid-local-testenv2/conf:/app/conf"
 
   redis:
     container_name: redis
