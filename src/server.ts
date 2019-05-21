@@ -46,9 +46,9 @@ import {
   WEBHOOK_USER_LOGIN_BASE_URL,
   WEBHOOK_USER_LOGIN_PATH
 } from "./config";
-import AuthenticationController from "./controllers/authentication";
 import ProfileController from "./controllers/profile";
 import SessionController from "./controllers/session";
+import SpidAuthenticationController from "./controllers/spid_authentication";
 import WebhookController from "./controllers/webhooks";
 import JwtService from "./services/jwt";
 import RedisSessionStorage from "./services/redis_session_storage";
@@ -108,7 +108,7 @@ const userWebhookRequest = createFetchRequestForApi(userWebhook, {
   fetchApi: (nodeFetch as any) as typeof fetch
 });
 
-const acsController = new AuthenticationController(
+const acsController = new SpidAuthenticationController(
   sessionStorage,
   SAML_CERT,
   spidStrategy,
