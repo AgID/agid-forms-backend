@@ -23,11 +23,11 @@ import {
   SERVER_PORT,
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
-import ProfileController from "./controllers/profile";
 import JwtService from "./services/jwt";
 import RedisSessionStorage from "./services/redis_session_storage";
 import bearerTokenStrategy from "./strategies/bearer_token";
 
+import { getProfile } from "./controllers/profile";
 import { AppUser } from "./types/user";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
@@ -53,11 +53,8 @@ const sessionStorage = new RedisSessionStorage(
 const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 
 //
-//  Configure controllers
+//  Configure controllers and services
 //
-
-const profileController = new ProfileController();
-
 const jwtService = new JwtService(JWT_SECRET, JWT_EXPIRES_IN);
 
 // Setup Passport.
@@ -106,7 +103,7 @@ app.get(
   `${API_BASE_PATH}/profile`,
   bearerTokenAuth,
   (req: express.Request, res: express.Response) => {
-    toExpressHandler(profileController.getProfile)(req, res, profileController);
+    toExpressHandler(getProfile)(req, res);
   }
 );
 

@@ -14,16 +14,14 @@ import {
 
 import { AppUser, withUserFromRequest } from "../types/user";
 
-export default class ProfileController {
-  /**
-   * Returns the profile for the user identified by the provided fiscal
-   * code.
-   */
-  public readonly getProfile = (
-    req: express.Request
-  ): Promise<
-    | IResponseSuccessJson<AppUser>
-    | IResponseErrorInternal
-    | IResponseErrorValidation
-  > => withUserFromRequest(req, async user => ResponseSuccessJson(user));
-}
+/**
+ * Returns the profile for the user identified by the provided fiscal
+ * code.
+ */
+export const getProfile = (
+  req: express.Request
+): Promise<
+  | IResponseSuccessJson<AppUser>
+  | IResponseErrorInternal
+  | IResponseErrorValidation
+> => withUserFromRequest(req, async user => ResponseSuccessJson(user));

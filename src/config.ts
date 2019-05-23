@@ -61,3 +61,6 @@ export const USER_ROLE_ID = process.env.USER_ROLE_ID || DEFAULT_USER_ROLE_ID;
 export const JWT_SECRET = process.env.JWT_SECRET || "";
 
 export const JSONAPI_BASE_URL = process.env.JSONAPI_BASE_URL || "";
+
+export const ELASTICSEARCH_URL =
+  process.env.ELASTICSEARCH_URL || "http://localhost:9200";
