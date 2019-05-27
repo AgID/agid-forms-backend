@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/spid-proxy:0.0.7
+      - image: docker.io/gunzip/agid-forms-backend:0.0.9
         name: backend
         ports:
         - name: http-port
@@ -39,15 +39,17 @@ spec:
         - name: "NODE_ENV"
           value: "development"
         - name: "REDIS_URL"
-          value: "redis-master.default.svc.cluster.local"
+          value: "redis-master"
         - name: "REDIS_PORT"
           value: "6379"
         - name: "WEBHOOK_USER_LOGIN_BASE_URL"
-          value: "http://backend.default.svc.cluster.local"
+          value: "http://backend"
         - name: "USER_ROLE_ID"
           value: "31438e54-87fb-469c-acc0-21480e59a22a"
         - name: "JSONAPI_BASE_URL"
           value: "https://drupal.danilospinelli.com/jsonapi"
+        - name: "ELASTICSEARCH_URL"
+          value: "http://es:9200"
         - name: "JWT_SECRET"
           valueFrom:
             secretKeyRef:
@@ -58,21 +60,9 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: redis_password
-        - name: "SAML_CALLBACK_URL"
-          value: "https://backend.danilospinelli.com/assertionConsumerService"
-        - name: "SAML_ISSUER"
-          value: "https://spid.agid.gov.it/cd"
-        - name: "SAML_ATTRIBUTE_CONSUMING_SERVICE_INDEX"
-          value: "0"
-        - name: "SPID_TESTENV_URL"
-          value: "https://spid-testenv2.danilospinelli.com"
         - name: "TOKEN_DURATION_IN_SECONDS"
           # 30 days
           value: "2592000"
-        volumeMounts:
-          - name: certs
-            mountPath: "/usr/src/app/certs"
-            readOnly: true
         livenessProbe:
           httpGet:
             path: "/ping"
@@ -81,11 +71,6 @@ spec:
           timeoutSeconds: 5
           periodSeconds: 10
           failureThreshold: 5
-      volumes:
-      - name: certs
-        secret:
-          # cert.pem, key.pem
-          secretName: spid-cert
 
 ---
 #

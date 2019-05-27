@@ -6,69 +6,69 @@
 import * as express from "express";
 
 import {
+  IResponseErrorInternal,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorInternal,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
 
 import * as t from "io-ts";
-import { ELASTICSEARCH_URL } from "../config";
-import { DecodeBodyMiddleware } from "../middlewares/decode_body";
+
+import { TypeofApiCall } from "italia-ts-commons/lib/requests";
+
+import { isLeft } from "fp-ts/lib/Either";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
+import { RequiredQueryParamMiddleware } from "../middlewares/required_query_param";
+import { PaSearchRequestT, PaSearchResultT } from "../utils/search";
 
-const IpaQuery = t.string;
-type IpaQuery = t.TypeOf<typeof IpaQuery>;
-
-const PublicAdministrationFromIpa = t.interface({});
+const PublicAdministrationFromIpa = t.readonlyArray(
+  t.interface({ _source: PaSearchResultT })
+);
 type PublicAdministrationFromIpa = t.TypeOf<typeof PublicAdministrationFromIpa>;
 
-type IGetPublicAdministrationFromIpa = (
-  query: IpaQuery
+type ISearchPublicAdministrationFromIpa = (
+  name: string
 ) => Promise<
-  IResponseErrorValidation | IResponseSuccessJson<PublicAdministrationFromIpa>
+  | IResponseErrorValidation
+  | IResponseErrorInternal
+  | IResponseSuccessJson<PublicAdministrationFromIpa>
 >;
 
-const PA_INDEX_NAME = "ipa_amministrazioni";
-
-const OU_INDEX_NAME = "ipa_ou";
-
-const RETRIEVED_PA_FIELDS: ReadonlyArray<string> = [
-  "cod_amm",
-  "des_amm",
-  "Comune",
-  "Provincia,Regione"
-];
-
-const RETRIEVED_OU_FIELDS: ReadonlyArray<string> = [
-  "mail_resp",
-  "nome_resp",
-  "cogn_resp"
-];
-
-const getPaQueryUrl = (paNameOrIpaCode: string) =>
-  `${ELASTICSEARCH_URL}/${PA_INDEX_NAME}/_search?_source=${RETRIEVED_PA_FIELDS.join(
-    ","
-  )}&q=cod_amm:${paNameOrIpaCode} OR des_amm_Comune:${paNameOrIpaCode}`;
-
-const getOuQueryUrl = (ipaCode: string) =>
-  `${ELASTICSEARCH_URL}/${OU_INDEX_NAME}/_search?_source=${RETRIEVED_OU_FIELDS.join(
-    ","
-  )}&q=cod_ou:Ufficio_Transizione_Digitale AND cod_amm:${ipaCode}`;
-
-/**
- * -> hits.hits[<idx>]._source.{...}
- */
-export function GetPublicAdministrationFromIpaHandler(): IGetPublicAdministrationFromIpa {
-  return async (_: IpaQuery) => {
-    return ResponseSuccessJson({});
+export function SearchPublicAdministrationsHandler(
+  paSearchRequest: TypeofApiCall<PaSearchRequestT>
+): ISearchPublicAdministrationFromIpa {
+  return async (paNameOrIpaCode: string) => {
+    const errorOrPaSearchResponse = await paSearchRequest({
+      paNameOrIpaCode
+    });
+    if (isLeft(errorOrPaSearchResponse)) {
+      return ResponseErrorInternal(
+        `Cannot get search results: ${readableReport(
+          errorOrPaSearchResponse.value
+        )}`
+      );
+    }
+    if (errorOrPaSearchResponse.value.status !== 200) {
+      return ResponseErrorInternal(
+        `Cannot get search results (status=${
+          errorOrPaSearchResponse.value.status
+        })`
+      );
+    }
+    const paSearchResponse = errorOrPaSearchResponse.value;
+    return ResponseSuccessJson(paSearchResponse.value.hits.hits);
   };
 }
 
-export function GetPublicAdministrationFromIpa(): express.RequestHandler {
-  const handler = GetPublicAdministrationFromIpaHandler();
+export function SearchPublicAdministrations(
+  paSearchRequest: TypeofApiCall<PaSearchRequestT>
+): express.RequestHandler {
+  const handler = SearchPublicAdministrationsHandler(paSearchRequest);
   const withrequestMiddlewares = withRequestMiddlewares(
-    DecodeBodyMiddleware(IpaQuery)
+    RequiredQueryParamMiddleware("name", t.string)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

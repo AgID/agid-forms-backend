@@ -16,6 +16,7 @@ import { toExpressHandler } from "italia-ts-commons/lib/express";
 
 import {
   API_BASE_PATH,
+  ELASTICSEARCH_URL,
   JSONAPI_BASE_URL,
   JWT_EXPIRES_IN,
   JWT_SECRET,
@@ -27,10 +28,15 @@ import JwtService from "./services/jwt";
 import RedisSessionStorage from "./services/redis_session_storage";
 import bearerTokenStrategy from "./strategies/bearer_token";
 
+import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
+import nodeFetch from "node-fetch";
+
+import { SearchPublicAdministrations } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
 import { AppUser } from "./types/user";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
+import { paSearchRequest } from "./utils/search";
 
 const port = SERVER_PORT;
 const env = NODE_ENVIRONMENT;
@@ -105,6 +111,17 @@ app.get(
   (req: express.Request, res: express.Response) => {
     toExpressHandler(getProfile)(req, res);
   }
+);
+
+const paSearchRequestApi = createFetchRequestForApi(paSearchRequest, {
+  baseUrl: ELASTICSEARCH_URL,
+  // tslint:disable-next-line: no-any
+  fetchApi: (nodeFetch as any) as typeof fetch
+});
+
+app.get(
+  `${API_BASE_PATH}/search_ipa`,
+  SearchPublicAdministrations(paSearchRequestApi)
 );
 
 // tslint:disable-next-line: no-var-requires

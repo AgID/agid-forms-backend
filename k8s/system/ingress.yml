@@ -152,9 +152,6 @@ spec:
     - hosts:
       - backend.danilospinelli.com
       secretName: cms-backend-cert-lep
-    - hosts:
-      - spid-testenv2.danilospinelli.com
-      secretName: spid-testenv2-cert-lep
   rules:
   - host: backend.danilospinelli.com
     http:
@@ -163,10 +160,3 @@ spec:
         backend:
           serviceName: backend
           servicePort: 80
-  - host: spid-testenv2.danilospinelli.com
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: spid-testenv2
-          servicePort: 8088
