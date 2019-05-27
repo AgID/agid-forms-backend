@@ -9,7 +9,6 @@ schemes:
   - https
 security:
   - Bearer: []
-paths: []
 definitions:
   EmailAddress:
     type: string

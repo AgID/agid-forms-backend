@@ -31,12 +31,15 @@ import bearerTokenStrategy from "./strategies/bearer_token";
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
-import { SearchPublicAdministrations } from "./controllers/ipa";
+import {
+  GetPublicAdministration,
+  SearchPublicAdministrations
+} from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
 import { AppUser } from "./types/user";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
-import { paSearchRequest } from "./utils/search";
+import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
 
 const port = SERVER_PORT;
 const env = NODE_ENVIRONMENT;
@@ -122,6 +125,23 @@ const paSearchRequestApi = createFetchRequestForApi(paSearchRequest, {
 app.get(
   `${API_BASE_PATH}/search_ipa`,
   SearchPublicAdministrations(paSearchRequestApi)
+);
+
+const paGetRequestApi = createFetchRequestForApi(paGetRequest, {
+  baseUrl: ELASTICSEARCH_URL,
+  // tslint:disable-next-line: no-any
+  fetchApi: (nodeFetch as any) as typeof fetch
+});
+
+const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
+  baseUrl: ELASTICSEARCH_URL,
+  // tslint:disable-next-line: no-any
+  fetchApi: (nodeFetch as any) as typeof fetch
+});
+
+app.get(
+  `${API_BASE_PATH}/get_ipa`,
+  GetPublicAdministration(paGetRequestApi, ouGetRequestApi)
 );
 
 // tslint:disable-next-line: no-var-requires

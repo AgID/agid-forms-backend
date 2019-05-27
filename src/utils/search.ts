@@ -6,7 +6,6 @@ import {
   BasicResponseType,
   IGetApiRequestType
 } from "italia-ts-commons/lib/requests";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 /////////////////////////////////////////////////////////////
 
@@ -73,7 +72,7 @@ export const paGetRequest: PaSearchRequestT = {
 
 const OU_INDEX_NAME = "ipa_ou";
 
-const OuGetResultT = t.interface({
+export const OuGetResultT = t.interface({
   cogn_resp: t.string,
   mail_resp: t.string,
   nome_resp: t.string
@@ -90,9 +89,9 @@ const OuGetResultsT = t.interface({
 });
 type OuGetResultsT = t.TypeOf<typeof OuGetResultsT>;
 
-type OuGetRequestT = IGetApiRequestType<
+export type OuGetRequestT = IGetApiRequestType<
   {
-    readonly ipaCode: NonEmptyString;
+    readonly ipaCode: string;
   },
   never,
   "_source" | "q",
