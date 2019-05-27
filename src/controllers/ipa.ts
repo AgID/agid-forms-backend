@@ -7,9 +7,11 @@ import * as express from "express";
 
 import {
   IResponseErrorInternal,
+  IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
   ResponseErrorInternal,
+  ResponseErrorNotFound,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
 
@@ -71,9 +73,6 @@ export function SearchPublicAdministrationsHandler(
       );
     }
     const paSearchResponse = errorOrPaSearchResponse.value;
-
-    log.error("paSearchResponse:%s", JSON.stringify(paSearchResponse));
-
     if (
       !paSearchResponse.value.hits.hits ||
       paSearchResponse.value.hits.hits.length === 0
@@ -111,8 +110,10 @@ type PublicAdministrationFromIpa = t.TypeOf<typeof PublicAdministrationFromIpa>;
 type IGetPublicAdministrationFromIpa = (
   name: string
 ) => Promise<
+  // tslint:disable-next-line: max-union-size
   | IResponseErrorValidation
   | IResponseErrorInternal
+  | IResponseErrorNotFound
   | IResponseSuccessJson<PublicAdministrationFromIpa>
 >;
 
@@ -136,11 +137,20 @@ export function GetPublicAdministrationHandler(
     }
     const paGetResponse = errorOrPaGetResponse.value;
 
+    if (
+      !paGetResponse.value.hits.hits ||
+      paGetResponse.value.hits.hits.length === 0
+    ) {
+      return ResponseErrorNotFound("Not found.", "Ipa code not found");
+    }
+
     // Get RTD data
 
     const errorOrOuGetResponse = await ouGetRequest({
       ipaCode
     });
+    log.error("ouGetResponse:%s", JSON.stringify(errorOrOuGetResponse));
+
     if (isLeft(errorOrOuGetResponse)) {
       return ResponseErrorInternal(
         `Cannot get ou results: ${readableReport(errorOrOuGetResponse.value)}`

@@ -98,6 +98,8 @@ export type OuGetRequestT = IGetApiRequestType<
   BasicResponseType<OuGetResultsT>
 >;
 
+const OU_UFFICIO_TRANSIZIONE_DIGITALE = "Ufficio_Transizione_Digitale";
+
 /**
  * Get name, surname and email of the Digital Transformation Responsible.
  */
@@ -108,7 +110,9 @@ export const ouGetRequest: OuGetRequestT = {
   method: "get",
   query: params => ({
     _source: `${Object.keys(OuGetResultT.props).join(",")}`,
-    q: `cod_amm:${params.ipaCode}`
+    q: `cod_amm:"${
+      params.ipaCode
+    }" AND cod_ou:"${OU_UFFICIO_TRANSIZIONE_DIGITALE}"`
   }),
   response_decoder: basicResponseDecoder(OuGetResultsT),
   url: () => `${OU_INDEX_NAME}/_search`
