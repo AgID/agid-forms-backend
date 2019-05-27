@@ -25,7 +25,7 @@ import { readableReport } from "italia-ts-commons/lib/reporters";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
 import { RequiredQueryParamMiddleware } from "../middlewares/required_query_param";
-import { log } from "../utils/logger";
+
 import {
   OuGetRequestT,
   OuGetResultT,
@@ -149,7 +149,6 @@ export function GetPublicAdministrationHandler(
     const errorOrOuGetResponse = await ouGetRequest({
       ipaCode
     });
-    log.error("ouGetResponse:%s", JSON.stringify(errorOrOuGetResponse));
 
     if (isLeft(errorOrOuGetResponse)) {
       return ResponseErrorInternal(
