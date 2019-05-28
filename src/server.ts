@@ -164,7 +164,7 @@ const secretStorage = RedisObjectStorage(
 );
 
 app.post(
-  `${API_BASE_PATH}/auth/email`,
+  `${API_BASE_PATH}/auth/email/:ipa_code`,
   SendEmailToRtd(
     paGetRequestApi,
     ouGetRequestApi,
@@ -173,6 +173,9 @@ app.post(
     secretStorage
   )
 );
+
+// app.post(
+//   `${API_BASE_PATH}/auth/login/:ipa_code`);
 
 // tslint:disable-next-line: no-var-requires
 const packageJson = require("../package.json");

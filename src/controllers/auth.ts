@@ -6,10 +6,12 @@
 import * as express from "express";
 
 import {
+  IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseSuccessJson
@@ -21,7 +23,6 @@ import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
-import { RequiredQueryParamMiddleware } from "../middlewares/required_query_param";
 import { OuGetRequestT, PaSearchRequestT } from "../utils/search";
 import {
   GetPublicAdministrationHandler,
@@ -38,9 +39,14 @@ import {
   ORGANIZATION_NAME,
   SERVICE_NAME
 } from "../config";
+import { DecodeBodyMiddleware } from "../middlewares/decode_body";
+import { RequiredParamMiddleware } from "../middlewares/required_param";
 import { IObjectStorage } from "../services/object_storage";
+import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";
 import { emailAuthCode } from "../templates/html/email/authcode";
+import { SessionToken } from "../types/token";
+import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 
 type ISendMailToRtd = (
@@ -61,7 +67,7 @@ export function SendEmailToRtdHandler(
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
-  redisSecretStorage: IObjectStorage<string, string>
+  secretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
     // Call search API to retrieve PA info and RTD email address
@@ -86,13 +92,10 @@ export function SendEmailToRtdHandler(
     const secretCode = generateCode();
 
     // Save (ipa_code, secret) to storage
-    const key = generateKey(secretCode, ipaCode);
-    const errorOrStorageResult = await redisSecretStorage.set(
-      ipaCode,
-      () => key
+    const errorOrStorageResult = await secretStorage.set(
+      generateNewToken(),
+      () => generateKey(secretCode, ipaCode)
     );
-
-    log.debug("Storing secret: (%s) %s...", ipaCode, key.substr(6));
 
     if (isLeft(errorOrStorageResult)) {
       return ResponseErrorInternal("Cannot store secret");
@@ -126,17 +129,77 @@ export function SendEmailToRtd(
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
-  redisSecretStorage: IObjectStorage<string, string>
+  secretStorage: IObjectStorage<string, string>
 ): express.RequestHandler {
   const handler = SendEmailToRtdHandler(
     paSearchRequest,
     ouGetRequest,
     transporter,
     generateCode,
-    redisSecretStorage
+    secretStorage
   );
   const withrequestMiddlewares = withRequestMiddlewares(
-    RequiredQueryParamMiddleware("code", t.string)
+    RequiredParamMiddleware("code", t.string)
+  );
+  return wrapRequestHandler(withrequestMiddlewares(handler));
+}
+
+//////////////////////////////////////////////////////////
+
+const LoginInfoT = t.interface({
+  secret: t.string
+});
+type LoginInfoT = t.TypeOf<typeof LoginInfoT>;
+
+type ILogin = (
+  ipaCode: string,
+  creds: LoginInfoT
+) => Promise<
+  | IResponseErrorInternal
+  | IResponseErrorForbiddenNotAuthorized
+  | IResponseSuccessJson<SessionToken>
+>;
+
+export function LoginHandler(
+  secretStorage: IObjectStorage<string, string>,
+  sessionStorage: IObjectStorage<AppUser, SessionToken>
+): ILogin {
+  return async (ipaCode, creds) => {
+    const errorOrToken = await secretStorage.get(
+      generateKey(creds.secret, ipaCode)
+    );
+    if (isLeft(errorOrToken) || !errorOrToken.value) {
+      return ResponseErrorForbiddenNotAuthorized;
+    }
+    const token = errorOrToken.value;
+
+    // Create user session for bearer authentication
+    const errorOrSession = await sessionStorage.set(
+      {
+        created_at: new Date().getTime(),
+        name: ipaCode,
+        session_token: token as SessionToken
+      },
+      () => token
+    );
+    if (isLeft(errorOrSession) || !errorOrSession) {
+      return ResponseErrorInternal("Cannot store user info");
+    }
+
+    // TODO: call to webhook
+
+    return ResponseSuccessJson(token as SessionToken);
+  };
+}
+
+export function Login(
+  secretStorage: IObjectStorage<string, string>,
+  sessionStorage: IObjectStorage<AppUser, SessionToken>
+): express.RequestHandler {
+  const handler = LoginHandler(secretStorage, sessionStorage);
+  const withrequestMiddlewares = withRequestMiddlewares(
+    RequiredParamMiddleware("ipa_code", t.string),
+    DecodeBodyMiddleware(LoginInfoT)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

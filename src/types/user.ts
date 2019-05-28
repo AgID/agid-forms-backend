@@ -9,11 +9,11 @@ export const AppUser = t.intersection([
   t.interface({
     created_at: t.number,
     name: t.string,
+    // needed to logout
     session_token: SessionToken
   }),
   t.partial({
-    metadata: t.record(t.string, t.string),
-    sessionIndex: t.string
+    metadata: t.record(t.string, t.string)
   })
 ]);
 
