@@ -34,13 +34,14 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
-import { SendEmailToRtd } from "./controllers/auth";
+import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
 import { RedisObjectStorage } from "./services/redis_object_storage";
+import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
@@ -60,7 +61,7 @@ const redisClient = createSimpleRedisClient(
   process.env.REDIS_PASSWORD!
 );
 
-const sessionStorage = RedisObjectStorage(
+const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
   redisClient,
   TOKEN_DURATION_IN_SECONDS,
   AppUser,
@@ -174,8 +175,16 @@ app.post(
   )
 );
 
-// app.post(
-//   `${API_BASE_PATH}/auth/login/:ipa_code`);
+app.post(
+  `${API_BASE_PATH}/auth/login/:ipa_code`,
+  Login(secretStorage, sessionStorage)
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/logout`,
+  bearerTokenAuth,
+  Logout(sessionStorage)
+);
 
 // tslint:disable-next-line: no-var-requires
 const packageJson = require("../package.json");

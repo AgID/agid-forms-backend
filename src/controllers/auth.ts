@@ -41,6 +41,7 @@ import {
 } from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
+import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";
@@ -200,6 +201,35 @@ export function Login(
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
     DecodeBodyMiddleware(LoginInfoT)
+  );
+  return wrapRequestHandler(withrequestMiddlewares(handler));
+}
+
+//////////////////////////////////////////////////////////
+
+type ILogout = (
+  user: AppUser
+) => Promise<IResponseErrorInternal | IResponseSuccessJson<null>>;
+
+export function LogoutHandler(
+  sessionStorage: IObjectStorage<AppUser, SessionToken>
+): ILogout {
+  return async user => {
+    // Delete user session
+    const errorOrSession = await sessionStorage.del(user.session_token);
+    if (isLeft(errorOrSession) || !errorOrSession.value) {
+      return ResponseErrorInternal("Cannot delete user session");
+    }
+    return ResponseSuccessJson(null);
+  };
+}
+
+export function Logout(
+  sessionStorage: IObjectStorage<AppUser, SessionToken>
+): express.RequestHandler {
+  const handler = LogoutHandler(sessionStorage);
+  const withrequestMiddlewares = withRequestMiddlewares(
+    UserFromRequestMiddleware()
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

@@ -11,9 +11,15 @@ export interface IObjectStorage<T, TK> {
   /**
    * Retrieves a value from the cache using the key.
    */
-  readonly get: (key: TK) => Promise<Either<Error, T>>;
+  readonly get: (
+    key: TK,
+    keyDerivationFn?: (k: TK) => string
+  ) => Promise<Either<Error, T>>;
   /**
    * Removes a value from the cache.
    */
-  readonly del: (key: TK) => Promise<Either<Error, boolean>>;
+  readonly del: (
+    key: TK,
+    keyDerivationFn?: (k: TK) => string
+  ) => Promise<Either<Error, boolean>>;
 }
