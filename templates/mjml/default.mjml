@@ -22,7 +22,7 @@
     <mj-section padding="32px 30px 32px" background-url="https://raw.githubusercontent.com/agid/agid-forms-backend/master/templates/images/bg-section.gif" background-repeat="repeat" background-size="100%">
       <mj-group>
         <mj-column padding-right="32px" padding-top="16px">
-          <mj-image width="48px" src="https://raw.githubusercontent.com/agid/agid-forms-backend/master/templates/images/agid-logo.svg" align="right" />
+          <mj-image width="48px" src="https://raw.githubusercontent.com/agid/agid-forms-backend/master/templates/images/agid-logo.gif" align="right" />
         </mj-column>
       </mj-group>
     </mj-section>
