@@ -22,6 +22,7 @@ import {
   JWT_SECRET,
   NODE_ENVIRONMENT,
   SERVER_PORT,
+  SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
 import JwtService from "./services/jwt";
@@ -31,12 +32,15 @@ import bearerTokenStrategy from "./strategies/bearer_token";
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
+import * as nodemailer from "nodemailer";
+import { SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
 import { AppUser } from "./types/user";
+import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
@@ -142,6 +146,18 @@ const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
 app.get(
   `${API_BASE_PATH}/get_ipa`,
   GetPublicAdministration(paGetRequestApi, ouGetRequestApi)
+);
+
+const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
+
+app.post(
+  `${API_BASE_PATH}/auth/email`,
+  SendEmailToRtd(
+    paGetRequestApi,
+    ouGetRequestApi,
+    nodedmailerTransporter,
+    generateCode
+  )
 );
 
 // tslint:disable-next-line: no-var-requires

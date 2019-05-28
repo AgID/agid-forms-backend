@@ -101,11 +101,13 @@ export function SearchPublicAdministrations(
 
 ///////////////////////////////////////////////
 
-const PublicAdministrationFromIpa = t.intersection([
+export const PublicAdministrationFromIpa = t.intersection([
   PaSearchResultT,
   OuGetResultT
 ]);
-type PublicAdministrationFromIpa = t.TypeOf<typeof PublicAdministrationFromIpa>;
+export type PublicAdministrationFromIpa = t.TypeOf<
+  typeof PublicAdministrationFromIpa
+>;
 
 type IGetPublicAdministrationFromIpa = (
   name: string

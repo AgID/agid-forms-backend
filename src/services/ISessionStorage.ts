@@ -10,15 +10,17 @@ export interface ISessionStorage {
   /**
    * Stores a value into the cache.
    */
-  set(user: AppUser): Promise<Either<Error, boolean>>;
+  readonly set: (user: AppUser) => Promise<Either<Error, boolean>>;
 
   /**
    * Retrieves a value from the cache using the session token.
    */
-  getBySessionToken(token: SessionToken): Promise<Either<Error, AppUser>>;
+  readonly getBySessionToken: (
+    token: SessionToken
+  ) => Promise<Either<Error, AppUser>>;
 
   /**
    * Removes a value from the cache.
    */
-  del(sessionToken: SessionToken): Promise<Either<Error, boolean>>;
+  readonly del: (sessionToken: SessionToken) => Promise<Either<Error, boolean>>;
 }

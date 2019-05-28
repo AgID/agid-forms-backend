@@ -19,8 +19,8 @@ npm-debug.log
 /.env
 
 # Exclude typescript generated javascript files.
-*.js
-*.js.map
+src/**/*.js
+src/**/*.js.map
 
 # Excluded auto-generated API types.
 /src/types/api/*.ts
