@@ -6,14 +6,18 @@ import * as express from "express";
 import { Either } from "fp-ts/lib/Either";
 import * as passport from "passport-http-bearer";
 import { IVerifyOptions } from "passport-http-bearer";
-import { ISessionStorage } from "../services/ISessionStorage";
+
+import { IObjectStorage } from "../services/object_storage";
 import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
+
 /**
  * Passthrough a bearer token for specified paths.
  */
-const bearerTokenStrategy = (sessionStorage: ISessionStorage) => {
+const bearerTokenStrategy = (
+  sessionStorage: IObjectStorage<AppUser, SessionToken>
+) => {
   const options = {
     passReqToCallback: true,
     realm: "Proxy API",
@@ -26,9 +30,9 @@ const bearerTokenStrategy = (sessionStorage: ISessionStorage) => {
     done: (error: any, user?: any, options?: IVerifyOptions | string) => void
   ) => {
     // req.route.path
-    sessionStorage.getBySessionToken(token as SessionToken).then(
+    sessionStorage.get(token as SessionToken).then(
       (errorOrUser: Either<Error, AppUser>) => {
-        log.debug("getBySessionToken %s", JSON.stringify(errorOrUser));
+        log.debug("bearerTokenStrategy.get: %s", JSON.stringify(errorOrUser));
         errorOrUser.fold(
           () => done(undefined, false),
           user => done(undefined, user)

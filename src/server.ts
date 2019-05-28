@@ -26,7 +26,7 @@ import {
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
 import JwtService from "./services/jwt";
-import RedisSessionStorage from "./services/redis_session_storage";
+import { RedisSessionStorage } from "./services/redis_session_storage";
 import bearerTokenStrategy from "./strategies/bearer_token";
 
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
@@ -58,7 +58,7 @@ const redisClient = createSimpleRedisClient(
   process.env.REDIS_PASSWORD!
 );
 
-const sessionStorage = new RedisSessionStorage(
+const sessionStorage = RedisSessionStorage(
   redisClient,
   TOKEN_DURATION_IN_SECONDS
 );
