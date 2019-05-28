@@ -155,13 +155,22 @@ app.get(
 
 const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
 
+const secretStorage = RedisObjectStorage(
+  redisClient,
+  TOKEN_DURATION_IN_SECONDS,
+  t.string,
+  value => value,
+  key => key
+);
+
 app.post(
   `${API_BASE_PATH}/auth/email`,
   SendEmailToRtd(
     paGetRequestApi,
     ouGetRequestApi,
     nodedmailerTransporter,
-    generateCode
+    generateCode,
+    secretStorage
   )
 );
 
