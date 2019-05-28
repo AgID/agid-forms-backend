@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/agid-forms-backend:0.0.9
+      - image: docker.io/gunzip/agid-forms-backend:0.1.0
         name: backend
         ports:
         - name: http-port
@@ -50,6 +50,22 @@ spec:
           value: "https://drupal.danilospinelli.com/jsonapi"
         - name: "ELASTICSEARCH_URL"
           value: "http://es:9200"
+        - name: "ORGANIZATION_NAME"
+          value: "AGID"
+        - name: "SERVICE_NAME"
+          value: "Agenzia per l'Italia Digitale"
+        - name: "AUTHMAIL_FROM"
+          value: "no-reply@agid.gov.it"
+        - name: "AUTHMAIL_REPLY_TO"
+          value: "no-reply@agid.gov.it"
+          # TODO: delete the following line
+        - name: "AUTHMAIL_TEST_ADDRESS"
+          value: "danilo.spinelli@agid.gov.it"
+        - name: "SMTP_CONNECTION_URL"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: smtp_connection_url
         - name: "JWT_SECRET"
           valueFrom:
             secretKeyRef:

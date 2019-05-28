@@ -13,6 +13,6 @@
     "sourceMap": true,
     "plugins": [{ "name": "tslint-language-service" }]
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "./templates/**/*.ts"],
   "exclude": ["node_modules"]
 }

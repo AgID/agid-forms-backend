@@ -64,3 +64,18 @@ export const JSONAPI_BASE_URL = process.env.JSONAPI_BASE_URL || "";
 
 export const ELASTICSEARCH_URL =
   process.env.ELASTICSEARCH_URL || "http://localhost:9200";
+
+export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
+
+export const SESSION_PREFIX = "SESSION-";
+
+/////////// Authentication email configuration
+
+export const SERVICE_NAME = process.env.SERVICE_NAME || "";
+export const ORGANIZATION_NAME = process.env.ORGANIZATION_NAME || "";
+
+export const AUTHMAIL_FROM = process.env.AUTHMAIL_FROM;
+export const AUTHMAIL_REPLY_TO = process.env.AUTHMAIL_REPLY_TO;
+export const AUTHMAIL_TEST_ADDRESS = process.env.AUTHMAIL_TEST_ADDRESS;
+
+export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;

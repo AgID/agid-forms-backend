@@ -22,21 +22,27 @@ import {
   JWT_SECRET,
   NODE_ENVIRONMENT,
   SERVER_PORT,
+  SESSION_PREFIX,
+  SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
 import JwtService from "./services/jwt";
-import RedisSessionStorage from "./services/redis_session_storage";
+
 import bearerTokenStrategy from "./strategies/bearer_token";
 
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
+import * as nodemailer from "nodemailer";
+import { SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
+import { RedisObjectStorage } from "./services/redis_object_storage";
 import { AppUser } from "./types/user";
+import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
@@ -54,9 +60,12 @@ const redisClient = createSimpleRedisClient(
   process.env.REDIS_PASSWORD!
 );
 
-const sessionStorage = new RedisSessionStorage(
+const sessionStorage = RedisObjectStorage(
   redisClient,
-  TOKEN_DURATION_IN_SECONDS
+  TOKEN_DURATION_IN_SECONDS,
+  AppUser,
+  user => `${SESSION_PREFIX}${user.session_token}`,
+  key => `${SESSION_PREFIX}${key}`
 );
 
 const bearerTokenAuth = passport.authenticate("bearer", { session: false });
@@ -142,6 +151,27 @@ const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
 app.get(
   `${API_BASE_PATH}/get_ipa`,
   GetPublicAdministration(paGetRequestApi, ouGetRequestApi)
+);
+
+const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
+
+const secretStorage = RedisObjectStorage(
+  redisClient,
+  TOKEN_DURATION_IN_SECONDS,
+  t.string,
+  value => value,
+  key => key
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/email`,
+  SendEmailToRtd(
+    paGetRequestApi,
+    ouGetRequestApi,
+    nodedmailerTransporter,
+    generateCode,
+    secretStorage
+  )
 );
 
 // tslint:disable-next-line: no-var-requires

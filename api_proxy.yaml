@@ -5,6 +5,7 @@ info:
   description: AGID forms.
 host: localhost
 basePath: /api/v1
+paths: {}
 schemes:
   - https
 security:
