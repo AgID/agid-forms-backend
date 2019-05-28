@@ -10,10 +10,12 @@ COPY /package.json /usr/src/app/package.json
 COPY /tsconfig.json /usr/src/app/tsconfig.json
 COPY /yarn.lock /usr/src/app/yarn.lock
 COPY /api_proxy.yaml /usr/src/app/api_proxy.yaml
+COPY /gulpfile.js /usr/src/app/gulpfile.js
 
 RUN sudo chmod -R 777 /usr/src/app \
   && yarn install \
-  && yarn generate:proxy-models \
+  && yarn generate:proxy:api-models \
+  && yarn generate:templates \
   && yarn build
 
 FROM node:8.11.3-alpine
