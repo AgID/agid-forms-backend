@@ -10,6 +10,7 @@ import {
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
@@ -27,6 +28,7 @@ import {
   PublicAdministrationFromIpa
 } from "./ipa";
 
+import { isLeft } from "fp-ts/lib/Either";
 import * as nodemailer from "nodemailer";
 import {
   AUTHMAIL_FROM,
@@ -36,8 +38,10 @@ import {
   ORGANIZATION_NAME,
   SERVICE_NAME
 } from "../config";
+import { IObjectStorage } from "../services/object_storage";
 import { withDefaultEmailTemplate } from "../templates/html/default";
 import { emailAuthCode } from "../templates/html/email/authcode";
+import { log } from "../utils/logger";
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -49,11 +53,15 @@ type ISendMailToRtd = (
   | IResponseSuccessJson<PublicAdministrationFromIpa>
 >;
 
+const generateKey = (secretCode: string, ipaCode: string) =>
+  `${secretCode}_${ipaCode}`;
+
 export function SendEmailToRtdHandler(
   paSearchRequest: TypeofApiCall<PaSearchRequestT>,
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   transporter: nodemailer.Transporter,
-  generateCode: () => string
+  generateCode: () => string,
+  redisSecretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
     // Call search API to retrieve PA info and RTD email address
@@ -61,23 +69,37 @@ export function SendEmailToRtdHandler(
       paSearchRequest,
       ouGetRequest
     )(ipaCode);
+
     if (paResponse.kind !== "IResponseSuccessJson") {
       return paResponse;
     }
 
     const paInfo = paResponse.value;
 
-    // exclude "da_indicare@x.it"
+    log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
+
+    // Filter out "da_indicare@x.it"
     if (DUMB_IPA_VALUE_FOR_NULL === paInfo.mail_resp) {
       return ResponseErrorNotFound("Not found", "RTD not set yet.");
     }
 
     const secretCode = generateCode();
 
-    // TODO: save (secret, ipa_code) (=user name) to redis (+expire)
+    // Save (ipa_code, secret) to storage
+    const key = generateKey(secretCode, ipaCode);
+    const errorOrStorageResult = await redisSecretStorage.set(
+      ipaCode,
+      () => key
+    );
 
-    const emailAuthCodeContent = emailAuthCode(secretCode);
+    log.debug("Storing secret: (%s) %s...", ipaCode, key.substr(6));
 
+    if (isLeft(errorOrStorageResult)) {
+      return ResponseErrorInternal("Cannot store secret");
+    }
+
+    // Get email content from template
+    const emailAuthCodeContent = emailAuthCode(secretCode, ipaCode);
     const emailAuthCodeHtml = withDefaultEmailTemplate(
       emailAuthCodeContent.title,
       ORGANIZATION_NAME,
@@ -85,16 +107,14 @@ export function SendEmailToRtdHandler(
       emailAuthCodeContent.html
     );
 
-    // send email with secret to RTD
+    // Send email with the secret to the RTD
     await transporter.sendMail({
-      // tslint:disable-next-line: no-duplicate-string
       from: AUTHMAIL_FROM,
-      to: AUTHMAIL_TEST_ADDRESS || paInfo.mail_resp,
-      // tslint:disable-next-line: object-literal-sort-keys
+      html: emailAuthCodeHtml,
       replyTo: AUTHMAIL_REPLY_TO,
       subject: emailAuthCodeContent.title,
       text: emailAuthCodeHtml,
-      html: emailAuthCodeHtml
+      to: AUTHMAIL_TEST_ADDRESS || paInfo.mail_resp
     });
 
     return ResponseSuccessJson(paInfo);
@@ -105,13 +125,15 @@ export function SendEmailToRtd(
   paSearchRequest: TypeofApiCall<PaSearchRequestT>,
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   transporter: nodemailer.Transporter,
-  generateCode: () => string
+  generateCode: () => string,
+  redisSecretStorage: IObjectStorage<string, string>
 ): express.RequestHandler {
   const handler = SendEmailToRtdHandler(
     paSearchRequest,
     ouGetRequest,
     transporter,
-    generateCode
+    generateCode,
+    redisSecretStorage
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredQueryParamMiddleware("code", t.string)

@@ -22,11 +22,12 @@ import {
   JWT_SECRET,
   NODE_ENVIRONMENT,
   SERVER_PORT,
+  SESSION_PREFIX,
   SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS
 } from "./config";
 import JwtService from "./services/jwt";
-import { RedisSessionStorage } from "./services/redis_session_storage";
+
 import bearerTokenStrategy from "./strategies/bearer_token";
 
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
@@ -39,6 +40,7 @@ import {
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
+import { RedisObjectStorage } from "./services/redis_object_storage";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
@@ -58,9 +60,12 @@ const redisClient = createSimpleRedisClient(
   process.env.REDIS_PASSWORD!
 );
 
-const sessionStorage = RedisSessionStorage(
+const sessionStorage = RedisObjectStorage(
   redisClient,
-  TOKEN_DURATION_IN_SECONDS
+  TOKEN_DURATION_IN_SECONDS,
+  AppUser,
+  user => `${SESSION_PREFIX}${user.session_token}`,
+  key => `${SESSION_PREFIX}${key}`
 );
 
 const bearerTokenAuth = passport.authenticate("bearer", { session: false });
