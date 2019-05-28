@@ -35,10 +35,14 @@ const loadObjectByKey = <T, TK>(
       return tryCatch2v(
         () => JSON.parse(value),
         e =>
-          new Error(
-            `Unable to parse the object json ${
-              e instanceof Error ? e.message : ""
-            }`
+          resolve(
+            left(
+              new Error(
+                `Unable to parse the object json ${
+                  e instanceof Error ? e.message : ""
+                }`
+              )
+            )
           )
       ).map(objectPayload => {
         type.decode(objectPayload).fold(
