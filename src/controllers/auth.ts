@@ -4,6 +4,7 @@
  */
 
 import * as express from "express";
+import * as htmlToText from "html-to-text";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -21,7 +22,7 @@ import * as t from "io-ts";
 
 import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
-import { IpaSearchClient } from "../clients/search";
+import { IpaSearchClient } from "../clients/ipa_search";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
 import {
@@ -117,7 +118,7 @@ export function SendEmailToRtdHandler(
       html: emailAuthCodeHtml,
       replyTo: AUTHMAIL_REPLY_TO,
       subject: emailAuthCodeContent.title,
-      text: emailAuthCodeHtml,
+      text: htmlToText.fromString(emailAuthCodeHtml),
       to: AUTHMAIL_TEST_ADDRESS || paInfo.mail_resp
     });
 
