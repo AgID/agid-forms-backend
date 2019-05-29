@@ -21,9 +21,9 @@ import * as t from "io-ts";
 
 import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
+import { IpaSearchClient } from "../clients/search";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
-import { OuGetRequestT, PaSearchRequestT } from "../utils/search";
 import {
   GetPublicAdministrationHandler,
   PublicAdministrationFromIpa
@@ -68,18 +68,16 @@ const generateKey = (secretCode: string, ipaCode: string) =>
   `${secretCode}_${ipaCode}`;
 
 export function SendEmailToRtdHandler(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>,
+  ipaSearchClient: ReturnType<IpaSearchClient>,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
   secretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
     // Call search API to retrieve PA info and RTD email address
-    const paResponse = await GetPublicAdministrationHandler(
-      paSearchRequest,
-      ouGetRequest
-    )(ipaCode);
+    const paResponse = await GetPublicAdministrationHandler(ipaSearchClient)(
+      ipaCode
+    );
     if (paResponse.kind !== "IResponseSuccessJson") {
       return paResponse;
     }
@@ -128,15 +126,13 @@ export function SendEmailToRtdHandler(
 }
 
 export function SendEmailToRtd(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>,
+  ipaSearchClient: ReturnType<IpaSearchClient>,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
   secretStorage: IObjectStorage<string, string>
 ): express.RequestHandler {
   const handler = SendEmailToRtdHandler(
-    paSearchRequest,
-    ouGetRequest,
+    ipaSearchClient,
     transporter,
     generateCode,
     secretStorage
@@ -167,8 +163,7 @@ type ILogin = (
 >;
 
 export function LoginHandler(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>,
+  ipaSearchClient: ReturnType<IpaSearchClient>,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
@@ -185,10 +180,9 @@ export function LoginHandler(
     const token = errorOrToken.value;
 
     // Call search API to retrieve RTD email address from IPA
-    const paResponse = await GetPublicAdministrationHandler(
-      paSearchRequest,
-      ouGetRequest
-    )(ipaCode);
+    const paResponse = await GetPublicAdministrationHandler(ipaSearchClient)(
+      ipaCode
+    );
     if (paResponse.kind !== "IResponseSuccessJson") {
       return paResponse;
     }
@@ -236,16 +230,14 @@ export function LoginHandler(
 }
 
 export function Login(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>,
+  ipaSearchClient: ReturnType<IpaSearchClient>,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
   webhookJwtService: ReturnType<WebhookJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
-    paSearchRequest,
-    ouGetRequest,
+    ipaSearchClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,

@@ -1,10 +1,14 @@
 /**
  */
 import * as t from "io-ts";
+import nodeFetch from "node-fetch";
+
 import {
   basicResponseDecoder,
   BasicResponseType,
-  IGetApiRequestType
+  createFetchRequestForApi,
+  IGetApiRequestType,
+  TypeofApiCall
 } from "italia-ts-commons/lib/requests";
 
 /////////////////////////////////////////////////////////////
@@ -19,7 +23,7 @@ export const PaSearchResultT = t.interface({
   des_amm: t.string
 });
 
-const PaSearchResultsT = t.interface({
+export const PaSearchResultsT = t.interface({
   hits: t.interface({
     hits: t.readonlyArray(
       t.interface({
@@ -28,9 +32,9 @@ const PaSearchResultsT = t.interface({
     )
   })
 });
-type PaSearchResultsT = t.TypeOf<typeof PaSearchResultsT>;
+export type PaSearchResultsT = t.TypeOf<typeof PaSearchResultsT>;
 
-export type PaSearchRequestT = IGetApiRequestType<
+type PaSearchRequestT = IGetApiRequestType<
   {
     readonly paNameOrIpaCode: string;
   },
@@ -42,7 +46,7 @@ export type PaSearchRequestT = IGetApiRequestType<
 /**
  * Get every PA that matches the search parameter.
  */
-export const paSearchRequest: PaSearchRequestT = {
+const paSearchRequest: PaSearchRequestT = {
   headers: () => ({
     "Content-Type": "application/json"
   }),
@@ -60,7 +64,7 @@ export const paSearchRequest: PaSearchRequestT = {
 /**
  * Get exactly one PA using its IPA code
  */
-export const paGetRequest: PaSearchRequestT = {
+const paGetRequest: PaSearchRequestT = {
   ...paSearchRequest,
   query: params => ({
     _source: `${Object.keys(PaSearchResultT.props).join(",")}`,
@@ -78,7 +82,7 @@ export const OuGetResultT = t.interface({
   nome_resp: t.string
 });
 
-const OuGetResultsT = t.interface({
+export const OuGetResultsT = t.interface({
   hits: t.interface({
     hits: t.readonlyArray(
       t.interface({
@@ -87,9 +91,9 @@ const OuGetResultsT = t.interface({
     )
   })
 });
-type OuGetResultsT = t.TypeOf<typeof OuGetResultsT>;
+export type OuGetResultsT = t.TypeOf<typeof OuGetResultsT>;
 
-export type OuGetRequestT = IGetApiRequestType<
+type OuGetRequestT = IGetApiRequestType<
   {
     readonly ipaCode: string;
   },
@@ -103,7 +107,7 @@ const OU_UFFICIO_TRANSIZIONE_DIGITALE = "Ufficio_Transizione_Digitale";
 /**
  * Get name, surname and email of the Digital Transformation Responsible.
  */
-export const ouGetRequest: OuGetRequestT = {
+const ouGetRequest: OuGetRequestT = {
   headers: () => ({
     "Content-Type": "application/json"
   }),
@@ -117,3 +121,27 @@ export const ouGetRequest: OuGetRequestT = {
   response_decoder: basicResponseDecoder(OuGetResultsT),
   url: () => `${OU_INDEX_NAME}/_search`
 };
+
+/////////////////////////////////////////////////////////////
+
+export function IpaSearchClient(
+  baseUrl?: string,
+  // tslint:disable-next-line:no-any
+  fetchApi: typeof fetch = (nodeFetch as any) as typeof fetch
+): {
+  ouGetRequest: TypeofApiCall<OuGetRequestT>;
+  paGetRequest: TypeofApiCall<PaSearchRequestT>;
+  paSearchRequest: TypeofApiCall<PaSearchRequestT>;
+} {
+  const opts = {
+    baseUrl,
+    fetchApi
+  };
+  return {
+    ouGetRequest: createFetchRequestForApi(ouGetRequest, opts),
+    paGetRequest: createFetchRequestForApi(paGetRequest, opts),
+    paSearchRequest: createFetchRequestForApi(paSearchRequest, opts)
+  };
+}
+
+export type IpaSearchClient = typeof IpaSearchClient;

@@ -38,6 +38,7 @@ import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
 import { JsonapiClient } from "./clients/jsonapi";
+import { IpaSearchClient } from "./clients/search";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
@@ -51,7 +52,6 @@ import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
-import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
 import { userWebhook } from "./utils/webhooks";
 
 const port = SERVER_PORT;
@@ -136,30 +136,14 @@ app.get(
   }
 );
 
-const paSearchRequestApi = createFetchRequestForApi(paSearchRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  fetchApi
-});
-
-const paGetRequestApi = createFetchRequestForApi(paGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  fetchApi
-});
-
-const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  fetchApi
-});
+const ipaSearchClient = IpaSearchClient(ELASTICSEARCH_URL, fetchApi);
 
 app.get(
   `${API_BASE_PATH}/search_ipa`,
-  SearchPublicAdministrations(paSearchRequestApi)
+  SearchPublicAdministrations(ipaSearchClient)
 );
 
-app.get(
-  `${API_BASE_PATH}/get_ipa`,
-  GetPublicAdministration(paGetRequestApi, ouGetRequestApi)
-);
+app.get(`${API_BASE_PATH}/get_ipa`, GetPublicAdministration(ipaSearchClient));
 
 const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
 
@@ -174,8 +158,7 @@ const secretStorage = RedisObjectStorage(
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
   SendEmailToRtd(
-    paGetRequestApi,
-    ouGetRequestApi,
+    ipaSearchClient,
     nodedmailerTransporter,
     generateCode,
     secretStorage
@@ -190,8 +173,7 @@ const userWebhookRequest = createFetchRequestForApi(userWebhook, {
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
   Login(
-    paGetRequestApi,
-    ouGetRequestApi,
+    ipaSearchClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,
