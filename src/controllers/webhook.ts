@@ -1,5 +1,4 @@
 import * as express from "express";
-import * as t from "io-ts";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -16,7 +15,7 @@ import { DrupalJwtService } from "../services/jwt";
 
 import { isEmpty } from "fp-ts/lib/Array";
 import { isLeft } from "fp-ts/lib/Either";
-import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import {
   withRequestMiddlewares,
@@ -24,17 +23,12 @@ import {
 } from "../middlewares/request_middleware";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 
+import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 import { UserMetadataT } from "../utils/webhooks";
 
-const JwtUser = t.interface({
-  email: EmailString,
-  name: t.string
-});
-type JwtUser = t.TypeOf<typeof JwtUser>;
-
 type AuthWebhookT = (
-  user: JwtUser
+  user: AppUser
 ) => Promise<
   // tslint:disable-next-line: max-union-size
   | IResponseErrorInternal
@@ -143,7 +137,7 @@ export function AuthWebhook(
     defaultRoleId
   );
   const withrequestMiddlewares = withRequestMiddlewares(
-    UserFromRequestMiddleware(JwtUser)
+    UserFromRequestMiddleware(AppUser)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

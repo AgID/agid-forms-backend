@@ -1,6 +1,6 @@
 {
   "name": "agid-forms-backend",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
