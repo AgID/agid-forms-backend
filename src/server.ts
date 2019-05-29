@@ -15,6 +15,7 @@ import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
 
 import {
+  ADMIN_UID,
   API_BASE_PATH,
   ELASTICSEARCH_URL,
   JSONAPI_BASE_URL,
@@ -24,9 +25,12 @@ import {
   SERVER_PORT,
   SESSION_PREFIX,
   SMTP_CONNECTION_URL,
-  TOKEN_DURATION_IN_SECONDS
+  TOKEN_DURATION_IN_SECONDS,
+  USER_ROLE_ID,
+  WEBHOOK_USER_LOGIN_BASE_URL,
+  WEBHOOK_USER_LOGIN_PATH
 } from "./config";
-import JwtService from "./services/jwt";
+import { JwtService } from "./services/jwt";
 
 import bearerTokenStrategy from "./strategies/bearer_token";
 
@@ -34,12 +38,14 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
+import { JsonapiClient } from "./clients/jsonapi";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
+import { AuthWebhook } from "./controllers/webhook";
 import { RedisObjectStorage } from "./services/redis_object_storage";
 import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
@@ -47,9 +53,13 @@ import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
+import { userWebhook } from "./utils/webhooks";
 
 const port = SERVER_PORT;
 const env = NODE_ENVIRONMENT;
+
+// tslint:disable-next-line: no-any
+const fetchApi = (nodeFetch as any) as typeof fetch;
 
 //
 // Create Redis session storage
@@ -74,7 +84,7 @@ const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 //
 //  Configure controllers and services
 //
-const jwtService = new JwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const jwtService = JwtService(JWT_SECRET, JWT_EXPIRES_IN);
 
 // Setup Passport.
 
@@ -115,9 +125,6 @@ app.use(express.static("public"));
 // Initializes Passport for incoming requests.
 app.use(passport.initialize());
 
-// Setup routing.
-app.get("/login", (_, res) => res.json({ TODO: "TODO" }));
-
 app.get(
   `${API_BASE_PATH}/profile`,
   bearerTokenAuth,
@@ -128,26 +135,23 @@ app.get(
 
 const paSearchRequestApi = createFetchRequestForApi(paSearchRequest, {
   baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
+  fetchApi
+});
+
+const paGetRequestApi = createFetchRequestForApi(paGetRequest, {
+  baseUrl: ELASTICSEARCH_URL,
+  fetchApi
+});
+
+const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
+  baseUrl: ELASTICSEARCH_URL,
+  fetchApi
 });
 
 app.get(
   `${API_BASE_PATH}/search_ipa`,
   SearchPublicAdministrations(paSearchRequestApi)
 );
-
-const paGetRequestApi = createFetchRequestForApi(paGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
-});
-
-const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
-});
 
 app.get(
   `${API_BASE_PATH}/get_ipa`,
@@ -175,15 +179,35 @@ app.post(
   )
 );
 
+const userWebhookRequest = createFetchRequestForApi(userWebhook, {
+  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
+  fetchApi
+});
+
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
-  Login(secretStorage, sessionStorage)
+  Login(
+    paGetRequestApi,
+    ouGetRequestApi,
+    secretStorage,
+    sessionStorage,
+    WEBHOOK_USER_LOGIN_PATH,
+    userWebhookRequest
+  )
 );
 
 app.post(
   `${API_BASE_PATH}/auth/logout`,
   bearerTokenAuth,
   Logout(sessionStorage)
+);
+
+const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
+
+// Webhook
+app.post(
+  WEBHOOK_USER_LOGIN_PATH,
+  AuthWebhook(jwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
 );
 
 // tslint:disable-next-line: no-var-requires

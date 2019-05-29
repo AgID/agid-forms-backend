@@ -30,6 +30,7 @@ import {
 } from "./ipa";
 
 import { isLeft } from "fp-ts/lib/Either";
+import { EmailString } from "italia-ts-commons/lib/strings";
 import * as nodemailer from "nodemailer";
 import {
   AUTHMAIL_FROM,
@@ -49,6 +50,7 @@ import { emailAuthCode } from "../templates/html/email/authcode";
 import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
+import { UserWebhookT } from "../utils/webhooks";
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -76,11 +78,9 @@ export function SendEmailToRtdHandler(
       paSearchRequest,
       ouGetRequest
     )(ipaCode);
-
     if (paResponse.kind !== "IResponseSuccessJson") {
       return paResponse;
     }
-
     const paInfo = paResponse.value;
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
@@ -156,16 +156,24 @@ type ILogin = (
   ipaCode: string,
   creds: LoginInfoT
 ) => Promise<
+  // tslint:disable-next-line: max-union-size
   | IResponseErrorInternal
+  | IResponseErrorValidation
+  | IResponseErrorNotFound
   | IResponseErrorForbiddenNotAuthorized
   | IResponseSuccessJson<{ token: SessionToken }>
 >;
 
 export function LoginHandler(
+  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
+  ouGetRequest: TypeofApiCall<OuGetRequestT>,
   secretStorage: IObjectStorage<string, string>,
-  sessionStorage: IObjectStorage<AppUser, SessionToken>
+  sessionStorage: IObjectStorage<AppUser, SessionToken>,
+  webhookPath: string,
+  userWebhookRequest: TypeofApiCall<UserWebhookT>
 ): ILogin {
   return async (ipaCode, creds) => {
+    // Check if secret (user's credentials) is valid
     const errorOrToken = await secretStorage.get(
       generateKey(creds.secret, ipaCode)
     );
@@ -174,30 +182,72 @@ export function LoginHandler(
     }
     const token = errorOrToken.value;
 
+    // Call search API to retrieve RTD email address from IPA
+    const paResponse = await GetPublicAdministrationHandler(
+      paSearchRequest,
+      ouGetRequest
+    )(ipaCode);
+    if (paResponse.kind !== "IResponseSuccessJson") {
+      return paResponse;
+    }
+    const paInfo = paResponse.value;
+
+    log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
+
+    // Make user object
+    const user: AppUser = {
+      created_at: new Date().getTime(),
+      email: paResponse.value.mail_resp as EmailString,
+      name: ipaCode,
+      session_token: token as SessionToken
+    };
+
+    // Call webhook and retrieve metadata
+    const errorOrWebhookResponse = await userWebhookRequest({
+      user,
+      webhookPath
+    });
+    if (
+      isLeft(errorOrWebhookResponse) ||
+      errorOrWebhookResponse.value.status !== 200
+    ) {
+      log.error(
+        "Error calling webhook: %s",
+        JSON.stringify(errorOrWebhookResponse.value)
+      );
+      return ResponseErrorInternal("Error calling webhook.");
+    }
+    const webhookResponse = errorOrWebhookResponse.value;
+
     // Create user session for bearer authentication
     const errorOrSession = await sessionStorage.set(
-      {
-        created_at: new Date().getTime(),
-        name: ipaCode,
-        session_token: token as SessionToken
-      },
+      { ...user, metadata: webhookResponse.value },
       () => token
     );
     if (isLeft(errorOrSession) || !errorOrSession) {
       return ResponseErrorInternal("Cannot store user info");
     }
 
-    // TODO: call to webhook
-
     return ResponseSuccessJson({ token: token as SessionToken });
   };
 }
 
 export function Login(
+  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
+  ouGetRequest: TypeofApiCall<OuGetRequestT>,
   secretStorage: IObjectStorage<string, string>,
-  sessionStorage: IObjectStorage<AppUser, SessionToken>
+  sessionStorage: IObjectStorage<AppUser, SessionToken>,
+  webhookPath: string,
+  userWebhookRequest: TypeofApiCall<UserWebhookT>
 ): express.RequestHandler {
-  const handler = LoginHandler(secretStorage, sessionStorage);
+  const handler = LoginHandler(
+    paSearchRequest,
+    ouGetRequest,
+    secretStorage,
+    sessionStorage,
+    webhookPath,
+    userWebhookRequest
+  );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
     DecodeBodyMiddleware(LoginInfoT)

@@ -4,27 +4,23 @@
 
 import { sign } from "jsonwebtoken";
 
-export default class JwtService {
-  constructor(
-    private readonly secret: string,
-    private readonly expiresIn: string
-  ) {}
-
+export const JwtService = (secret: string, expiresIn: string) => ({
   /**
-   * Generates a new JWT for uid.
+   * Generates a new JWT for a Drupal user's uid.
    */
-  public getJwtForUid(uid: number): string {
+  getJwtForUid: (uid: number): string => {
     return sign(
       {
         drupal: {
           uid
         }
       },
-      Buffer.from(this.secret, "base64"),
-      // secret,
+      Buffer.from(secret, "base64"),
       {
-        expiresIn: this.expiresIn
+        expiresIn
       }
     );
   }
-}
+});
+
+export type JwtService = typeof JwtService;

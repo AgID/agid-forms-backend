@@ -12,18 +12,14 @@ import {
   TypeofApiCall
 } from "italia-ts-commons/lib/requests";
 
-import {
-  EmailString,
-  FiscalCode,
-  NonEmptyString
-} from "italia-ts-commons/lib/strings";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import nodeFetch from "node-fetch";
 
 const CreateUserRequestT = t.interface({
   data: t.interface({
     attributes: t.interface({
       mail: EmailString,
-      name: FiscalCode,
+      name: t.string,
       status: t.boolean
     }),
     relationships: t.interface({
@@ -61,7 +57,7 @@ type CreateUserResponseT = t.TypeOf<typeof CreateUserResponseT>;
 
 type GetUserT = IGetApiRequestType<
   {
-    readonly username: FiscalCode;
+    readonly username: string;
     readonly jwt: string;
   },
   never,
