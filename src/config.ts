@@ -59,6 +59,7 @@ export const DEFAULT_USER_ROLE_ID = "";
 export const USER_ROLE_ID = process.env.USER_ROLE_ID || DEFAULT_USER_ROLE_ID;
 
 export const JWT_SECRET = process.env.JWT_SECRET || "";
+export const WEBHOOK_JWT_SECRET = process.env.WEBHOOK_JWT_SECRET || "";
 
 export const JSONAPI_BASE_URL = process.env.JSONAPI_BASE_URL || "";
 

@@ -17,8 +17,6 @@ import {
 
 import * as t from "io-ts";
 
-import { TypeofApiCall } from "italia-ts-commons/lib/requests";
-
 import { isLeft } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
@@ -27,11 +25,10 @@ import { wrapRequestHandler } from "../middlewares/request_middleware";
 import { RequiredQueryParamMiddleware } from "../middlewares/required_query_param";
 
 import {
-  OuGetRequestT,
+  IpaSearchClient,
   OuGetResultT,
-  PaSearchRequestT,
   PaSearchResultT
-} from "../utils/search";
+} from "../clients/search";
 
 ///////////////////////////////////////////////
 
@@ -52,10 +49,10 @@ type ISearchPublicAdministrationFromIpa = (
 >;
 
 export function SearchPublicAdministrationsHandler(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>
+  ipaSearchClient: ReturnType<IpaSearchClient>
 ): ISearchPublicAdministrationFromIpa {
   return async (paNameOrIpaCode: string) => {
-    const errorOrPaSearchResponse = await paSearchRequest({
+    const errorOrPaSearchResponse = await ipaSearchClient.paSearchRequest({
       paNameOrIpaCode
     });
     if (isLeft(errorOrPaSearchResponse)) {
@@ -90,9 +87,9 @@ export function SearchPublicAdministrationsHandler(
 }
 
 export function SearchPublicAdministrations(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>
+  ipaSearchClient: ReturnType<IpaSearchClient>
 ): express.RequestHandler {
-  const handler = SearchPublicAdministrationsHandler(paSearchRequest);
+  const handler = SearchPublicAdministrationsHandler(ipaSearchClient);
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredQueryParamMiddleware("name", t.string)
   );
@@ -120,11 +117,10 @@ type IGetPublicAdministrationFromIpa = (
 >;
 
 export function GetPublicAdministrationHandler(
-  paGetRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>
+  ipaSearchClient: ReturnType<IpaSearchClient>
 ): IGetPublicAdministrationFromIpa {
   return async (ipaCode: string) => {
-    const errorOrPaGetResponse = await paGetRequest({
+    const errorOrPaGetResponse = await ipaSearchClient.paGetRequest({
       paNameOrIpaCode: ipaCode
     });
     if (isLeft(errorOrPaGetResponse)) {
@@ -148,7 +144,7 @@ export function GetPublicAdministrationHandler(
 
     // Get RTD data
 
-    const errorOrOuGetResponse = await ouGetRequest({
+    const errorOrOuGetResponse = await ipaSearchClient.ouGetRequest({
       ipaCode
     });
 
@@ -173,10 +169,9 @@ export function GetPublicAdministrationHandler(
 }
 
 export function GetPublicAdministration(
-  paSearchRequest: TypeofApiCall<PaSearchRequestT>,
-  ouGetRequest: TypeofApiCall<OuGetRequestT>
+  ipaSearchClient: ReturnType<IpaSearchClient>
 ): express.RequestHandler {
-  const handler = GetPublicAdministrationHandler(paSearchRequest, ouGetRequest);
+  const handler = GetPublicAdministrationHandler(ipaSearchClient);
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredQueryParamMiddleware("code", t.string)
   );

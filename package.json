@@ -1,6 +1,6 @@
 {
   "name": "agid-forms-backend",
-  "version": "0.1.0",
+  "version": "0.2.7",
   "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
@@ -34,6 +34,7 @@
   },
   "homepage": "https://github.com/AGID/agid-forms-backend#readme",
   "dependencies": {
+    "@types/passport-jwt": "^3.0.1",
     "@types/randomstring": "^1.1.6",
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
@@ -54,6 +55,7 @@
     "passport": "^0.4.0",
     "passport-auth-token": "^1.0.1",
     "passport-http-bearer": "^1.0.1",
+    "passport-jwt": "^4.0.0",
     "passport-strategy": "^1.0.0",
     "patch-package": "^5.1.1",
     "randomstring": "^1.1.5",

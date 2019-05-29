@@ -4,23 +4,23 @@ import {
   BasicResponseType,
   IPostApiRequestType
 } from "italia-ts-commons/lib/requests";
-import { AppUser } from "../types/user";
 
 export type UserMetadataT = Record<string, string>;
 
 export type UserWebhookT = IPostApiRequestType<
   {
-    readonly user: AppUser;
     readonly webhookPath: string;
+    readonly jwt: string;
   },
-  never,
+  "Authorization" | "Content-Type",
   never,
   BasicResponseType<UserMetadataT>
 >;
 
 export const userWebhook: UserWebhookT = {
-  body: params => JSON.stringify(params.user),
-  headers: () => ({
+  body: params => JSON.stringify({ jwt: params.jwt }),
+  headers: params => ({
+    Authorization: `Bearer ${params.jwt}`,
     "Content-Type": "application/json"
   }),
   method: "post",

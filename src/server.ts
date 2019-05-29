@@ -7,26 +7,29 @@ import * as t from "io-ts";
 import * as morgan from "morgan";
 import * as passport from "passport";
 
-import expressEnforcesSsl = require("express-enforces-ssl");
 import proxy = require("express-http-proxy");
 
 import { isLeft } from "fp-ts/lib/Either";
-import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
+import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 
 import {
+  ADMIN_UID,
   API_BASE_PATH,
   ELASTICSEARCH_URL,
   JSONAPI_BASE_URL,
   JWT_EXPIRES_IN,
   JWT_SECRET,
-  NODE_ENVIRONMENT,
   SERVER_PORT,
   SESSION_PREFIX,
   SMTP_CONNECTION_URL,
-  TOKEN_DURATION_IN_SECONDS
+  TOKEN_DURATION_IN_SECONDS,
+  USER_ROLE_ID,
+  WEBHOOK_JWT_SECRET,
+  WEBHOOK_USER_LOGIN_BASE_URL,
+  WEBHOOK_USER_LOGIN_PATH
 } from "./config";
-import JwtService from "./services/jwt";
+import { DrupalJwtService, WebhookJwtService } from "./services/jwt";
 
 import bearerTokenStrategy from "./strategies/bearer_token";
 
@@ -34,21 +37,27 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
-import { SendEmailToRtd } from "./controllers/auth";
+import { JsonapiClient } from "./clients/jsonapi";
+import { IpaSearchClient } from "./clients/search";
+import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
   SearchPublicAdministrations
 } from "./controllers/ipa";
 import { getProfile } from "./controllers/profile";
+import { AuthWebhook } from "./controllers/webhook";
 import { RedisObjectStorage } from "./services/redis_object_storage";
+import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
-import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
+import { userWebhook } from "./utils/webhooks";
 
 const port = SERVER_PORT;
-const env = NODE_ENVIRONMENT;
+
+// tslint:disable-next-line: no-any
+const fetchApi = (nodeFetch as any) as typeof fetch;
 
 //
 // Create Redis session storage
@@ -60,7 +69,7 @@ const redisClient = createSimpleRedisClient(
   process.env.REDIS_PASSWORD!
 );
 
-const sessionStorage = RedisObjectStorage(
+const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
   redisClient,
   TOKEN_DURATION_IN_SECONDS,
   AppUser,
@@ -73,22 +82,27 @@ const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 //
 //  Configure controllers and services
 //
-const jwtService = new JwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const drupalJwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
 
 // Setup Passport.
 
 // Add the strategy to authenticate proxy clients.
 passport.use(bearerTokenStrategy(sessionStorage));
 
+// Used to call webhook
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: Buffer.from(WEBHOOK_JWT_SECRET, "base64")
+    },
+    (jwtPayload, done) => done(null, jwtPayload)
+  )
+);
+
 // Create and setup the Express app.
 const app = express();
-
-// Redirect unsecure connections.
-if (env === NodeEnvironmentEnum.DEVELOPMENT) {
-  // Trust proxy uses proxy X-Forwarded-Proto for ssl.
-  app.enable("trust proxy");
-  app.use(/\/((?!ping).)*/, expressEnforcesSsl());
-}
 
 // Add security to http headers.
 app.use(helmet());
@@ -114,9 +128,6 @@ app.use(express.static("public"));
 // Initializes Passport for incoming requests.
 app.use(passport.initialize());
 
-// Setup routing.
-app.get("/login", (_, res) => res.json({ TODO: "TODO" }));
-
 app.get(
   `${API_BASE_PATH}/profile`,
   bearerTokenAuth,
@@ -125,33 +136,14 @@ app.get(
   }
 );
 
-const paSearchRequestApi = createFetchRequestForApi(paSearchRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
-});
+const ipaSearchClient = IpaSearchClient(ELASTICSEARCH_URL, fetchApi);
 
 app.get(
   `${API_BASE_PATH}/search_ipa`,
-  SearchPublicAdministrations(paSearchRequestApi)
+  SearchPublicAdministrations(ipaSearchClient)
 );
 
-const paGetRequestApi = createFetchRequestForApi(paGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
-});
-
-const ouGetRequestApi = createFetchRequestForApi(ouGetRequest, {
-  baseUrl: ELASTICSEARCH_URL,
-  // tslint:disable-next-line: no-any
-  fetchApi: (nodeFetch as any) as typeof fetch
-});
-
-app.get(
-  `${API_BASE_PATH}/get_ipa`,
-  GetPublicAdministration(paGetRequestApi, ouGetRequestApi)
-);
+app.get(`${API_BASE_PATH}/get_ipa`, GetPublicAdministration(ipaSearchClient));
 
 const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
 
@@ -164,14 +156,44 @@ const secretStorage = RedisObjectStorage(
 );
 
 app.post(
-  `${API_BASE_PATH}/auth/email`,
+  `${API_BASE_PATH}/auth/email/:ipa_code`,
   SendEmailToRtd(
-    paGetRequestApi,
-    ouGetRequestApi,
+    ipaSearchClient,
     nodedmailerTransporter,
     generateCode,
     secretStorage
   )
+);
+
+const userWebhookRequest = createFetchRequestForApi(userWebhook, {
+  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
+  fetchApi
+});
+
+app.post(
+  `${API_BASE_PATH}/auth/login/:ipa_code`,
+  Login(
+    ipaSearchClient,
+    secretStorage,
+    sessionStorage,
+    userWebhookRequest,
+    webhookJwtService
+  )
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/logout`,
+  bearerTokenAuth,
+  Logout(sessionStorage)
+);
+
+const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
+
+// Webhook
+app.post(
+  WEBHOOK_USER_LOGIN_PATH,
+  passport.authenticate("jwt", { session: false }),
+  AuthWebhook(drupalJwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
 );
 
 // tslint:disable-next-line: no-var-requires
@@ -202,10 +224,12 @@ app.use(
       if (!user.metadata || !user.metadata.uid) {
         return proxyReqOpts;
       }
-      const jwt = jwtService.getJwtForUid(parseInt(user.metadata.uid, 10));
+      const jwt = drupalJwtService.getJwtForUid(
+        parseInt(user.metadata.uid, 10)
+      );
       return {
         ...proxyReqOpts,
-        headers: { ...proxyReqOpts.headers, Authorization: "Bearer " + jwt }
+        headers: { ...proxyReqOpts.headers, Authorization: `Bearer ${jwt}` }
       };
     }
   })

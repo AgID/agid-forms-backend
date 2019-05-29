@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/agid-forms-backend:0.1.0
+      - image: docker.io/gunzip/agid-forms-backend:0.2.7
         name: backend
         ports:
         - name: http-port
@@ -66,6 +66,11 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: smtp_connection_url
+        - name: "WEBHOOK_JWT_SECRET"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: webhook_jwt_secret
         - name: "JWT_SECRET"
           valueFrom:
             secretKeyRef:
