@@ -140,7 +140,7 @@ export function SendEmailToRtd(
     secretStorage
   );
   const withrequestMiddlewares = withRequestMiddlewares(
-    RequiredParamMiddleware("code", t.string)
+    RequiredParamMiddleware("ipa_code", t.string)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }
@@ -158,7 +158,7 @@ type ILogin = (
 ) => Promise<
   | IResponseErrorInternal
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseSuccessJson<SessionToken>
+  | IResponseSuccessJson<{ token: SessionToken }>
 >;
 
 export function LoginHandler(
@@ -189,7 +189,7 @@ export function LoginHandler(
 
     // TODO: call to webhook
 
-    return ResponseSuccessJson(token as SessionToken);
+    return ResponseSuccessJson({ token: token as SessionToken });
   };
 }
 
