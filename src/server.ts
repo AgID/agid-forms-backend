@@ -37,8 +37,8 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
-import { JsonapiClient } from "./clients/jsonapi";
 import { IpaSearchClient } from "./clients/ipa_search";
+import { JsonapiClient } from "./clients/jsonapi";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,
@@ -53,8 +53,6 @@ import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { userWebhook } from "./utils/webhooks";
-
-const port = SERVER_PORT;
 
 // tslint:disable-next-line: no-any
 const fetchApi = (nodeFetch as any) as typeof fetch;
@@ -77,18 +75,16 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
   key => `${SESSION_PREFIX}${key}`
 );
 
+//
+// Setup Passport
+//
+
 const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 
-//
-//  Configure controllers and services
-//
-const drupalJwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
-const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
-
-// Setup Passport.
-
-// Add the strategy to authenticate proxy clients.
+// Used to authenticate frontend api calls
 passport.use(bearerTokenStrategy(sessionStorage));
+
+const jwtTokenAuth = passport.authenticate("jwt", { session: false });
 
 // Used to call webhook
 passport.use(
@@ -100,6 +96,35 @@ passport.use(
     (jwtPayload, done) => done(null, jwtPayload)
   )
 );
+
+//
+// Setup dependecies for controllers
+//
+const drupalJwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+
+const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
+
+const ipaSearchClient = IpaSearchClient(ELASTICSEARCH_URL, fetchApi);
+
+const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
+
+const userWebhookRequest = createFetchRequestForApi(userWebhook, {
+  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
+  fetchApi
+});
+
+const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
+
+const secretStorage = RedisObjectStorage(
+  redisClient,
+  TOKEN_DURATION_IN_SECONDS,
+  t.string,
+  value => value,
+  key => key
+);
+
+import packageJson = require("../package.json");
+const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
 const app = express();
@@ -128,6 +153,10 @@ app.use(express.static("public"));
 // Initializes Passport for incoming requests.
 app.use(passport.initialize());
 
+//
+// Setup routes
+//
+
 app.get(
   `${API_BASE_PATH}/profile`,
   bearerTokenAuth,
@@ -136,24 +165,12 @@ app.get(
   }
 );
 
-const ipaSearchClient = IpaSearchClient(ELASTICSEARCH_URL, fetchApi);
-
 app.get(
   `${API_BASE_PATH}/search_ipa`,
   SearchPublicAdministrations(ipaSearchClient)
 );
 
 app.get(`${API_BASE_PATH}/get_ipa`, GetPublicAdministration(ipaSearchClient));
-
-const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
-
-const secretStorage = RedisObjectStorage(
-  redisClient,
-  TOKEN_DURATION_IN_SECONDS,
-  t.string,
-  value => value,
-  key => key
-);
 
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
@@ -164,11 +181,6 @@ app.post(
     secretStorage
   )
 );
-
-const userWebhookRequest = createFetchRequestForApi(userWebhook, {
-  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
-  fetchApi
-});
 
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
@@ -187,18 +199,11 @@ app.post(
   Logout(sessionStorage)
 );
 
-const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
-
-// Webhook
 app.post(
   WEBHOOK_USER_LOGIN_PATH,
-  passport.authenticate("jwt", { session: false }),
+  jwtTokenAuth,
   AuthWebhook(drupalJwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
 );
-
-// tslint:disable-next-line: no-var-requires
-const packageJson = require("../package.json");
-const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 app.get("/info", (_, res) => {
   res.status(200).json({ version });
@@ -239,7 +244,7 @@ app.use(
 //  Start HTTP server
 //
 
-// HTTPS is terminated by the Kubernetes Ingress controller.
-http.createServer(app).listen(port, () => {
-  log.info("Listening on port %d", port);
+// HTTPS is terminated by the Kubernetes Ingress controller
+http.createServer(app).listen(SERVER_PORT, () => {
+  log.info("Listening on port %d", SERVER_PORT);
 });
