@@ -1,0 +1,196 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: AGID forms
+  description: AGID forms.
+host: localhost
+basePath: /api/v1
+paths:
+
+  "/profile":
+    get:
+      summary: Get user profile data.
+      description: User's profile data.
+      responses:
+        "200":
+          description: User found.
+          schema:
+            "$ref": "#/definitions/AppUser"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "401":
+          description: Bearer token wrong or expired.
+        "404":
+          description: No user found for the provided bearer token.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the user.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+
+  "/ipa/search":
+    get:
+      summary: Search for a Public Administration.
+      description: |
+        Search for a Public Administration in
+        [IPA](https://indicepa.gov.it) catalogue using the PA name or IPA code .
+      responses:
+        "200":
+          description: Administration found.
+          schema:
+            "$ref": "#/definitions/PublicAdministrationsFromIpa"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the user.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: name
+          in: query
+          description: PA name or IPA code.
+          type: string
+          required: true
+
+  "/ipa/organizations/{ipa_code}":
+    get:
+      summary: Get data for a Public Administration.
+      description: |
+        Get information on a Public Administration (organization) from the
+        [IPA](https://indicepa.gov.it) catalogue using the PA IPA code.
+      responses:
+        "200":
+          description: Organization found.
+          schema:
+            "$ref": "#/definitions/PublicAdministrationFromIpa"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "404":
+          description: No organizaion found for the provided IPA code.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the organization.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: ipa_code
+          in: path
+          description: PA IPA code
+          type: string
+          required: true
+
+  "/auth/email/{ipa_code}":
+    post:
+      summary: Send an email with a secret code to the RTD.
+      description: |
+        Send an email with a secret code to the RTD of the Public Administration
+        (organization) identified by the IPA code. 
+        Gets the information on the organization from the
+        [IPA](https://indicepa.gov.it) catalogue using the provided IPA code.
+        The secret code will be used by the client to login into the backend.
+      responses:
+        "200":
+          description: Organization found.
+          schema:
+            "$ref": "#/definitions/PublicAdministrationFromIpa"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "404":
+          description: No organizaion found for the provided IPA code.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the organization.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: ipa_code
+          in: path
+          description: PA IPA code.
+          type: string
+          required: true
+
+  "/auth/login/{ipa_code}":
+    post:
+      summary: Get a bearer token to use with subsequent API calls.
+      description: |
+        The client post a secret code and the IPA code of the Public Administration
+        he wants to personify. If the secret is valid for the provided IPA code,
+        then the backend returns a bearer token to authenicate subsequent API calls.
+      responses:
+        "200":
+          description: Authorized.
+          schema:
+            "$ref": "#/definitions/SessionTokenResult"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "401":
+          description: Not authorized.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "404":
+          description: No organizaion found for the provided IPA code.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the organization.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: ipa_code
+          in: path
+          description: PA IPA code.
+          type: string
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/LoginCredentials"
+          required: true
+
+  "/auth/logout":
+    post:
+      summary: Terminate user session.
+      description: |
+        Delete the session identified by the provided bearer token.
+      responses:
+        "200":
+          description: Logged out.
+          schema:
+            "$ref": "#/definitions/OkResponse"
+        "500":
+          description: There was an error deleting user's session.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+
+
+  # TODO: webhook, proxy, info
+  # definitions
+
+schemes:
+  - https
+security:
+  - Bearer: []
+definitions:
+  EmailAddress:
+    type: string
+    format: email
+    example: foobar@example.com
+  FiscalCode:
+    type: string
+    description: User's fiscal code.
+    format: FiscalCode
+    x-import: italia-ts-commons/lib/strings
+    example: SPNDNL80R13C555X

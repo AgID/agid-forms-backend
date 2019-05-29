@@ -29,6 +29,7 @@ import {
   OuGetResultT,
   PaSearchResultT
 } from "../clients/ipa_search";
+import { RequiredParamMiddleware } from "../middlewares/required_param";
 
 ///////////////////////////////////////////////
 
@@ -173,7 +174,7 @@ export function GetPublicAdministration(
 ): express.RequestHandler {
   const handler = GetPublicAdministrationHandler(ipaSearchClient);
   const withrequestMiddlewares = withRequestMiddlewares(
-    RequiredQueryParamMiddleware("code", t.string)
+    RequiredParamMiddleware("ipa_code", t.string)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

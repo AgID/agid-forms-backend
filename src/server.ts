@@ -166,11 +166,14 @@ app.get(
 );
 
 app.get(
-  `${API_BASE_PATH}/search_ipa`,
+  `${API_BASE_PATH}/ipa/search`,
   SearchPublicAdministrations(ipaSearchClient)
 );
 
-app.get(`${API_BASE_PATH}/get_ipa`, GetPublicAdministration(ipaSearchClient));
+app.get(
+  `${API_BASE_PATH}/ipa/organizations/:ipa_code`,
+  GetPublicAdministration(ipaSearchClient)
+);
 
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,

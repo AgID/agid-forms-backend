@@ -18,7 +18,7 @@
     "test": "jest -i",
     "start": "node src/server.js",
     "generate:templates": "gulp generate:templates",
-    "generate:proxy:api-models": "gen-api-models --api-spec api_proxy.yaml --no-strict --out-dir src/types/api",
+    "generate:backend:api-models": "gen-api-models --api-spec api_backend.yaml --no-strict --out-dir src/types/api",
     "generate:jsonapi:api-models": "gen-api-models --api-spec jsonapi.yaml --no-strict --out-dir src/types/jsonapi",
     "postversion": "git push && git push --tags"
   },
