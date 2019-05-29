@@ -1,5 +1,6 @@
+import * as t from "io-ts";
 import { ResponseErrorFromValidationErrors } from "italia-ts-commons/lib/responses";
-import { AppUser } from "../types/user";
+import { log } from "../utils/logger";
 import { IRequestMiddleware } from "./request_middleware";
 
 /**
@@ -9,15 +10,18 @@ import { IRequestMiddleware } from "./request_middleware";
  * @param name  The name of the parameter
  * @param type  The io-ts Type for validating the parameter
  */
-export function UserFromRequestMiddleware(): IRequestMiddleware<
-  "IResponseErrorValidation",
-  AppUser
-> {
+export function UserFromRequestMiddleware<T>(
+  userType: t.Type<T>
+): IRequestMiddleware<"IResponseErrorValidation", T> {
   return request =>
     new Promise(resolve => {
-      const validation = AppUser.decode(request.user);
+      log.info(
+        "UserFromRequestMiddleware|Decoding %s",
+        JSON.stringify(request.user)
+      );
+      const validation = userType.decode(request.user);
       const result = validation.mapLeft(
-        ResponseErrorFromValidationErrors(AppUser)
+        ResponseErrorFromValidationErrors(userType)
       );
       resolve(result);
     });

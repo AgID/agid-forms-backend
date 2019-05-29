@@ -38,11 +38,13 @@ import {
   AUTHMAIL_TEST_ADDRESS,
   DUMB_IPA_VALUE_FOR_NULL,
   ORGANIZATION_NAME,
-  SERVICE_NAME
+  SERVICE_NAME,
+  WEBHOOK_USER_LOGIN_PATH
 } from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
+import { WebhookJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";
@@ -169,8 +171,8 @@ export function LoginHandler(
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  webhookPath: string,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>
+  userWebhookRequest: TypeofApiCall<UserWebhookT>,
+  webhookJwtService: ReturnType<WebhookJwtService>
 ): ILogin {
   return async (ipaCode, creds) => {
     // Check if secret (user's credentials) is valid
@@ -204,8 +206,8 @@ export function LoginHandler(
 
     // Call webhook and retrieve metadata
     const errorOrWebhookResponse = await userWebhookRequest({
-      user,
-      webhookPath
+      jwt: webhookJwtService.getJwtForWebhook(user),
+      webhookPath: WEBHOOK_USER_LOGIN_PATH
     });
     if (
       isLeft(errorOrWebhookResponse) ||
@@ -237,16 +239,16 @@ export function Login(
   ouGetRequest: TypeofApiCall<OuGetRequestT>,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  webhookPath: string,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>
+  userWebhookRequest: TypeofApiCall<UserWebhookT>,
+  webhookJwtService: ReturnType<WebhookJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
     paSearchRequest,
     ouGetRequest,
     secretStorage,
     sessionStorage,
-    webhookPath,
-    userWebhookRequest
+    userWebhookRequest,
+    webhookJwtService
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
@@ -279,7 +281,7 @@ export function Logout(
 ): express.RequestHandler {
   const handler = LogoutHandler(sessionStorage);
   const withrequestMiddlewares = withRequestMiddlewares(
-    UserFromRequestMiddleware()
+    UserFromRequestMiddleware(AppUser)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

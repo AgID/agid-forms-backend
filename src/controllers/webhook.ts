@@ -1,4 +1,5 @@
 import * as express from "express";
+import * as t from "io-ts";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -11,22 +12,29 @@ import {
 } from "italia-ts-commons/lib/responses";
 
 import { CreateUserRequestT, JsonapiClient } from "../clients/jsonapi";
-import { JwtService } from "../services/jwt";
+import { DrupalJwtService } from "../services/jwt";
 
 import { isEmpty } from "fp-ts/lib/Array";
 import { isLeft } from "fp-ts/lib/Either";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { DecodeBodyMiddleware } from "../middlewares/decode_body";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+
 import {
   withRequestMiddlewares,
   wrapRequestHandler
 } from "../middlewares/request_middleware";
-import { AppUser } from "../types/user";
+import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
+
 import { log } from "../utils/logger";
 import { UserMetadataT } from "../utils/webhooks";
 
+const JwtUser = t.interface({
+  email: EmailString,
+  name: t.string
+});
+type JwtUser = t.TypeOf<typeof JwtUser>;
+
 type AuthWebhookT = (
-  user: AppUser
+  user: JwtUser
 ) => Promise<
   // tslint:disable-next-line: max-union-size
   | IResponseErrorInternal
@@ -37,14 +45,14 @@ type AuthWebhookT = (
 >;
 
 function AuthWebhookHandler(
-  jwtService: ReturnType<JwtService>,
+  drupalJwtService: ReturnType<DrupalJwtService>,
   jsonApiClient: ReturnType<JsonapiClient>,
   adminUid: number,
   defaultRoleId: string
 ): AuthWebhookT {
   return async user => {
     // Get admin JWT
-    const jwt = jwtService.getJwtForUid(adminUid);
+    const jwt = drupalJwtService.getJwtForUid(adminUid);
 
     // Get Drupal user uid if exists
     const errorOrGetUserResponse = await jsonApiClient.getUser({
@@ -123,19 +131,19 @@ function AuthWebhookHandler(
 }
 
 export function AuthWebhook(
-  jwtService: ReturnType<JwtService>,
+  drupalJwtService: ReturnType<DrupalJwtService>,
   jsonApiClient: ReturnType<JsonapiClient>,
   adminUid: number,
   defaultRoleId: string
 ): express.RequestHandler {
   const handler = AuthWebhookHandler(
-    jwtService,
+    drupalJwtService,
     jsonApiClient,
     adminUid,
     defaultRoleId
   );
   const withrequestMiddlewares = withRequestMiddlewares(
-    DecodeBodyMiddleware(AppUser)
+    UserFromRequestMiddleware(JwtUser)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

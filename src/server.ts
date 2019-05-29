@@ -13,6 +13,7 @@ import proxy = require("express-http-proxy");
 import { isLeft } from "fp-ts/lib/Either";
 import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
+import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 
 import {
   ADMIN_UID,
@@ -27,10 +28,11 @@ import {
   SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS,
   USER_ROLE_ID,
+  WEBHOOK_JWT_SECRET,
   WEBHOOK_USER_LOGIN_BASE_URL,
   WEBHOOK_USER_LOGIN_PATH
 } from "./config";
-import { JwtService } from "./services/jwt";
+import { DrupalJwtService, WebhookJwtService } from "./services/jwt";
 
 import bearerTokenStrategy from "./strategies/bearer_token";
 
@@ -84,12 +86,24 @@ const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 //
 //  Configure controllers and services
 //
-const jwtService = JwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const jwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
 
 // Setup Passport.
 
 // Add the strategy to authenticate proxy clients.
 passport.use(bearerTokenStrategy(sessionStorage));
+
+// Used to call webhook
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: WEBHOOK_JWT_SECRET
+    },
+    (jwtPayload, done) => done(null, jwtPayload)
+  )
+);
 
 // Create and setup the Express app.
 const app = express();
@@ -191,8 +205,8 @@ app.post(
     ouGetRequestApi,
     secretStorage,
     sessionStorage,
-    WEBHOOK_USER_LOGIN_PATH,
-    userWebhookRequest
+    userWebhookRequest,
+    webhookJwtService
   )
 );
 
@@ -207,6 +221,7 @@ const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
 // Webhook
 app.post(
   WEBHOOK_USER_LOGIN_PATH,
+  passport.authenticate("jwt", { session: false }),
   AuthWebhook(jwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
 );
 
@@ -241,7 +256,7 @@ app.use(
       const jwt = jwtService.getJwtForUid(parseInt(user.metadata.uid, 10));
       return {
         ...proxyReqOpts,
-        headers: { ...proxyReqOpts.headers, Authorization: "Bearer " + jwt }
+        headers: { ...proxyReqOpts.headers, Authorization: `Bearer ${jwt}` }
       };
     }
   })

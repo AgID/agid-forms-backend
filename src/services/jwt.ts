@@ -3,8 +3,9 @@
  */
 
 import { sign } from "jsonwebtoken";
+import { AppUser } from "../types/user";
 
-export const JwtService = (secret: string, expiresIn: string) => ({
+export const DrupalJwtService = (secret: string, expiresIn: string) => ({
   /**
    * Generates a new JWT for a Drupal user's uid.
    */
@@ -23,4 +24,19 @@ export const JwtService = (secret: string, expiresIn: string) => ({
   }
 });
 
-export type JwtService = typeof JwtService;
+export type DrupalJwtService = typeof DrupalJwtService;
+
+///////////////////////////////////////////////////////
+
+export const WebhookJwtService = (secret: string, expiresIn: string) => ({
+  /**
+   * Generates a new JWT for webhook.
+   */
+  getJwtForWebhook: (user: AppUser): string => {
+    return sign(user, Buffer.from(secret, "base64"), {
+      expiresIn
+    });
+  }
+});
+
+export type WebhookJwtService = typeof WebhookJwtService;
