@@ -28,7 +28,7 @@ import {
   IpaSearchClient,
   OuGetResultT,
   PaSearchResultT
-} from "../clients/search";
+} from "../clients/ipa_search";
 
 ///////////////////////////////////////////////
 

@@ -38,7 +38,7 @@ import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
 import { JsonapiClient } from "./clients/jsonapi";
-import { IpaSearchClient } from "./clients/search";
+import { IpaSearchClient } from "./clients/ipa_search";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import {
   GetPublicAdministration,

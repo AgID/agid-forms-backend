@@ -21,7 +21,7 @@ import * as t from "io-ts";
 
 import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
-import { IpaSearchClient } from "../clients/search";
+import { IpaSearchClient } from "../clients/ipa_search";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
 import {
