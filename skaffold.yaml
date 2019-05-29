@@ -2,7 +2,7 @@ apiVersion: skaffold/v1beta7
 kind: Config
 build:
   artifacts:
-  - image: docker.io/gunzip/spid-proxy
+  - image: docker.io/gunzip/agid-forms-backend
 deploy:
   kubectl:
     manifests:

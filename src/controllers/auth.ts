@@ -205,8 +205,12 @@ export function LoginHandler(
     };
 
     // Call webhook and retrieve metadata
+    const webhookJwt = webhookJwtService.getJwtForWebhook(user);
+
+    log.info("Calling webhook with jwt %s", webhookJwt);
+
     const errorOrWebhookResponse = await userWebhookRequest({
-      jwt: webhookJwtService.getJwtForWebhook(user),
+      jwt: webhookJwt,
       webhookPath: WEBHOOK_USER_LOGIN_PATH
     });
     if (

@@ -7,11 +7,9 @@ import * as t from "io-ts";
 import * as morgan from "morgan";
 import * as passport from "passport";
 
-import expressEnforcesSsl = require("express-enforces-ssl");
 import proxy = require("express-http-proxy");
 
 import { isLeft } from "fp-ts/lib/Either";
-import { NodeEnvironmentEnum } from "italia-ts-commons/lib/environment";
 import { toExpressHandler } from "italia-ts-commons/lib/express";
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 
@@ -22,7 +20,6 @@ import {
   JSONAPI_BASE_URL,
   JWT_EXPIRES_IN,
   JWT_SECRET,
-  NODE_ENVIRONMENT,
   SERVER_PORT,
   SESSION_PREFIX,
   SMTP_CONNECTION_URL,
@@ -58,7 +55,6 @@ import { ouGetRequest, paGetRequest, paSearchRequest } from "./utils/search";
 import { userWebhook } from "./utils/webhooks";
 
 const port = SERVER_PORT;
-const env = NODE_ENVIRONMENT;
 
 // tslint:disable-next-line: no-any
 const fetchApi = (nodeFetch as any) as typeof fetch;
@@ -86,7 +82,7 @@ const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 //
 //  Configure controllers and services
 //
-const jwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const drupalJwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
 const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
 
 // Setup Passport.
@@ -99,7 +95,7 @@ passport.use(
   new JwtStrategy(
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: WEBHOOK_JWT_SECRET
+      secretOrKey: Buffer.from(WEBHOOK_JWT_SECRET, "base64")
     },
     (jwtPayload, done) => done(null, jwtPayload)
   )
@@ -107,13 +103,6 @@ passport.use(
 
 // Create and setup the Express app.
 const app = express();
-
-// Redirect unsecure connections.
-if (env === NodeEnvironmentEnum.DEVELOPMENT) {
-  // Trust proxy uses proxy X-Forwarded-Proto for ssl.
-  app.enable("trust proxy");
-  app.use(/\/((?!ping).)*/, expressEnforcesSsl());
-}
 
 // Add security to http headers.
 app.use(helmet());
@@ -222,7 +211,7 @@ const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
 app.post(
   WEBHOOK_USER_LOGIN_PATH,
   passport.authenticate("jwt", { session: false }),
-  AuthWebhook(jwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
+  AuthWebhook(drupalJwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
 );
 
 // tslint:disable-next-line: no-var-requires
@@ -253,7 +242,9 @@ app.use(
       if (!user.metadata || !user.metadata.uid) {
         return proxyReqOpts;
       }
-      const jwt = jwtService.getJwtForUid(parseInt(user.metadata.uid, 10));
+      const jwt = drupalJwtService.getJwtForUid(
+        parseInt(user.metadata.uid, 10)
+      );
       return {
         ...proxyReqOpts,
         headers: { ...proxyReqOpts.headers, Authorization: `Bearer ${jwt}` }
