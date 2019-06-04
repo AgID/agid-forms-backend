@@ -175,9 +175,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
 
-
-  # TODO: webhook, proxy, info
-  # definitions
+# TODO: proxy
 
 schemes:
   - https
