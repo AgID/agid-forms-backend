@@ -78,6 +78,13 @@ deployment "backend" configured
 service "backend" configured
 ```
 
+Add a `postgresql-password` entry (file) to backend-secrets then install
+postgresql with helm:
+
+```
+$ helm install --name postgresql --set existingSecret=backend-secrets,postgresqlDatabase=agid
+```
+
 ## Additional components
 
 ### Installing Helm
@@ -94,9 +101,6 @@ Then run `kubectl` with the insecure port:
 $ kubectl apply -f system/cluster-admin.yml --namespace=kube-system
 clusterrole "cluster-admin" created
 ```
-
-_Note: you will be able to create the admin role only if you requested `admin`
-credentials with `az aks get-credentials`._
 
 #### Creating the Service Account for Tiller
 

@@ -31,3 +31,5 @@ src/**/*.js.map
 # Exclude local files
 local.*
 local/*
+
+database/config.yaml
