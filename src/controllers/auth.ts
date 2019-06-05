@@ -28,7 +28,7 @@ import { wrapRequestHandler } from "../middlewares/request_middleware";
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
 import * as nodemailer from "nodemailer";
-import { GraphqlClient } from "../clients/graphql";
+import { GET_RTD_FROM_IPA, GraphqlClient } from "../clients/graphql";
 import {
   AUTHMAIL_FROM,
   AUTHMAIL_REPLY_TO,
@@ -49,12 +49,8 @@ import { emailAuthCode } from "../templates/html/email/authcode";
 import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
-import { UserWebhookT } from "../utils/webhooks";
 
-const PublicAdministrationFromIpa = t.type({
-  mail_resp: EmailString
-});
-type PublicAdministrationFromIpa = t.TypeOf<typeof PublicAdministrationFromIpa>;
+import { GetPaFromIpa, GetPaFromIpaVariables } from "../generated/GetPaFromIpa";
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -63,7 +59,7 @@ type ISendMailToRtd = (
   | IResponseErrorValidation
   | IResponseErrorNotFound
   | IResponseErrorInternal
-  | IResponseSuccessJson<PublicAdministrationFromIpa>
+  | IResponseSuccessJson<GetPaFromIpa>
 >;
 
 const generateKey = (secretCode: string, ipaCode: string) =>
@@ -76,13 +72,29 @@ export function SendEmailToRtdHandler(
   secretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
-    // TODO: retrieve PA info and RTD email address
-    // graphqlClient...
+    // Retrieve PA info and RTD email address
+    const errorOrPaInfo = await graphqlClient.query<
+      GetPaFromIpa,
+      GetPaFromIpaVariables
+    >({
+      query: GET_RTD_FROM_IPA,
+      variables: {
+        code: ipaCode
+      }
+    });
+    if (errorOrPaInfo.errors) {
+      return ResponseErrorInternal(errorOrPaInfo.errors.join("\n"));
+    }
+    if (!errorOrPaInfo.data.ipa_ou[0]) {
+      return ResponseErrorNotFound("Not found", "PA not found in catalogue");
+    }
+    const paInfo = errorOrPaInfo.data;
+    const rtdEmail = paInfo.ipa_ou[0].mail_resp;
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
     // Filter out "da_indicare@x.it"
-    if (DUMB_IPA_VALUE_FOR_NULL === paInfo.mail_resp) {
+    if (DUMB_IPA_VALUE_FOR_NULL === rtdEmail) {
       return ResponseErrorNotFound("Not found", "RTD not set yet.");
     }
 
@@ -114,7 +126,7 @@ export function SendEmailToRtdHandler(
       replyTo: AUTHMAIL_REPLY_TO,
       subject: emailAuthCodeContent.title,
       text: htmlToText.fromString(emailAuthCodeHtml),
-      to: AUTHMAIL_TEST_ADDRESS || paInfo.mail_resp
+      to: AUTHMAIL_TEST_ADDRESS || rtdEmail
     });
 
     return ResponseSuccessJson(paInfo);
@@ -176,15 +188,31 @@ export function LoginHandler(
     }
     const token = errorOrToken.value;
 
-    // TODO: get RTD email address from IPA data
-    // graphqlClient.get....
+    // Retrieve PA info and RTD email address
+    const errorOrPaInfo = await graphqlClient.query<
+      GetPaFromIpa,
+      GetPaFromIpaVariables
+    >({
+      query: GET_RTD_FROM_IPA,
+      variables: {
+        code: ipaCode
+      }
+    });
+    if (errorOrPaInfo.errors) {
+      return ResponseErrorInternal(errorOrPaInfo.errors.join("\n"));
+    }
+    if (!errorOrPaInfo.data.ipa_ou[0]) {
+      return ResponseErrorNotFound("Not found", "PA not found in catalogue");
+    }
+    const paInfo = errorOrPaInfo.data;
+    const rtdEmail = paInfo.ipa_ou[0].mail_resp;
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
     // Make user object
     const user: AppUser = {
       created_at: new Date().getTime(),
-      email: paResponse.value.mail_resp as EmailString,
+      email: rtdEmail as EmailString,
       name: ipaCode,
       session_token: token as SessionToken
     };
@@ -217,13 +245,15 @@ export function LoginHandler(
     }
 
     // TODO: generate hasura jwt and return it to the client
+    const ou = paInfo.ipa_ou[0];
+    hasuraJwtService.getJwtForUser(.mail_resp,)
 
     return ResponseSuccessJson({ token: token as SessionToken });
   };
 }
 
 export function Login(
-  graphqlClient: ReturnType<GraphqlClient>,
+  graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,

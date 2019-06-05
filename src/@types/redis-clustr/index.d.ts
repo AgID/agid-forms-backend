@@ -3,6 +3,8 @@
  */
 
 declare module "redis-clustr" {
+  import { RedisClient } from "redis";
+
   interface IServer {
     readonly host: string;
     readonly port: number;
@@ -20,7 +22,7 @@ declare module "redis-clustr" {
     readonly servers: ReadonlyArray<IServer>;
   }
 
-  class RedisClustr {
+  class RedisClustr extends RedisClient {
     constructor(conf: IOptions);
   }
 

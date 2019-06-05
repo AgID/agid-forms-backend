@@ -17,7 +17,7 @@ import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 
 import { AppUser } from "../types/user";
 
-import { UserMetadataT } from "../utils/webhooks";
+type UserMetadataT = Record<string, string>;
 
 type AuthWebhookT = (
   user: AppUser
@@ -30,11 +30,10 @@ type AuthWebhookT = (
   | IResponseSuccessJson<UserMetadataT>
 >;
 
-function AuthWebhookHandler(
+function AuthWebhookHandler(): AuthWebhookT {
   // graphqlClient: ReturnType<GraphqlClient>,
   // defaultRoleId: string,
   // adminSecret: string
-): AuthWebhookT {
   return async user => {
     // TODO: set X-Hasura-Admin-Secret in graphql call
 
