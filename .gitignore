@@ -33,3 +33,6 @@ local.*
 local/*
 
 database/config.yaml
+
+src/generated/*.ts
+

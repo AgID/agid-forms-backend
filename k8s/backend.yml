@@ -44,12 +44,13 @@ spec:
           value: "6379"
         - name: "WEBHOOK_USER_LOGIN_BASE_URL"
           value: "http://backend"
-        - name: "USER_ROLE_ID"
-          value: "31438e54-87fb-469c-acc0-21480e59a22a"
-        - name: "JSONAPI_BASE_URL"
-          value: "https://drupal.danilospinelli.com/jsonapi"
-        - name: "ELASTICSEARCH_URL"
-          value: "http://es:9200"
+        - name: "HASURA_GRAPHQL_ENDPOINT"
+          value: "http://hasura/v1/graphql"
+        - name: HASURA_GRAPHQL_ADMIN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: hasura_admin_password
         - name: "ORGANIZATION_NAME"
           value: "AGID"
         - name: "SERVICE_NAME"

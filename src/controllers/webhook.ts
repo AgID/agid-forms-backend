@@ -6,16 +6,8 @@ import {
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
-  ResponseErrorInternal,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
-
-import { CreateUserRequestT, JsonapiClient } from "../clients/jsonapi";
-import { DrupalJwtService } from "../services/jwt";
-
-import { isEmpty } from "fp-ts/lib/Array";
-import { isLeft } from "fp-ts/lib/Either";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import {
   withRequestMiddlewares,
@@ -24,7 +16,7 @@ import {
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 
 import { AppUser } from "../types/user";
-import { log } from "../utils/logger";
+
 import { UserMetadataT } from "../utils/webhooks";
 
 type AuthWebhookT = (
@@ -39,103 +31,26 @@ type AuthWebhookT = (
 >;
 
 function AuthWebhookHandler(
-  drupalJwtService: ReturnType<DrupalJwtService>,
-  jsonApiClient: ReturnType<JsonapiClient>,
-  adminUid: number,
-  defaultRoleId: string
+  // graphqlClient: ReturnType<GraphqlClient>,
+  // defaultRoleId: string,
+  // adminSecret: string
 ): AuthWebhookT {
   return async user => {
-    // Get admin JWT
-    const jwt = drupalJwtService.getJwtForUid(adminUid);
+    // TODO: set X-Hasura-Admin-Secret in graphql call
 
-    // Get Drupal user uid if exists
-    const errorOrGetUserResponse = await jsonApiClient.getUser({
-      jwt,
-      username: user.name
-    });
-
-    log.debug(
-      "AuthWebhookHandler|User response from jsonapi (%s)",
-      JSON.stringify(errorOrGetUserResponse)
-    );
-
-    if (
-      isLeft(errorOrGetUserResponse) ||
-      errorOrGetUserResponse.value.status !== 200
-    ) {
-      log.error(
-        "AuthWebhookHandler|Cannot get user from json api: %s",
-        JSON.stringify(errorOrGetUserResponse.value)
-      );
-      return ResponseErrorInternal("Cannot get user from json api.");
-    }
-
-    const isExistingUser = !isEmpty(errorOrGetUserResponse.value.value.data);
-
-    if (isExistingUser) {
-      return ResponseSuccessJson({
-        uid: errorOrGetUserResponse.value.value.data[0].attributes.drupal_internal__uid.toString()
-      });
-    }
-
-    // Create Drupal user if not exists
-    const drupalUser: CreateUserRequestT = {
-      data: {
-        attributes: {
-          mail: user.email,
-          name: user.name,
-          status: true
-        },
-        relationships: {
-          roles: {
-            data: [
-              {
-                // TODO: remove this cast
-                id: defaultRoleId as NonEmptyString,
-                type: "user_role--user_role"
-              }
-            ]
-          }
-        },
-        type: "user--user"
-      }
-    };
-
-    log.debug("Creating new user (%s)", JSON.stringify(drupalUser));
-
-    const errorOrCreateUserResponse = await jsonApiClient.createUser({
-      drupalUser,
-      jwt
-    });
-
-    if (
-      isLeft(errorOrCreateUserResponse) ||
-      errorOrCreateUserResponse.value.status !== 201
-    ) {
-      log.error(
-        "Cannot post user to json api: %s",
-        JSON.stringify(errorOrCreateUserResponse)
-      );
-      return ResponseErrorInternal("Cannot post user to json api.");
-    }
+    // TODO: upsert user into database
     return ResponseSuccessJson({
-      uid: errorOrCreateUserResponse.value.value.data.attributes.drupal_internal__uid.toString()
+      ok: "OK"
     });
   };
 }
 
 export function AuthWebhook(
-  drupalJwtService: ReturnType<DrupalJwtService>,
-  jsonApiClient: ReturnType<JsonapiClient>,
-  adminUid: number,
-  defaultRoleId: string
+  // graphqlClient: ReturnType<GraphqlClient>,
+  defaultRoleId: string,
+  adminSecret: string
 ): express.RequestHandler {
-  const handler = AuthWebhookHandler(
-    drupalJwtService,
-    jsonApiClient,
-    adminUid,
-    defaultRoleId
-  );
+  const handler = AuthWebhookHandler(/*graphqlClient, defaultRoleId, adminSecret*/);
   const withrequestMiddlewares = withRequestMiddlewares(
     UserFromRequestMiddleware(AppUser)
   );

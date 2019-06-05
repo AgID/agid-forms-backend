@@ -7,17 +7,11 @@ import * as t from "io-ts";
 import * as morgan from "morgan";
 import * as passport from "passport";
 
-import proxy = require("express-http-proxy");
-
-import { isLeft } from "fp-ts/lib/Either";
-import { toExpressHandler } from "italia-ts-commons/lib/express";
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 
 import {
-  ADMIN_UID,
   API_BASE_PATH,
-  ELASTICSEARCH_URL,
-  JSONAPI_BASE_URL,
+  HASURA_GRAPHQL_ADMIN_SECRET,
   JWT_EXPIRES_IN,
   JWT_SECRET,
   SERVER_PORT,
@@ -29,7 +23,7 @@ import {
   WEBHOOK_USER_LOGIN_BASE_URL,
   WEBHOOK_USER_LOGIN_PATH
 } from "./config";
-import { DrupalJwtService, WebhookJwtService } from "./services/jwt";
+import { HasuraJwtService, WebhookJwtService } from "./services/jwt";
 
 import bearerTokenStrategy from "./strategies/bearer_token";
 
@@ -37,14 +31,7 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
-import { IpaSearchClient } from "./clients/ipa_search";
-import { JsonapiClient } from "./clients/jsonapi";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
-import {
-  GetPublicAdministration,
-  SearchPublicAdministrations
-} from "./controllers/ipa";
-import { getProfile } from "./controllers/profile";
 import { AuthWebhook } from "./controllers/webhook";
 import { RedisObjectStorage } from "./services/redis_object_storage";
 import { SessionToken } from "./types/token";
@@ -100,13 +87,9 @@ passport.use(
 //
 // Setup dependecies for controllers
 //
-const drupalJwtService = DrupalJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const hasuraJwtService = HasuraJwtService(JWT_SECRET, JWT_EXPIRES_IN);
 
 const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
-
-const ipaSearchClient = IpaSearchClient(ELASTICSEARCH_URL, fetchApi);
-
-const jsonApiClient = JsonapiClient(JSONAPI_BASE_URL);
 
 const userWebhookRequest = createFetchRequestForApi(userWebhook, {
   baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
@@ -157,28 +140,10 @@ app.use(passport.initialize());
 // Setup routes
 //
 
-app.get(
-  `${API_BASE_PATH}/profile`,
-  bearerTokenAuth,
-  (req: express.Request, res: express.Response) => {
-    toExpressHandler(getProfile)(req, res);
-  }
-);
-
-app.get(
-  `${API_BASE_PATH}/ipa/search`,
-  SearchPublicAdministrations(ipaSearchClient)
-);
-
-app.get(
-  `${API_BASE_PATH}/ipa/organizations/:ipa_code`,
-  GetPublicAdministration(ipaSearchClient)
-);
-
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
   SendEmailToRtd(
-    ipaSearchClient,
+    graphqlClient,
     nodedmailerTransporter,
     generateCode,
     secretStorage
@@ -188,11 +153,12 @@ app.post(
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
   Login(
-    ipaSearchClient,
+    graphqlClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,
-    webhookJwtService
+    webhookJwtService,
+    hasuraJwtService
   )
 );
 
@@ -205,7 +171,7 @@ app.post(
 app.post(
   WEBHOOK_USER_LOGIN_PATH,
   jwtTokenAuth,
-  AuthWebhook(drupalJwtService, jsonApiClient, ADMIN_UID, USER_ROLE_ID)
+  AuthWebhook(graphqlClient, USER_ROLE_ID, HASURA_GRAPHQL_ADMIN_SECRET)
 );
 
 app.get("/info", (_, res) => {
@@ -216,32 +182,6 @@ app.get("/info", (_, res) => {
 // @see
 // https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-http-request
 app.get("/ping", (_, res) => res.status(200).send("ok"));
-
-// Setup proxy
-app.use(
-  "/proxy",
-  bearerTokenAuth,
-  proxy(JSONAPI_BASE_URL, {
-    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
-      // srcReq.user is set by bearerTokenAuth
-      const errorOrUser = AppUser.decode(srcReq.user);
-      if (isLeft(errorOrUser)) {
-        return proxyReqOpts;
-      }
-      const user = errorOrUser.value;
-      if (!user.metadata || !user.metadata.uid) {
-        return proxyReqOpts;
-      }
-      const jwt = drupalJwtService.getJwtForUid(
-        parseInt(user.metadata.uid, 10)
-      );
-      return {
-        ...proxyReqOpts,
-        headers: { ...proxyReqOpts.headers, Authorization: `Bearer ${jwt}` }
-      };
-    }
-  })
-);
 
 //
 //  Start HTTP server

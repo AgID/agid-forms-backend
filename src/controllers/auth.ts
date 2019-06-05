@@ -22,17 +22,13 @@ import * as t from "io-ts";
 
 import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
-import { IpaSearchClient } from "../clients/ipa_search";
 import { withRequestMiddlewares } from "../middlewares/request_middleware";
 import { wrapRequestHandler } from "../middlewares/request_middleware";
-import {
-  GetPublicAdministrationHandler,
-  PublicAdministrationFromIpa
-} from "./ipa";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
 import * as nodemailer from "nodemailer";
+import { GraphqlClient } from "../clients/graphql";
 import {
   AUTHMAIL_FROM,
   AUTHMAIL_REPLY_TO,
@@ -45,7 +41,7 @@ import {
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
-import { WebhookJwtService } from "../services/jwt";
+import { HasuraJwtService, WebhookJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";
@@ -54,6 +50,11 @@ import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 import { UserWebhookT } from "../utils/webhooks";
+
+const PublicAdministrationFromIpa = t.type({
+  mail_resp: EmailString
+});
+type PublicAdministrationFromIpa = t.TypeOf<typeof PublicAdministrationFromIpa>;
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -69,20 +70,14 @@ const generateKey = (secretCode: string, ipaCode: string) =>
   `${secretCode}_${ipaCode}`;
 
 export function SendEmailToRtdHandler(
-  ipaSearchClient: ReturnType<IpaSearchClient>,
+  graphqlClient: GraphqlClient,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
   secretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
-    // Call search API to retrieve PA info and RTD email address
-    const paResponse = await GetPublicAdministrationHandler(ipaSearchClient)(
-      ipaCode
-    );
-    if (paResponse.kind !== "IResponseSuccessJson") {
-      return paResponse;
-    }
-    const paInfo = paResponse.value;
+    // TODO: retrieve PA info and RTD email address
+    // graphqlClient...
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
@@ -127,13 +122,13 @@ export function SendEmailToRtdHandler(
 }
 
 export function SendEmailToRtd(
-  ipaSearchClient: ReturnType<IpaSearchClient>,
+  graphqlClient: GraphqlClient,
   transporter: nodemailer.Transporter,
   generateCode: () => string,
   secretStorage: IObjectStorage<string, string>
 ): express.RequestHandler {
   const handler = SendEmailToRtdHandler(
-    ipaSearchClient,
+    graphqlClient,
     transporter,
     generateCode,
     secretStorage
@@ -164,11 +159,12 @@ type ILogin = (
 >;
 
 export function LoginHandler(
-  ipaSearchClient: ReturnType<IpaSearchClient>,
+  graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  webhookJwtService: ReturnType<WebhookJwtService>,
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): ILogin {
   return async (ipaCode, creds) => {
     // Check if secret (user's credentials) is valid
@@ -180,14 +176,8 @@ export function LoginHandler(
     }
     const token = errorOrToken.value;
 
-    // Call search API to retrieve RTD email address from IPA
-    const paResponse = await GetPublicAdministrationHandler(ipaSearchClient)(
-      ipaCode
-    );
-    if (paResponse.kind !== "IResponseSuccessJson") {
-      return paResponse;
-    }
-    const paInfo = paResponse.value;
+    // TODO: get RTD email address from IPA data
+    // graphqlClient.get....
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
@@ -226,23 +216,27 @@ export function LoginHandler(
       return ResponseErrorInternal("Cannot store user info");
     }
 
+    // TODO: generate hasura jwt and return it to the client
+
     return ResponseSuccessJson({ token: token as SessionToken });
   };
 }
 
 export function Login(
-  ipaSearchClient: ReturnType<IpaSearchClient>,
+  graphqlClient: ReturnType<GraphqlClient>,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  webhookJwtService: ReturnType<WebhookJwtService>,
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
-    ipaSearchClient,
+    graphqlClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,
-    webhookJwtService
+    webhookJwtService,
+    hasuraJwtService
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),

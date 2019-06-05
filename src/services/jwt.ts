@@ -5,26 +5,34 @@
 import { sign } from "jsonwebtoken";
 import { AppUser } from "../types/user";
 
-export const DrupalJwtService = (secret: string, expiresIn: string) => ({
+export const HasuraJwtService = (secret: string, expiresIn: string) => ({
   /**
    * Generates a new JWT for a Drupal user's uid.
    */
-  getJwtForUid: (uid: number): string => {
-    return sign(
-      {
-        drupal: {
-          uid
-        }
+  getJwtForUser: (
+    name: string,
+    userId: string,
+    organizationId: string,
+    roles: ReadonlyArray<string>,
+    admin: boolean = false
+  ): string => {
+    const user = {
+      admin,
+      "https://hasura.io/jwt/claims": {
+        "x-hasura-allowed-roles": roles,
+        "x-hasura-default-role": roles[0],
+        "x-hasura-org-id": organizationId,
+        "x-hasura-user-id": userId
       },
-      Buffer.from(secret, "base64"),
-      {
-        expiresIn
-      }
-    );
+      name
+    };
+    return sign(user, Buffer.from(secret, "base64"), {
+      expiresIn
+    });
   }
 });
 
-export type DrupalJwtService = typeof DrupalJwtService;
+export type HasuraJwtService = typeof HasuraJwtService;
 
 ///////////////////////////////////////////////////////
 

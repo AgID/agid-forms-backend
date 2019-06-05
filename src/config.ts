@@ -6,7 +6,9 @@ import { log } from "./utils/logger";
 
 // Without this the environment variables loaded by dotenv
 // aren't available in this file.
-dotenv.config();
+
+// tslint:disable-next-line: no-console
+console.log("dotenv", dotenv.config());
 
 // Server port.
 const DEFAULT_SERVER_PORT = "80";
@@ -54,17 +56,17 @@ export const WEBHOOK_USER_LOGIN_PATH = "/webhook/user";
 export const WEBHOOK_USER_LOGIN_BASE_URL =
   process.env.WEBHOOK_USER_LOGIN_BASE_URL || "http://localhost";
 
-export const ADMIN_UID = 1;
-export const DEFAULT_USER_ROLE_ID = "";
+export const DEFAULT_USER_ROLE_ID = "authenticated";
 export const USER_ROLE_ID = process.env.USER_ROLE_ID || DEFAULT_USER_ROLE_ID;
 
 export const JWT_SECRET = process.env.JWT_SECRET || "";
 export const WEBHOOK_JWT_SECRET = process.env.WEBHOOK_JWT_SECRET || "";
 
-export const JSONAPI_BASE_URL = process.env.JSONAPI_BASE_URL || "";
+export const HASURA_GRAPHQL_ENDPOINT =
+  process.env.HASURA_GRAPHQL_ENDPOINT || "http://hasura/v1/graphql";
 
-export const ELASTICSEARCH_URL =
-  process.env.ELASTICSEARCH_URL || "http://localhost:9200";
+export const HASURA_GRAPHQL_ADMIN_SECRET =
+  process.env.HASURA_GRAPHQL_ADMIN_SECRET || "";
 
 export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
 
