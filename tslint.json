@@ -12,7 +12,7 @@
   "linterOptions": {
     "exclude": [
       "node_modules/**/*",
-      "generated/**/*.ts"
+      "src/generated/**/*.ts"
     ]
   }
 }
