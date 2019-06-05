@@ -1,7 +1,0 @@
-- args:
-    cascade: false
-    sql: |-
-      ALTER TABLE role ADD CONSTRAINT role_snake_case CHECK (
-          role ~ '^([a-z\_])+$'
-      );
-  type: run_sql

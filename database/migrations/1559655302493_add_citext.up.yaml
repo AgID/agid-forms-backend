@@ -1,4 +1,0 @@
-- args:
-    cascade: false
-    sql: create extension citext;
-  type: run_sql
