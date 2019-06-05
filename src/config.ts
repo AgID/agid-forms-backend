@@ -7,8 +7,7 @@ import { log } from "./utils/logger";
 // Without this the environment variables loaded by dotenv
 // aren't available in this file.
 
-// tslint:disable-next-line: no-console
-console.log("dotenv", dotenv.config());
+dotenv.config();
 
 // Server port.
 const DEFAULT_SERVER_PORT = "80";
