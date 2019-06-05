@@ -64,3 +64,38 @@ export const UPSERT_USER = gql`
     }
   }
 `;
+
+export const SEARCH_IPA = gql`
+  query SearchIpa($name: String!) {
+    search_ipa(args: { search: $name }) {
+      Comune
+      Provincia
+      Regione
+      cod_amm
+      des_amm
+    }
+  }
+`;
+
+export const GET_RTD_FROM_IPA = gql`
+  query GetPaFromIpa($code: String!) {
+    ipa_pa(where: { cod_amm: { _eq: $code } }) {
+      Comune
+      Provincia
+      Regione
+      des_amm
+      cod_amm
+    }
+    ipa_ou(
+      where: {
+        cod_amm: { _eq: $code }
+        cod_ou: { _eq: "Ufficio_Transizione_Digitale" }
+      }
+    ) {
+      cod_ou
+      nome_resp
+      cogn_resp
+      mail_resp
+    }
+  }
+`;

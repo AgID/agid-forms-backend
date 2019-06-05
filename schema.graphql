@@ -2479,6 +2479,48 @@ type query_root {
   # fetch data from the table: "role" using primary key columns
   role_by_pk(role: String!): role
 
+  # execute function "search_ipa" which returns "ipa_pa"
+  search_ipa(
+    # input parameters for function "search_ipa"
+    args: search_ipa_args!
+
+    # distinct select on columns
+    distinct_on: [ipa_pa_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [ipa_pa_order_by!]
+
+    # filter the rows returned
+    where: ipa_pa_bool_exp
+  ): [ipa_pa!]!
+
+  # execute function "search_ipa" and query aggregates on result of table type "ipa_pa"
+  search_ipa_aggregate(
+    # input parameters for function "search_ipa"
+    args: search_ipa_args!
+
+    # distinct select on columns
+    distinct_on: [ipa_pa_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [ipa_pa_order_by!]
+
+    # filter the rows returned
+    where: ipa_pa_bool_exp
+  ): ipa_pa_aggregate!
+
   # fetch data from the table: "status"
   status(
     # distinct select on columns
@@ -2708,6 +2750,10 @@ input role_set_input {
 enum role_update_column {
   # column name
   role
+}
+
+input search_ipa_args {
+  search: String!
 }
 
 # columns and relationships of "status"
@@ -3058,6 +3104,48 @@ type subscription_root {
 
   # fetch data from the table: "role" using primary key columns
   role_by_pk(role: String!): role
+
+  # execute function "search_ipa" which returns "ipa_pa"
+  search_ipa(
+    # input parameters for function "search_ipa"
+    args: search_ipa_args!
+
+    # distinct select on columns
+    distinct_on: [ipa_pa_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [ipa_pa_order_by!]
+
+    # filter the rows returned
+    where: ipa_pa_bool_exp
+  ): [ipa_pa!]!
+
+  # execute function "search_ipa" and query aggregates on result of table type "ipa_pa"
+  search_ipa_aggregate(
+    # input parameters for function "search_ipa"
+    args: search_ipa_args!
+
+    # distinct select on columns
+    distinct_on: [ipa_pa_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [ipa_pa_order_by!]
+
+    # filter the rows returned
+    where: ipa_pa_bool_exp
+  ): ipa_pa_aggregate!
 
   # fetch data from the table: "status"
   status(

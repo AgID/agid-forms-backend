@@ -1,0 +1,4 @@
+- args:
+    name: search_ipa
+    schema: public
+  type: track_function

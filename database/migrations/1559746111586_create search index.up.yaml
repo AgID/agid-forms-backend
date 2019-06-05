@@ -1,0 +1,16 @@
+- args:
+    cascade: false
+    sql: |
+      /* CREATE INDEX search_gin_idx ON public.ipa_pa USING GIN ((des_amm || ' ' || "Comune") gin_trgm_ops); */
+
+      CREATE FUNCTION search_ipa(search text)
+      RETURNS SETOF public.ipa_pa AS $$
+          SELECT *
+          FROM public.ipa_pa
+          WHERE
+            search <% (des_amm || ' ' || "Comune")
+          ORDER BY
+            similarity(search, (des_amm || ' ' || "Comune")) DESC
+          LIMIT 10;
+      $$ LANGUAGE sql STABLE;
+  type: run_sql
