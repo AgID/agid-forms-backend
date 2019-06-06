@@ -42,7 +42,7 @@ import {
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
-import { HasuraJwtService, WebhookJwtService } from "../services/jwt";
+import { WebhookJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";

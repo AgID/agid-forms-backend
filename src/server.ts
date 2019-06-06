@@ -8,17 +8,16 @@ import * as morgan from "morgan";
 import * as passport from "passport";
 
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
+import { GraphqlClient } from "./clients/graphql";
 
 import {
   API_BASE_PATH,
-  HASURA_GRAPHQL_ADMIN_SECRET,
   JWT_EXPIRES_IN,
   JWT_SECRET,
   SERVER_PORT,
   SESSION_PREFIX,
   SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS,
-  USER_ROLE_ID,
   WEBHOOK_JWT_SECRET,
   WEBHOOK_USER_LOGIN_BASE_URL,
   WEBHOOK_USER_LOGIN_PATH
@@ -143,7 +142,7 @@ app.use(passport.initialize());
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
   SendEmailToRtd(
-    graphqlClient,
+    GraphqlClient,
     nodedmailerTransporter,
     generateCode,
     secretStorage
@@ -153,12 +152,11 @@ app.post(
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
   Login(
-    graphqlClient,
+    GraphqlClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,
-    webhookJwtService,
-    hasuraJwtService
+    webhookJwtService
   )
 );
 
@@ -171,7 +169,7 @@ app.post(
 app.post(
   WEBHOOK_USER_LOGIN_PATH,
   jwtTokenAuth,
-  AuthWebhook(graphqlClient, USER_ROLE_ID, HASURA_GRAPHQL_ADMIN_SECRET)
+  AuthWebhook(GraphqlClient, hasuraJwtService)
 );
 
 app.get("/info", (_, res) => {
