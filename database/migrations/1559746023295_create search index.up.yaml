@@ -1,5 +1,0 @@
-- args:
-    cascade: false
-    sql: CREATE INDEX search_gin_idx ON public.ipa_pa USING GIN ((des_amm || ' ' ||
-      "Comune") gin_trgm_ops);
-  type: run_sql

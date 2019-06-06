@@ -55,7 +55,7 @@ export const UPSERT_USER = gql`
   mutation UpsertUser($user: user_insert_input!) {
     insert_user(
       objects: [$user]
-      on_conflict: { constraint: user_pkey, update_columns: [email] }
+      on_conflict: { constraint: user_email_key, update_columns: [email] }
     ) {
       returning {
         id

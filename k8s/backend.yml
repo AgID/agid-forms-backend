@@ -46,6 +46,8 @@ spec:
           value: "http://backend"
         - name: "HASURA_GRAPHQL_ENDPOINT"
           value: "http://hasura/v1/graphql"
+        - name: "HASURA_GRAPHQL_UNAUTHORIZED_ROLE"
+          value: "anonymous"
         - name: HASURA_GRAPHQL_ADMIN_SECRET
           valueFrom:
             secretKeyRef:

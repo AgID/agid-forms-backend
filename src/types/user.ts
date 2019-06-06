@@ -11,6 +11,7 @@ export const AppUser = t.intersection([
     created_at: t.number,
     email: EmailString,
     name: t.string,
+    roles: t.array(t.string),
     // needed to logout
     session_token: SessionToken
   }),

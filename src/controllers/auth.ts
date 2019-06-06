@@ -35,6 +35,7 @@ import {
   AUTHMAIL_TEST_ADDRESS,
   DUMB_IPA_VALUE_FOR_NULL,
   ORGANIZATION_NAME,
+  RTD_ROLE_NAME,
   SERVICE_NAME,
   WEBHOOK_USER_LOGIN_PATH
 } from "../config";
@@ -51,6 +52,7 @@ import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 
 import { GetPaFromIpa, GetPaFromIpaVariables } from "../generated/GetPaFromIpa";
+import { UserWebhookT } from "../utils/webhooks";
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -167,7 +169,7 @@ type ILogin = (
   | IResponseErrorValidation
   | IResponseErrorNotFound
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseSuccessJson<{ token: SessionToken }>
+  | IResponseSuccessJson<{ backendToken: SessionToken; graphqlToken: string }>
 >;
 
 export function LoginHandler(
@@ -175,8 +177,7 @@ export function LoginHandler(
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>,
-  hasuraJwtService: ReturnType<HasuraJwtService>
+  webhookJwtService: ReturnType<WebhookJwtService>
 ): ILogin {
   return async (ipaCode, creds) => {
     // Check if secret (user's credentials) is valid
@@ -201,7 +202,7 @@ export function LoginHandler(
     if (errorOrPaInfo.errors) {
       return ResponseErrorInternal(errorOrPaInfo.errors.join("\n"));
     }
-    if (!errorOrPaInfo.data.ipa_ou[0]) {
+    if (!errorOrPaInfo.data.ipa_pa[0] || !errorOrPaInfo.data.ipa_ou[0]) {
       return ResponseErrorNotFound("Not found", "PA not found in catalogue");
     }
     const paInfo = errorOrPaInfo.data;
@@ -214,6 +215,7 @@ export function LoginHandler(
       created_at: new Date().getTime(),
       email: rtdEmail as EmailString,
       name: ipaCode,
+      roles: [RTD_ROLE_NAME],
       session_token: token as SessionToken
     };
 
@@ -234,21 +236,21 @@ export function LoginHandler(
       return ResponseErrorInternal("Error calling webhook.");
     }
     const webhookResponse = errorOrWebhookResponse.value;
+    const metadata = webhookResponse.value;
 
     // Create user session for bearer authentication
     const errorOrSession = await sessionStorage.set(
-      { ...user, metadata: webhookResponse.value },
+      { ...user, metadata },
       () => token
     );
     if (isLeft(errorOrSession) || !errorOrSession) {
       return ResponseErrorInternal("Cannot store user info");
     }
 
-    // TODO: generate hasura jwt and return it to the client
-    const ou = paInfo.ipa_ou[0];
-    hasuraJwtService.getJwtForUser(.mail_resp,)
-
-    return ResponseSuccessJson({ token: token as SessionToken });
+    return ResponseSuccessJson({
+      backendToken: token as SessionToken,
+      graphqlToken: metadata.jwt
+    });
   };
 }
 
@@ -257,16 +259,14 @@ export function Login(
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
   userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>,
-  hasuraJwtService: ReturnType<HasuraJwtService>
+  webhookJwtService: ReturnType<WebhookJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
     graphqlClient,
     secretStorage,
     sessionStorage,
     userWebhookRequest,
-    webhookJwtService,
-    hasuraJwtService
+    webhookJwtService
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),

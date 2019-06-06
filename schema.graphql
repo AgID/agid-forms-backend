@@ -1221,6 +1221,12 @@ type mutation_root {
     where: node_revision_bool_exp!
   ): node_revision_mutation_response
 
+  # delete data from the table: "node_types"
+  delete_node_types(
+    # filter the rows which have to be deleted
+    where: node_types_bool_exp!
+  ): node_types_mutation_response
+
   # delete data from the table: "role"
   delete_role(
     # filter the rows which have to be deleted
@@ -1289,6 +1295,15 @@ type mutation_root {
     # on conflict condition
     on_conflict: node_revision_on_conflict
   ): node_revision_mutation_response
+
+  # insert data into the table: "node_types"
+  insert_node_types(
+    # the rows to be inserted
+    objects: [node_types_insert_input!]!
+
+    # on conflict condition
+    on_conflict: node_types_on_conflict
+  ): node_types_mutation_response
 
   # insert data into the table: "role"
   insert_role(
@@ -1409,6 +1424,15 @@ type mutation_root {
     where: node_revision_bool_exp!
   ): node_revision_mutation_response
 
+  # update data of the table: "node_types"
+  update_node_types(
+    # sets the columns of the filtered rows to the given values
+    _set: node_types_set_input
+
+    # filter the rows which have to be updated
+    where: node_types_bool_exp!
+  ): node_types_mutation_response
+
   # update data of the table: "role"
   update_role(
     # sets the columns of the filtered rows to the given values
@@ -1469,8 +1493,44 @@ type node {
     path: String
   ): jsonb!
   created_at: timestamptz!
-  id: String!
+  id: uuid!
   language: String!
+
+  # An array relationship
+  revisions(
+    # distinct select on columns
+    distinct_on: [node_revision_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_revision_order_by!]
+
+    # filter the rows returned
+    where: node_revision_bool_exp
+  ): [node_revision!]!
+
+  # An aggregated array relationship
+  revisions_aggregate(
+    # distinct select on columns
+    distinct_on: [node_revision_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_revision_order_by!]
+
+    # filter the rows returned
+    where: node_revision_bool_exp
+  ): node_revision_aggregate!
   status: String!
   title: String!
   type: String!
@@ -1478,7 +1538,7 @@ type node {
 
   # An object relationship
   user: user!
-  user_id: String!
+  user_id: uuid!
   version: Int!
 }
 
@@ -1546,14 +1606,15 @@ input node_bool_exp {
   _or: [node_bool_exp]
   content: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
-  id: text_comparison_exp
+  id: uuid_comparison_exp
   language: text_comparison_exp
+  revisions: node_revision_bool_exp
   status: text_comparison_exp
   title: text_comparison_exp
   type: text_comparison_exp
   updated_at: timestamptz_comparison_exp
   user: user_bool_exp
-  user_id: text_comparison_exp
+  user_id: uuid_comparison_exp
   version: integer_comparison_exp
 }
 
@@ -1588,66 +1649,59 @@ input node_inc_input {
 input node_insert_input {
   content: jsonb
   created_at: timestamptz
-  id: String
+  id: uuid
   language: String
+  revisions: node_revision_arr_rel_insert_input
   status: String
   title: String
   type: String
   updated_at: timestamptz
   user: user_obj_rel_insert_input
-  user_id: String
+  user_id: uuid
   version: Int
 }
 
 # aggregate max on columns
 type node_max_fields {
   created_at: timestamptz
-  id: String
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
   version: Int
 }
 
 # order by max() on columns of table "node"
 input node_max_order_by {
   created_at: order_by
-  id: order_by
   language: order_by
   status: order_by
   title: order_by
   type: order_by
   updated_at: order_by
-  user_id: order_by
   version: order_by
 }
 
 # aggregate min on columns
 type node_min_fields {
   created_at: timestamptz
-  id: String
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
   version: Int
 }
 
 # order by min() on columns of table "node"
 input node_min_order_by {
   created_at: order_by
-  id: order_by
   language: order_by
   status: order_by
   title: order_by
   type: order_by
   updated_at: order_by
-  user_id: order_by
   version: order_by
 }
 
@@ -1678,6 +1732,7 @@ input node_order_by {
   created_at: order_by
   id: order_by
   language: order_by
+  revisions_aggregate: node_revision_aggregate_order_by
   status: order_by
   title: order_by
   type: order_by
@@ -1699,16 +1754,13 @@ type node_revision {
     path: String
   ): jsonb!
   created_at: timestamptz!
-  id: String!
+  id: uuid!
   language: String!
   status: String!
   title: String!
   type: String!
   updated_at: timestamptz!
-
-  # An object relationship
-  user: user!
-  user_id: String!
+  user_id: uuid!
   version: Int!
 }
 
@@ -1776,14 +1828,13 @@ input node_revision_bool_exp {
   _or: [node_revision_bool_exp]
   content: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
-  id: text_comparison_exp
+  id: uuid_comparison_exp
   language: text_comparison_exp
   status: text_comparison_exp
   title: text_comparison_exp
   type: text_comparison_exp
   updated_at: timestamptz_comparison_exp
-  user: user_bool_exp
-  user_id: text_comparison_exp
+  user_id: uuid_comparison_exp
   version: integer_comparison_exp
 }
 
@@ -1818,66 +1869,57 @@ input node_revision_inc_input {
 input node_revision_insert_input {
   content: jsonb
   created_at: timestamptz
-  id: String
+  id: uuid
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user: user_obj_rel_insert_input
-  user_id: String
+  user_id: uuid
   version: Int
 }
 
 # aggregate max on columns
 type node_revision_max_fields {
   created_at: timestamptz
-  id: String
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
   version: Int
 }
 
 # order by max() on columns of table "node_revision"
 input node_revision_max_order_by {
   created_at: order_by
-  id: order_by
   language: order_by
   status: order_by
   title: order_by
   type: order_by
   updated_at: order_by
-  user_id: order_by
   version: order_by
 }
 
 # aggregate min on columns
 type node_revision_min_fields {
   created_at: timestamptz
-  id: String
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
   version: Int
 }
 
 # order by min() on columns of table "node_revision"
 input node_revision_min_order_by {
   created_at: order_by
-  id: order_by
   language: order_by
   status: order_by
   title: order_by
   type: order_by
   updated_at: order_by
-  user_id: order_by
   version: order_by
 }
 
@@ -1912,7 +1954,6 @@ input node_revision_order_by {
   title: order_by
   type: order_by
   updated_at: order_by
-  user: user_order_by
   user_id: order_by
   version: order_by
 }
@@ -1959,13 +2000,13 @@ enum node_revision_select_column {
 input node_revision_set_input {
   content: jsonb
   created_at: timestamptz
-  id: String
+  id: uuid
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
+  user_id: uuid
   version: Int
 }
 
@@ -2109,13 +2150,13 @@ enum node_select_column {
 input node_set_input {
   content: jsonb
   created_at: timestamptz
-  id: String
+  id: uuid
   language: String
   status: String
   title: String
   type: String
   updated_at: timestamptz
-  user_id: String
+  user_id: uuid
   version: Int
 }
 
@@ -2157,6 +2198,119 @@ type node_sum_fields {
 # order by sum() on columns of table "node"
 input node_sum_order_by {
   version: order_by
+}
+
+# columns and relationships of "node_types"
+type node_types {
+  node_type: String!
+}
+
+# aggregated selection of "node_types"
+type node_types_aggregate {
+  aggregate: node_types_aggregate_fields
+  nodes: [node_types!]!
+}
+
+# aggregate fields of "node_types"
+type node_types_aggregate_fields {
+  count(columns: [node_types_select_column!], distinct: Boolean): Int
+  max: node_types_max_fields
+  min: node_types_min_fields
+}
+
+# order by aggregate values of table "node_types"
+input node_types_aggregate_order_by {
+  count: order_by
+  max: node_types_max_order_by
+  min: node_types_min_order_by
+}
+
+# input type for inserting array relation for remote table "node_types"
+input node_types_arr_rel_insert_input {
+  data: [node_types_insert_input!]!
+  on_conflict: node_types_on_conflict
+}
+
+# Boolean expression to filter rows from the table "node_types". All fields are combined with a logical 'AND'.
+input node_types_bool_exp {
+  _and: [node_types_bool_exp]
+  _not: node_types_bool_exp
+  _or: [node_types_bool_exp]
+  node_type: text_comparison_exp
+}
+
+# unique or primary key constraints on table "node_types"
+enum node_types_constraint {
+  # unique or primary key constraint
+  node_types_pkey
+}
+
+# input type for inserting data into table "node_types"
+input node_types_insert_input {
+  node_type: String
+}
+
+# aggregate max on columns
+type node_types_max_fields {
+  node_type: String
+}
+
+# order by max() on columns of table "node_types"
+input node_types_max_order_by {
+  node_type: order_by
+}
+
+# aggregate min on columns
+type node_types_min_fields {
+  node_type: String
+}
+
+# order by min() on columns of table "node_types"
+input node_types_min_order_by {
+  node_type: order_by
+}
+
+# response of any mutation on the table "node_types"
+type node_types_mutation_response {
+  # number of affected rows by the mutation
+  affected_rows: Int!
+
+  # data of the affected rows by the mutation
+  returning: [node_types!]!
+}
+
+# input type for inserting object relation for remote table "node_types"
+input node_types_obj_rel_insert_input {
+  data: node_types_insert_input!
+  on_conflict: node_types_on_conflict
+}
+
+# on conflict condition type for table "node_types"
+input node_types_on_conflict {
+  constraint: node_types_constraint!
+  update_columns: [node_types_update_column!]!
+}
+
+# ordering options when selecting data from "node_types"
+input node_types_order_by {
+  node_type: order_by
+}
+
+# select columns of table "node_types"
+enum node_types_select_column {
+  # column name
+  node_type
+}
+
+# input type for updating data in table "node_types"
+input node_types_set_input {
+  node_type: String
+}
+
+# update columns of table "node_types"
+enum node_types_update_column {
+  # column name
+  node_type
 }
 
 # update columns of table "node"
@@ -2399,7 +2553,7 @@ type query_root {
   ): node_aggregate!
 
   # fetch data from the table: "node" using primary key columns
-  node_by_pk(id: String!): node
+  node_by_pk(id: uuid!): node
 
   # fetch data from the table: "node_revision"
   node_revision(
@@ -2438,7 +2592,46 @@ type query_root {
   ): node_revision_aggregate!
 
   # fetch data from the table: "node_revision" using primary key columns
-  node_revision_by_pk(id: String!): node_revision
+  node_revision_by_pk(id: uuid!): node_revision
+
+  # fetch data from the table: "node_types"
+  node_types(
+    # distinct select on columns
+    distinct_on: [node_types_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_types_order_by!]
+
+    # filter the rows returned
+    where: node_types_bool_exp
+  ): [node_types!]!
+
+  # fetch aggregated fields from the table: "node_types"
+  node_types_aggregate(
+    # distinct select on columns
+    distinct_on: [node_types_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_types_order_by!]
+
+    # filter the rows returned
+    where: node_types_bool_exp
+  ): node_types_aggregate!
+
+  # fetch data from the table: "node_types" using primary key columns
+  node_types_by_pk(node_type: String!): node_types
 
   # fetch data from the table: "role"
   role(
@@ -2597,7 +2790,7 @@ type query_root {
   ): user_aggregate!
 
   # fetch data from the table: "user" using primary key columns
-  user_by_pk(id: String!): user
+  user_by_pk(id: uuid!): user
 
   # fetch data from the table: "user_role"
   user_role(
@@ -2636,7 +2829,7 @@ type query_root {
   ): user_role_aggregate!
 
   # fetch data from the table: "user_role" using primary key columns
-  user_role_by_pk(role_id: String!, user_id: String!): user_role
+  user_role_by_pk(role_id: String!, user_id: uuid!): user_role
 }
 
 # columns and relationships of "role"
@@ -3025,7 +3218,7 @@ type subscription_root {
   ): node_aggregate!
 
   # fetch data from the table: "node" using primary key columns
-  node_by_pk(id: String!): node
+  node_by_pk(id: uuid!): node
 
   # fetch data from the table: "node_revision"
   node_revision(
@@ -3064,7 +3257,46 @@ type subscription_root {
   ): node_revision_aggregate!
 
   # fetch data from the table: "node_revision" using primary key columns
-  node_revision_by_pk(id: String!): node_revision
+  node_revision_by_pk(id: uuid!): node_revision
+
+  # fetch data from the table: "node_types"
+  node_types(
+    # distinct select on columns
+    distinct_on: [node_types_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_types_order_by!]
+
+    # filter the rows returned
+    where: node_types_bool_exp
+  ): [node_types!]!
+
+  # fetch aggregated fields from the table: "node_types"
+  node_types_aggregate(
+    # distinct select on columns
+    distinct_on: [node_types_select_column!]
+
+    # limit the nuber of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [node_types_order_by!]
+
+    # filter the rows returned
+    where: node_types_bool_exp
+  ): node_types_aggregate!
+
+  # fetch data from the table: "node_types" using primary key columns
+  node_types_by_pk(node_type: String!): node_types
 
   # fetch data from the table: "role"
   role(
@@ -3223,7 +3455,7 @@ type subscription_root {
   ): user_aggregate!
 
   # fetch data from the table: "user" using primary key columns
-  user_by_pk(id: String!): user
+  user_by_pk(id: uuid!): user
 
   # fetch data from the table: "user_role"
   user_role(
@@ -3262,7 +3494,7 @@ type subscription_root {
   ): user_role_aggregate!
 
   # fetch data from the table: "user_role" using primary key columns
-  user_role_by_pk(role_id: String!, user_id: String!): user_role
+  user_role_by_pk(role_id: String!, user_id: uuid!): user_role
 }
 
 # expression to compare columns of type text. All fields are combined with logical 'AND'.
@@ -3302,47 +3534,11 @@ input timestamptz_comparison_exp {
 # columns and relationships of "user"
 type user {
   email: String!
-  id: String!
+  id: uuid!
   metadata(
     # JSON select path
     path: String
   ): jsonb!
-
-  # An array relationship
-  nodes(
-    # distinct select on columns
-    distinct_on: [node_select_column!]
-
-    # limit the nuber of rows returned
-    limit: Int
-
-    # skip the first n rows. Use only with order_by
-    offset: Int
-
-    # sort the rows by one or more columns
-    order_by: [node_order_by!]
-
-    # filter the rows returned
-    where: node_bool_exp
-  ): [node!]!
-
-  # An aggregated array relationship
-  nodes_aggregate(
-    # distinct select on columns
-    distinct_on: [node_select_column!]
-
-    # limit the nuber of rows returned
-    limit: Int
-
-    # skip the first n rows. Use only with order_by
-    offset: Int
-
-    # sort the rows by one or more columns
-    order_by: [node_order_by!]
-
-    # filter the rows returned
-    where: node_bool_exp
-  ): node_aggregate!
 
   # An array relationship
   user_roles(
@@ -3418,9 +3614,8 @@ input user_bool_exp {
   _not: user_bool_exp
   _or: [user_bool_exp]
   email: text_comparison_exp
-  id: text_comparison_exp
+  id: uuid_comparison_exp
   metadata: jsonb_comparison_exp
-  nodes: node_bool_exp
   user_roles: user_role_bool_exp
 }
 
@@ -3452,34 +3647,29 @@ input user_delete_key_input {
 # input type for inserting data into table "user"
 input user_insert_input {
   email: String
-  id: String
+  id: uuid
   metadata: jsonb
-  nodes: node_arr_rel_insert_input
   user_roles: user_role_arr_rel_insert_input
 }
 
 # aggregate max on columns
 type user_max_fields {
   email: String
-  id: String
 }
 
 # order by max() on columns of table "user"
 input user_max_order_by {
   email: order_by
-  id: order_by
 }
 
 # aggregate min on columns
 type user_min_fields {
   email: String
-  id: String
 }
 
 # order by min() on columns of table "user"
 input user_min_order_by {
   email: order_by
-  id: order_by
 }
 
 # response of any mutation on the table "user"
@@ -3508,7 +3698,6 @@ input user_order_by {
   email: order_by
   id: order_by
   metadata: order_by
-  nodes_aggregate: node_aggregate_order_by
   user_roles_aggregate: user_role_aggregate_order_by
 }
 
@@ -3520,7 +3709,7 @@ input user_prepend_input {
 # columns and relationships of "user_role"
 type user_role {
   role_id: String!
-  user_id: String!
+  user_id: uuid!
 }
 
 # aggregated selection of "user_role"
@@ -3555,7 +3744,7 @@ input user_role_bool_exp {
   _not: user_role_bool_exp
   _or: [user_role_bool_exp]
   role_id: text_comparison_exp
-  user_id: text_comparison_exp
+  user_id: uuid_comparison_exp
 }
 
 # unique or primary key constraints on table "user_role"
@@ -3567,31 +3756,27 @@ enum user_role_constraint {
 # input type for inserting data into table "user_role"
 input user_role_insert_input {
   role_id: String
-  user_id: String
+  user_id: uuid
 }
 
 # aggregate max on columns
 type user_role_max_fields {
   role_id: String
-  user_id: String
 }
 
 # order by max() on columns of table "user_role"
 input user_role_max_order_by {
   role_id: order_by
-  user_id: order_by
 }
 
 # aggregate min on columns
 type user_role_min_fields {
   role_id: String
-  user_id: String
 }
 
 # order by min() on columns of table "user_role"
 input user_role_min_order_by {
   role_id: order_by
-  user_id: order_by
 }
 
 # response of any mutation on the table "user_role"
@@ -3633,7 +3818,7 @@ enum user_role_select_column {
 # input type for updating data in table "user_role"
 input user_role_set_input {
   role_id: String
-  user_id: String
+  user_id: uuid
 }
 
 # update columns of table "user_role"
@@ -3660,7 +3845,7 @@ enum user_select_column {
 # input type for updating data in table "user"
 input user_set_input {
   email: String
-  id: String
+  id: uuid
   metadata: jsonb
 }
 
@@ -3674,5 +3859,20 @@ enum user_update_column {
 
   # column name
   metadata
+}
+
+scalar uuid
+
+# expression to compare columns of type uuid. All fields are combined with logical 'AND'.
+input uuid_comparison_exp {
+  _eq: uuid
+  _gt: uuid
+  _gte: uuid
+  _in: [uuid]
+  _is_null: Boolean
+  _lt: uuid
+  _lte: uuid
+  _neq: uuid
+  _nin: [uuid]
 }
 
