@@ -1,0 +1,40 @@
+- args:
+    role: rtd
+    table:
+      name: ipa_ou
+      schema: public
+  type: drop_select_permission
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - Cap
+      - mail2
+      - provincia
+      - mail_resp
+      - Indirizzo
+      - des_ou
+      - nome_resp
+      - tipo_mail1
+      - cogn_resp
+      - cod_ou
+      - mail3
+      - comune
+      - cod_ou_padre
+      - tipo_mail3
+      - cod_uni_ou
+      - mail1
+      - Regione
+      - Tel
+      - Fax
+      - tel_resp
+      - tipo_mail2
+      - cod_amm
+      - cod_aoo
+      filter: {}
+      limit: 100
+    role: rtd
+    table:
+      name: ipa_ou
+      schema: public
+  type: create_select_permission

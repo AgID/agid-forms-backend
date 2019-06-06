@@ -7,86 +7,6 @@ host: localhost
 basePath: /api/v1
 paths:
 
-  "/profile":
-    get:
-      summary: Get user profile data.
-      description: User's profile data.
-      responses:
-        "200":
-          description: User found.
-          schema:
-            "$ref": "#/definitions/AppUser"
-        "400":
-          description: Bad request.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-        "401":
-          description: Bearer token wrong or expired.
-        "404":
-          description: No user found for the provided bearer token.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-        "500":
-          description: There was an error retrieving the user.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-
-  "/ipa/search":
-    get:
-      summary: Search for a Public Administration.
-      description: |
-        Search for a Public Administration in
-        [IPA](https://indicepa.gov.it) catalogue using the PA name or IPA code .
-      responses:
-        "200":
-          description: Administration found.
-          schema:
-            "$ref": "#/definitions/PublicAdministrationsFromIpa"
-        "400":
-          description: Bad request.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-        "500":
-          description: There was an error retrieving the user.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-      parameters:
-        - name: name
-          in: query
-          description: PA name or IPA code.
-          type: string
-          required: true
-
-  "/ipa/organizations/{ipa_code}":
-    get:
-      summary: Get data for a Public Administration.
-      description: |
-        Get information on a Public Administration (organization) from the
-        [IPA](https://indicepa.gov.it) catalogue using the PA IPA code.
-      responses:
-        "200":
-          description: Organization found.
-          schema:
-            "$ref": "#/definitions/PublicAdministrationFromIpa"
-        "400":
-          description: Bad request.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-        "404":
-          description: No organizaion found for the provided IPA code.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-        "500":
-          description: There was an error retrieving the organization.
-          schema:
-            $ref: "#/definitions/ProblemJson"
-      parameters:
-        - name: ipa_code
-          in: path
-          description: PA IPA code
-          type: string
-          required: true
-
   "/auth/email/{ipa_code}":
     post:
       summary: Send an email with a secret code to the RTD.
@@ -175,7 +95,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
 
-# TODO: proxy
+# TODO: definitions
 
 schemes:
   - https

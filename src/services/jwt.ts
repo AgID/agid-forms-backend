@@ -26,7 +26,7 @@ export const HasuraJwtService = (secret: string, expiresIn: string) => ({
       },
       name
     };
-    return sign(user, Buffer.from(secret, "base64"), {
+    return sign(user, secret, {
       expiresIn
     });
   }

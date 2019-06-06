@@ -1,0 +1,42 @@
+---
+# RUN AFTER ingress.yml 
+#
+# Ingress routing rules, apps will be routed based on host names where
+# services will be routed based on paths.
+#
+# TODO:
+# - add whitelist-source-range annotation
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginx
+  # see https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/annotations.md
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # TODO: we want ssl-redirect to be true but see https://github.com/jetstack/cert-manager/issues/194
+    ingress.kubernetes.io/ssl-redirect: "false"
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+      - backend.danilospinelli.com
+      secretName: cms-backend-cert-lep
+    - hosts:
+      - graphql.danilospinelli.com
+      secretName: cms-hasura-cert-lep
+  rules:
+  - host: backend.danilospinelli.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: backend
+          servicePort: 80
+  - host: graphql.danilospinelli.com
+    http:
+      paths:
+      - path: /v1/graphql
+        backend:
+          serviceName: hasura
+          servicePort: 80
