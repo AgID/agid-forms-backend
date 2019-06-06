@@ -4,6 +4,7 @@
 
 import { sign } from "jsonwebtoken";
 import { AppUser } from "../types/user";
+import { UUIDString } from "../types/uuid";
 
 export const HasuraJwtService = (secret: string, expiresIn: string) => ({
   /**
@@ -11,7 +12,7 @@ export const HasuraJwtService = (secret: string, expiresIn: string) => ({
    */
   getJwtForUser: (
     name: string,
-    userId: string,
+    userId: UUIDString,
     organizationId: string,
     roles: ReadonlyArray<string>,
     admin: boolean = false

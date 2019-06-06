@@ -18,10 +18,12 @@ import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 
 import { GraphqlClient, UPSERT_USER } from "../clients/graphql";
 
+import { isLeft } from "fp-ts/lib/Either";
 import { user_role_constraint } from "../generated/globalTypes";
 import { UpsertUser, UpsertUserVariables } from "../generated/UpsertUser";
 import { HasuraJwtService } from "../services/jwt";
 import { AppUser } from "../types/user";
+import { UUIDString } from "../types/uuid";
 
 type UserMetadataT = Record<string, string>;
 
@@ -67,11 +69,27 @@ function AuthWebhookHandler(
     if (errorOrUpsertResult.errors) {
       return ResponseErrorInternal(errorOrUpsertResult.errors.join("\n"));
     }
+    if (!errorOrUpsertResult.data) {
+      return ResponseErrorInternal("Cannot upsert user.");
+    }
+    const upsertResult = errorOrUpsertResult.data;
+    if (!upsertResult.insert_user || !upsertResult.insert_user.returning[0]) {
+      return ResponseErrorInternal("Cannot get data from upserted user.");
+    }
+
+    // Get user uuid and put it into JWT
+    const errorOrUserUuid = UUIDString.decode(
+      upsertResult.insert_user.returning[0].id
+    );
+    if (isLeft(errorOrUserUuid)) {
+      return ResponseErrorInternal("Cannot get UUID from upserted user.");
+    }
+    const userUuid = errorOrUserUuid.value;
 
     // Generate hasura jwt and serve it with metadata
     const jwt = hasuraJwtService.getJwtForUser(
       user.email,
-      user.email,
+      userUuid,
       user.name,
       user.roles
     );

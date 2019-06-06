@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/agid-forms-backend:1.0.0
+      - image: docker.io/gunzip/agid-forms-backend:1.0.1
         name: backend
         ports:
         - name: http-port
