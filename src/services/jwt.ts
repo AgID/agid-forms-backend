@@ -3,8 +3,8 @@
  */
 
 import { sign } from "jsonwebtoken";
+import { UUIDString } from "../generated/api/UUIDString";
 import { AppUser } from "../types/user";
-import { UUIDString } from "../types/uuid";
 
 export const HasuraJwtService = (secret: string, expiresIn: string) => ({
   /**

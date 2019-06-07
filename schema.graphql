@@ -2592,7 +2592,7 @@ type query_root {
   ): node_revision_aggregate!
 
   # fetch data from the table: "node_revision" using primary key columns
-  node_revision_by_pk(id: uuid!): node_revision
+  node_revision_by_pk(id: uuid!, version: Int!): node_revision
 
   # fetch data from the table: "node_types"
   node_types(
@@ -3257,7 +3257,7 @@ type subscription_root {
   ): node_revision_aggregate!
 
   # fetch data from the table: "node_revision" using primary key columns
-  node_revision_by_pk(id: uuid!): node_revision
+  node_revision_by_pk(id: uuid!, version: Int!): node_revision
 
   # fetch data from the table: "node_types"
   node_types(

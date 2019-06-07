@@ -14,7 +14,7 @@ apollo client:codegen \
   --tagName=gql \
   --clientName GraphqlClient \
   --useReadOnlyTypes \
-  --outputFlat  ./src/generated
+  --outputFlat  ./src/generated/graphql
 
   # --passthroughCustomScalars
   # --customScalarsPrefix Agid  

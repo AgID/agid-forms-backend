@@ -51,7 +51,10 @@ import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 
-import { GetPaFromIpa, GetPaFromIpaVariables } from "../generated/GetPaFromIpa";
+import {
+  GetPaFromIpa,
+  GetPaFromIpaVariables
+} from "../generated/graphql/GetPaFromIpa";
 import { UserWebhookT } from "../utils/webhooks";
 
 type ISendMailToRtd = (
@@ -169,7 +172,7 @@ type ILogin = (
   | IResponseErrorValidation
   | IResponseErrorNotFound
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseSuccessJson<{ backendToken: SessionToken; graphqlToken: string }>
+  | IResponseSuccessJson<{ backend_token: SessionToken; graphql_token: string }>
 >;
 
 export function LoginHandler(
@@ -248,8 +251,8 @@ export function LoginHandler(
     }
 
     return ResponseSuccessJson({
-      backendToken: token as SessionToken,
-      graphqlToken: metadata.jwt
+      backend_token: token as SessionToken,
+      graphql_token: metadata.jwt
     });
   };
 }

@@ -19,11 +19,14 @@ import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { GraphqlClient, UPSERT_USER } from "../clients/graphql";
 
 import { isLeft } from "fp-ts/lib/Either";
-import { user_role_constraint } from "../generated/globalTypes";
-import { UpsertUser, UpsertUserVariables } from "../generated/UpsertUser";
+import { UUIDString } from "../generated/api/UUIDString";
+import { user_role_constraint } from "../generated/graphql/globalTypes";
+import {
+  UpsertUser,
+  UpsertUserVariables
+} from "../generated/graphql/UpsertUser";
 import { HasuraJwtService } from "../services/jwt";
 import { AppUser } from "../types/user";
-import { UUIDString } from "../types/uuid";
 
 type UserMetadataT = Record<string, string>;
 

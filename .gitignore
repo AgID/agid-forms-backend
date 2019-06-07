@@ -34,5 +34,5 @@ local/*
 
 database/config.yaml
 
-src/generated/*.ts
+src/generated/**/*.ts
 
