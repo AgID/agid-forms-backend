@@ -65,17 +65,18 @@ export const UPSERT_USER = gql`
   }
 `;
 
-export const SEARCH_IPA = gql`
-  query SearchIpa($name: String!) {
-    search_ipa(args: { search: $name }) {
-      Comune
-      Provincia
-      Regione
-      cod_amm
-      des_amm
-    }
-  }
-`;
+// tslint:disable-next-line: no-commented-code
+// export const SEARCH_IPA = gql`
+//   query SearchIpa($name: String!) {
+//     search_ipa(args: { search: $name }) {
+//       Comune
+//       Provincia
+//       Regione
+//       cod_amm
+//       des_amm
+//     }
+//   }
+// `;
 
 export const GET_RTD_FROM_IPA = gql`
   query GetPaFromIpa($code: String!) {

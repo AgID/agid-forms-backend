@@ -51,11 +51,21 @@ import { SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 
+import { ApolloQueryResult } from "apollo-client";
+import { GetPaFromIpa } from "../generated/api/GetPaFromIpa";
+import { LoginCredentials } from "../generated/api/LoginCredentials";
+import { SuccessResponse } from "../generated/api/SuccessResponse";
 import {
-  GetPaFromIpa,
-  GetPaFromIpaVariables
+  GetPaFromIpa as GraphqlGetPaFromIpa,
+  GetPaFromIpaVariables as GraphqlGetPaFromIpaVariables
 } from "../generated/graphql/GetPaFromIpa";
 import { UserWebhookT } from "../utils/webhooks";
+
+const isPaFound = (errorOrPaInfo: ApolloQueryResult<GraphqlGetPaFromIpa>) =>
+  errorOrPaInfo.data.ipa_ou &&
+  errorOrPaInfo.data.ipa_pa &&
+  errorOrPaInfo.data.ipa_ou[0] &&
+  errorOrPaInfo.data.ipa_pa[0];
 
 type ISendMailToRtd = (
   ipaCode: string
@@ -79,8 +89,8 @@ export function SendEmailToRtdHandler(
   return async (ipaCode: string) => {
     // Retrieve PA info and RTD email address
     const errorOrPaInfo = await graphqlClient.query<
-      GetPaFromIpa,
-      GetPaFromIpaVariables
+      GraphqlGetPaFromIpa,
+      GraphqlGetPaFromIpaVariables
     >({
       query: GET_RTD_FROM_IPA,
       variables: {
@@ -90,7 +100,7 @@ export function SendEmailToRtdHandler(
     if (errorOrPaInfo.errors) {
       return ResponseErrorInternal(errorOrPaInfo.errors.join("\n"));
     }
-    if (!errorOrPaInfo.data.ipa_ou[0]) {
+    if (!isPaFound(errorOrPaInfo)) {
       return ResponseErrorNotFound("Not found", "PA not found in catalogue");
     }
     const paInfo = errorOrPaInfo.data;
@@ -134,7 +144,24 @@ export function SendEmailToRtdHandler(
       to: AUTHMAIL_TEST_ADDRESS || rtdEmail
     });
 
-    return ResponseSuccessJson(paInfo);
+    const pa = paInfo.ipa_pa[0];
+    const ou = paInfo.ipa_ou[0];
+
+    return ResponseSuccessJson({
+      ipa_ou: {
+        cod_ou: ou.cod_ou,
+        cogn_resp: ou.cogn_resp,
+        mail_resp: ou.mail_resp,
+        nome_resp: ou.nome_resp
+      },
+      ipa_pa: {
+        cod_amm: pa.cod_amm,
+        comune: pa.Comune,
+        des_amm: pa.des_amm,
+        provincia: pa.Provincia,
+        regione: pa.Regione
+      }
+    });
   };
 }
 
@@ -158,14 +185,9 @@ export function SendEmailToRtd(
 
 //////////////////////////////////////////////////////////
 
-const LoginInfoT = t.interface({
-  secret: t.string
-});
-type LoginInfoT = t.TypeOf<typeof LoginInfoT>;
-
 type ILogin = (
   ipaCode: string,
-  creds: LoginInfoT
+  creds: LoginCredentials
 ) => Promise<
   // tslint:disable-next-line: max-union-size
   | IResponseErrorInternal
@@ -194,8 +216,8 @@ export function LoginHandler(
 
     // Retrieve PA info and RTD email address
     const errorOrPaInfo = await graphqlClient.query<
-      GetPaFromIpa,
-      GetPaFromIpaVariables
+      GraphqlGetPaFromIpa,
+      GraphqlGetPaFromIpaVariables
     >({
       query: GET_RTD_FROM_IPA,
       variables: {
@@ -205,7 +227,7 @@ export function LoginHandler(
     if (errorOrPaInfo.errors) {
       return ResponseErrorInternal(errorOrPaInfo.errors.join("\n"));
     }
-    if (!errorOrPaInfo.data.ipa_pa[0] || !errorOrPaInfo.data.ipa_ou[0]) {
+    if (!isPaFound(errorOrPaInfo)) {
       return ResponseErrorNotFound("Not found", "PA not found in catalogue");
     }
     const paInfo = errorOrPaInfo.data;
@@ -273,7 +295,7 @@ export function Login(
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
-    DecodeBodyMiddleware(LoginInfoT)
+    DecodeBodyMiddleware(LoginCredentials)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }
@@ -282,7 +304,7 @@ export function Login(
 
 type ILogout = (
   user: AppUser
-) => Promise<IResponseErrorInternal | IResponseSuccessJson<null>>;
+) => Promise<IResponseErrorInternal | IResponseSuccessJson<SuccessResponse>>;
 
 export function LogoutHandler(
   sessionStorage: IObjectStorage<AppUser, SessionToken>
@@ -293,7 +315,7 @@ export function LogoutHandler(
     if (isLeft(errorOrSession) || !errorOrSession.value) {
       return ResponseErrorInternal("Cannot delete user session");
     }
-    return ResponseSuccessJson(null);
+    return ResponseSuccessJson({ message: "logout" });
   };
 }
 

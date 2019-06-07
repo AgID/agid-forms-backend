@@ -157,14 +157,11 @@ definitions:
   GetPaFromIpa_ipa_pa:
     type: object
     properties:
-      __typename:
+      comune:
         type: string
-        default: "ipa_pa"
-      Comune:
+      provincia:
         type: string
-      Provincia:
-        type: string
-      Regione:
+      regione:
         type: string
       des_amm:
         type: string
@@ -181,9 +178,6 @@ definitions:
   GetPaFromIpa_ipa_ou:
     type: object
     properties:
-      __typename:
-        type: string
-        default: "ipa_ou"
       cod_ou:
         type: string
       nome_resp:
@@ -201,13 +195,9 @@ definitions:
     type: object
     properties:
       ipa_pa:
-        type: array
-        items:
-          $ref: "#/definitions/GetPaFromIpa_ipa_pa"
+        $ref: "#/definitions/GetPaFromIpa_ipa_pa"
       ipa_ou:
-        type: array
-        items:
-          $ref: "#/definitions/GetPaFromIpa_ipa_ou"
+        $ref: "#/definitions/GetPaFromIpa_ipa_ou"
     required:
       - ipa_ou
       - ipa_pa
