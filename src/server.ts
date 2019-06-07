@@ -1,6 +1,7 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
 
+import * as cors from "cors";
 import * as helmet from "helmet";
 import * as http from "http";
 import * as t from "io-ts";
@@ -113,6 +114,9 @@ const app = express();
 
 // Add security to http headers.
 app.use(helmet());
+
+// Set up CORS (free access to the API from browser clients)
+app.use(cors());
 
 // Add a request logger.
 const loggerFormat =
