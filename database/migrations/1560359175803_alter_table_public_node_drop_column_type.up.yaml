@@ -1,0 +1,3 @@
+- args:
+    sql: ALTER TABLE "public"."node" DROP COLUMN "type"
+  type: run_sql

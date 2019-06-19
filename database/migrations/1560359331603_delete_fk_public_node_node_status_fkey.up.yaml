@@ -1,0 +1,3 @@
+- args:
+    sql: alter table "public"."node" drop constraint "node_status_fkey";
+  type: run_sql

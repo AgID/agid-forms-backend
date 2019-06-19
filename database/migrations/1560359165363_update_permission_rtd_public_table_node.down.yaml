@@ -1,0 +1,33 @@
+- args:
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: drop_select_permission
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - content
+      - created_at
+      - id
+      - language_id
+      - node_type_id
+      - title
+      - type
+      - updated_at
+      - version
+      filter:
+        _and:
+        - user_id:
+            _eq: X-Hasura-User-Id
+        - node_type:
+            node_type:
+              _in:
+              - dichiarazione_accessibilita
+      limit: 20
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: create_select_permission

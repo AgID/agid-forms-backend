@@ -1,0 +1,5 @@
+- args:
+    sql: |-
+      alter table "public"."role"
+          add constraint "role_pkey" primary key ( "role" );
+  type: run_sql

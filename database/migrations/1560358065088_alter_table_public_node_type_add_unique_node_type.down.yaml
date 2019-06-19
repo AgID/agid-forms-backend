@@ -1,0 +1,3 @@
+- args:
+    sql: alter table "public"."node_type" drop constraint "node_type_node_type_key";
+  type: run_sql

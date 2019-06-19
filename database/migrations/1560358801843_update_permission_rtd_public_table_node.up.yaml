@@ -1,0 +1,30 @@
+- args:
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: drop_update_permission
+- args:
+    permission:
+      columns:
+      - content
+      - language
+      - status
+      - title
+      filter:
+        _and:
+        - user_id:
+            _eq: X-Hasura-User-Id
+        - node_type:
+            node_type:
+              _in:
+              - dichiarazione_accessibilita
+      localPresets:
+      - key: ""
+        value: ""
+      set: {}
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: create_update_permission

@@ -1,0 +1,27 @@
+- args:
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: drop_insert_permission
+- args:
+    permission:
+      check: {}
+      columns:
+      - content
+      - id
+      - language_id
+      - node_type_id
+      - title
+      localPresets:
+      - key: user_id
+        value: x-hasura-User-Id
+      - key: ""
+        value: ""
+      set:
+        user_id: x-hasura-User-Id
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: create_insert_permission

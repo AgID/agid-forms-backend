@@ -1,0 +1,8 @@
+- args:
+    sql: alter table "public"."status" drop constraint "status_pkey";
+  type: run_sql
+- args:
+    sql: |-
+      alter table "public"."status"
+          add constraint "status_pkey" primary key ( "status" );
+  type: run_sql

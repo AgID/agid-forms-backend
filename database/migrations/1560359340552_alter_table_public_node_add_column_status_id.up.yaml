@@ -1,0 +1,3 @@
+- args:
+    sql: ALTER TABLE "public"."node" ADD COLUMN "status_id" uuid NOT NULL
+  type: run_sql

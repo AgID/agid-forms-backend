@@ -1,0 +1,8 @@
+- args:
+    sql: alter table "public"."node_type" drop constraint "node_types_pkey";
+  type: run_sql
+- args:
+    sql: |-
+      alter table "public"."node_type"
+          add constraint "node_type_pkey" primary key ( "id" );
+  type: run_sql

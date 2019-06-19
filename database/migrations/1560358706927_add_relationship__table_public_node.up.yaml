@@ -1,0 +1,8 @@
+- args:
+    name: node_type
+    table:
+      name: node
+      schema: public
+    using:
+      foreign_key_constraint_on: node_type_id
+  type: create_object_relationship

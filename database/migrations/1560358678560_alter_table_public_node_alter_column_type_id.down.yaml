@@ -1,0 +1,6 @@
+- args:
+    sql: COMMENT ON COLUMN "public"."node"."type_id" IS 'null'
+  type: run_sql
+- args:
+    sql: alter table "public"."node" rename column "node_type_id" to "type_id";
+  type: run_sql

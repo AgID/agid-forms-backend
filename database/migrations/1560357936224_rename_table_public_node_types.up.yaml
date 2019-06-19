@@ -1,0 +1,3 @@
+- args:
+    sql: alter table "public"."node_types" rename to "node_type";
+  type: run_sql

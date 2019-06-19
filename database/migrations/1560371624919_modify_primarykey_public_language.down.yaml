@@ -1,0 +1,7 @@
+- args:
+    sql: alter table "public"."language" drop constraint "language_pkey";
+  type: run_sql
+- sql: |-
+    alter table "public"."language"
+        add constraint "language_pkey" primary key ( "id" );
+  type: run_sql
