@@ -57,6 +57,7 @@ import { LoginCredentials } from "../generated/api/LoginCredentials";
 import { SuccessResponse } from "../generated/api/SuccessResponse";
 import { UserProfile } from "../generated/api/UserProfile";
 
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import {
   GetPaFromIpa as GraphqlGetPaFromIpa,
   GetPaFromIpaVariables as GraphqlGetPaFromIpaVariables
@@ -290,7 +291,9 @@ export function LoginHandler(
       }
     }).fold<IResponseSuccessJson<LoginResultT> | IResponseErrorInternal>(
       errs =>
-        ResponseErrorInternal("Cannot decode login result: " + errs.join(" ")),
+        ResponseErrorInternal(
+          `Cannot decode login result: ${readableReport(errs)}`
+        ),
       value => ResponseSuccessJson(value)
     );
   };

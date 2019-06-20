@@ -9,6 +9,7 @@ import {
   ResponseErrorValidation,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
+import { EmailString } from "italia-ts-commons/lib/strings";
 import { GET_USER_INFO, GraphqlClient } from "../clients/graphql";
 import { UserProfile } from "../generated/api/UserProfile";
 import {
@@ -21,7 +22,6 @@ import {
 } from "../middlewares/request_middleware";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { AppUser } from "../types/user";
-import { EmailString } from "italia-ts-commons/lib/strings";
 
 type IGetProfile = (
   user: AppUser
