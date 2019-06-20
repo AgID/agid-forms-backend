@@ -107,6 +107,7 @@ const secretStorage = RedisObjectStorage(
 );
 
 import packageJson = require("../package.json");
+import { GetProfile } from "./controllers/profile";
 const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
@@ -174,6 +175,12 @@ app.post(
   WEBHOOK_USER_LOGIN_PATH,
   jwtTokenAuth,
   AuthWebhook(GraphqlClient, hasuraJwtService)
+);
+
+app.get(
+  `${API_BASE_PATH}/user/profile`,
+  bearerTokenAuth,
+  GetProfile(GraphqlClient)
 );
 
 app.get("/info", (_, res) => {

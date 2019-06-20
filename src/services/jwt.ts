@@ -4,6 +4,7 @@
 
 import { sign } from "jsonwebtoken";
 import { UUIDString } from "../generated/api/UUIDString";
+import { GraphqlToken } from "../types/token";
 import { AppUser } from "../types/user";
 
 export const HasuraJwtService = (secret: string, expiresIn: string) => ({
@@ -16,7 +17,7 @@ export const HasuraJwtService = (secret: string, expiresIn: string) => ({
     organizationId: string,
     roles: ReadonlyArray<string>,
     admin: boolean = false
-  ): string => {
+  ): GraphqlToken => {
     const user = {
       admin,
       "https://hasura.io/jwt/claims": {
@@ -29,7 +30,7 @@ export const HasuraJwtService = (secret: string, expiresIn: string) => ({
     };
     return sign(user, secret, {
       expiresIn
-    });
+    }) as GraphqlToken;
   }
 });
 

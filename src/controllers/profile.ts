@@ -1,15 +1,29 @@
+import * as express from "express";
 import {
   IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseErrorValidation,
-  IResponseSuccessJson
+  IResponseSuccessJson,
+  ResponseErrorInternal,
+  ResponseErrorNotFound,
+  ResponseErrorValidation,
+  ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
-import { GraphqlClient } from "../clients/graphql";
+import { GET_USER_INFO, GraphqlClient } from "../clients/graphql";
 import { UserProfile } from "../generated/api/UserProfile";
-import { UUIDString } from "../generated/api/UUIDString";
+import {
+  GetUserInfo,
+  GetUserInfoVariables
+} from "../generated/graphql/GetUserInfo";
+import {
+  withRequestMiddlewares,
+  wrapRequestHandler
+} from "../middlewares/request_middleware";
+import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
+import { AppUser } from "../types/user";
 
 type IGetProfile = (
-  userId: UUIDString
+  user: AppUser
 ) => Promise<
   // tslint:disable-next-line: max-union-size
   | IResponseErrorValidation
@@ -18,19 +32,50 @@ type IGetProfile = (
   | IResponseSuccessJson<UserProfile>
 >;
 
-export function GetProfile(graphqlClient: GraphqlClient): IGetProfile {
-  return async (userId: UUIDString) => {
-
+export function GetProfileHandler(graphqlClient: GraphqlClient): IGetProfile {
+  return async (user: AppUser) => {
+    if (!user.metadata || !user.metadata.id) {
+      return ResponseErrorValidation(
+        "Empty id.",
+        "Cannot found an id for this user."
+      );
+    }
     const errorOrUserInfo = await graphqlClient.query<
-      ,
-      GraphqlGetPaFromIpaVariables
+      GetUserInfo,
+      GetUserInfoVariables
     >({
-      query: GET_RTD_FROM_IPA,
+      query: GET_USER_INFO,
       variables: {
-        code: ipaCode
+        id: user.metadata.id
       }
     });
-    
-
+    if (errorOrUserInfo.errors) {
+      return ResponseErrorInternal(errorOrUserInfo.errors.join("\n"));
+    }
+    if (
+      !errorOrUserInfo.data ||
+      !errorOrUserInfo.data.user ||
+      !errorOrUserInfo.data.user[0]
+    ) {
+      return ResponseErrorNotFound(
+        "User not found.",
+        "No matching user for the provided id."
+      );
+    }
+    const userInfo = errorOrUserInfo.data.user[0];
+    return ResponseSuccessJson({
+      email: userInfo.email,
+      id: userInfo.id
+    });
   };
+}
+
+export function GetProfile(
+  graphqlClient: GraphqlClient
+): express.RequestHandler {
+  const handler = GetProfileHandler(graphqlClient);
+  const withrequestMiddlewares = withRequestMiddlewares(
+    UserFromRequestMiddleware(AppUser)
+  );
+  return wrapRequestHandler(withrequestMiddlewares(handler));
 }

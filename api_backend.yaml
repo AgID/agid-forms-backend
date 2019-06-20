@@ -7,6 +7,26 @@ host: localhost
 basePath: /api/v1
 paths:
 
+  "/user/profile":
+    get:
+      summary: Get user's profile
+      description: Returns the profile for the authenticated user.
+      responses:
+        "200":
+          description: Found.
+          schema:
+            $ref: "#/definitions/UserProfile"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "401":
+          description: Bearer token null or expired.
+        "500":
+          description: There was an error in retrieving the user profile.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+
   "/auth/email/{ipa_code}":
     post:
       summary: Send an email with a secret code to the RTD.
@@ -144,16 +164,6 @@ definitions:
         description: |-
           An absolute URI that identifies the specific occurrence of the problem.
           It may or may not yield further information if dereferenced.
-  EmailAddress:
-    type: string
-    format: email
-    example: foobar@example.com
-  FiscalCode:
-    type: string
-    description: User's fiscal code.
-    format: FiscalCode
-    x-import: italia-ts-commons/lib/strings
-    example: SPNDNL80R13C555X
   GetPaFromIpa_ipa_pa:
     type: object
     properties:
@@ -227,3 +237,14 @@ definitions:
     type: string
     pattern: "^\\\\w+-\\\\w+-\\\\w+-\\\\w+-\\\\w+$"
     # x-import: italia-ts-commons/lib/UUIDString
+  UserProfile:
+    type: object
+    properties:
+      email:
+        type: string
+        x-import: italia-ts-commons/lib/EmailString
+      id:
+        $ref: "#/definitions/UUIDString"
+    required:
+      - id
+      - email

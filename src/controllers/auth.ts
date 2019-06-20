@@ -47,7 +47,7 @@ import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { withDefaultEmailTemplate } from "../templates/html/default";
 import { emailAuthCode } from "../templates/html/email/authcode";
-import { SessionToken } from "../types/token";
+import { GraphqlToken, SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
 
@@ -55,6 +55,8 @@ import { ApolloQueryResult } from "apollo-client";
 import { GetPaFromIpa } from "../generated/api/GetPaFromIpa";
 import { LoginCredentials } from "../generated/api/LoginCredentials";
 import { SuccessResponse } from "../generated/api/SuccessResponse";
+import { UserProfile } from "../generated/api/UserProfile";
+
 import {
   GetPaFromIpa as GraphqlGetPaFromIpa,
   GetPaFromIpaVariables as GraphqlGetPaFromIpaVariables
@@ -185,6 +187,13 @@ export function SendEmailToRtd(
 
 //////////////////////////////////////////////////////////
 
+const LoginResultT = t.interface({
+  backend_token: SessionToken,
+  graphql_token: GraphqlToken,
+  user: UserProfile
+});
+type LoginResultT = t.TypeOf<typeof LoginResultT>;
+
 type ILogin = (
   ipaCode: string,
   creds: LoginCredentials
@@ -194,7 +203,7 @@ type ILogin = (
   | IResponseErrorValidation
   | IResponseErrorNotFound
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseSuccessJson<{ backend_token: SessionToken; graphql_token: string }>
+  | IResponseSuccessJson<LoginResultT>
 >;
 
 export function LoginHandler(
@@ -272,10 +281,18 @@ export function LoginHandler(
       return ResponseErrorInternal("Cannot store user info");
     }
 
-    return ResponseSuccessJson({
-      backend_token: token as SessionToken,
-      graphql_token: metadata.jwt
-    });
+    return LoginResultT.decode({
+      backend_token: token,
+      graphql_token: metadata.jwt,
+      user: {
+        email: rtdEmail,
+        id: metadata.id
+      }
+    }).fold<IResponseSuccessJson<LoginResultT> | IResponseErrorInternal>(
+      errs =>
+        ResponseErrorInternal("Cannot decode login result: " + errs.join(" ")),
+      value => ResponseSuccessJson(value)
+    );
   };
 }
 

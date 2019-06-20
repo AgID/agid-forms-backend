@@ -100,3 +100,12 @@ export const GET_RTD_FROM_IPA = gql`
     }
   }
 `;
+
+export const GET_USER_INFO = gql`
+  query GetUserInfo($id: uuid!) {
+    user(where: { id: { _eq: $id } }) {
+      id
+      email
+    }
+  }
+`;

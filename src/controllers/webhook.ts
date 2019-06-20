@@ -46,7 +46,7 @@ function AuthWebhookHandler(
   hasuraJwtService: ReturnType<HasuraJwtService>
 ): AuthWebhookT {
   return async user => {
-    // Upsert user into graphsql database
+    // Upsert user into graphql database
     const errorOrUpsertResult = await graphqlClient.mutate<
       UpsertUser,
       UpsertUserVariables
@@ -98,6 +98,7 @@ function AuthWebhookHandler(
     );
 
     return ResponseSuccessJson({
+      id: userUuid,
       jwt
     });
   };
