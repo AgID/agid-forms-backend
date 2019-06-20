@@ -30,9 +30,10 @@ const bearerTokenStrategy = (
     done: (error: any, user?: any, options?: IVerifyOptions | string) => void
   ) => {
     // req.route.path
+    log.info("bearerTokenStrategyx.getting: %s", token);
     sessionStorage.get(token as SessionToken).then(
       (errorOrUser: Either<Error, AppUser>) => {
-        log.debug("bearerTokenStrategy.get: %s", JSON.stringify(errorOrUser));
+        log.info("bearerTokenStrategy.get: %s", JSON.stringify(errorOrUser));
         errorOrUser.fold(
           () => done(undefined, false),
           user => done(undefined, user)

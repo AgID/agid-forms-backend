@@ -120,8 +120,8 @@ export function SendEmailToRtdHandler(
 
     // Save (ipa_code, secret) to storage
     const errorOrStorageResult = await secretStorage.set(
-      generateNewToken(),
-      () => generateKey(secretCode, ipaCode)
+      generateKey(secretCode, ipaCode),
+      generateNewToken()
     );
 
     if (isLeft(errorOrStorageResult)) {
@@ -222,7 +222,7 @@ export function LoginHandler(
     if (isLeft(errorOrToken) || !errorOrToken.value) {
       return ResponseErrorForbiddenNotAuthorized;
     }
-    const token = errorOrToken.value;
+    const token = errorOrToken.value as SessionToken;
 
     // Retrieve PA info and RTD email address
     const errorOrPaInfo = await graphqlClient.query<
@@ -251,7 +251,7 @@ export function LoginHandler(
       email: rtdEmail as EmailString,
       name: ipaCode,
       roles: [RTD_ROLE_NAME],
-      session_token: token as SessionToken
+      session_token: token
     };
 
     // Call webhook and retrieve metadata
@@ -274,10 +274,10 @@ export function LoginHandler(
     const metadata = webhookResponse.value;
 
     // Create user session for bearer authentication
-    const errorOrSession = await sessionStorage.set(
-      { ...user, metadata },
-      () => token
-    );
+    const errorOrSession = await sessionStorage.set(token, {
+      ...user,
+      metadata
+    });
     if (isLeft(errorOrSession) || !errorOrSession) {
       return ResponseErrorInternal("Cannot store user info");
     }

@@ -70,6 +70,7 @@ export const HASURA_GRAPHQL_ADMIN_SECRET =
 export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
 
 export const SESSION_PREFIX = "SESSION-";
+export const SECRET_PREFIX = "SECRET-";
 
 export const RTD_ROLE_NAME = "rtd";
 

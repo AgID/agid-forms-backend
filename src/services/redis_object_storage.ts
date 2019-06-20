@@ -64,18 +64,15 @@ export const RedisObjectStorage = <T, TK = string>(
   redisClient: redis.RedisClient | RedisClustr,
   tokenDurationSecs: number,
   type: t.Type<T>,
-  setKeyDerivationFn: (obj: T) => string,
+  setKeyDerivationFn: (k: TK) => string,
   getKeyDerivationFn: (k: TK) => string
 ): IObjectStorage<T, TK> => ({
-  set: async (
-    obj: T,
-    keyDerivationFn: (obj: T) => string = setKeyDerivationFn
-  ): Promise<Either<Error, boolean>> => {
+  set: async (key: TK, obj: T): Promise<Either<Error, boolean>> => {
     const setObjectPromise = new Promise<Either<Error, boolean>>(resolve => {
       // Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
       // @see https://redis.io/commands/set
       redisClient.set(
-        keyDerivationFn(obj),
+        setKeyDerivationFn(key),
         JSON.stringify(obj),
         "EX",
         tokenDurationSecs,
@@ -93,20 +90,14 @@ export const RedisObjectStorage = <T, TK = string>(
     return right<Error, boolean>(true);
   },
 
-  get: async (
-    key: TK,
-    keyDerivationFn: (k: TK) => string = getKeyDerivationFn
-  ): Promise<Either<Error, T>> =>
-    loadObjectByKey(redisClient, key, type, keyDerivationFn),
+  get: async (key: TK): Promise<Either<Error, T>> =>
+    loadObjectByKey(redisClient, key, type, getKeyDerivationFn),
 
-  del: async (
-    key: TK,
-    keyDerivationFn: (k: TK) => string = getKeyDerivationFn
-  ): Promise<Either<Error, boolean>> => {
+  del: async (key: TK): Promise<Either<Error, boolean>> => {
     const deleteObjectPromise = new Promise<Either<Error, boolean>>(resolve => {
       // Remove the specified key. A key is ignored if it does not exist.
       // @see https://redis.io/commands/del
-      redisClient.del(keyDerivationFn(key), (err, response) =>
+      redisClient.del(getKeyDerivationFn(key), (err, response) =>
         resolve(integerReply(err, response))
       );
     });

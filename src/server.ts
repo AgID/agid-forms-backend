@@ -15,6 +15,7 @@ import {
   API_BASE_PATH,
   JWT_EXPIRES_IN,
   JWT_SECRET,
+  SECRET_PREFIX,
   SERVER_PORT,
   SESSION_PREFIX,
   SMTP_CONNECTION_URL,
@@ -58,7 +59,7 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
   redisClient,
   TOKEN_DURATION_IN_SECONDS,
   AppUser,
-  user => `${SESSION_PREFIX}${user.session_token}`,
+  key => `${SESSION_PREFIX}${key}`,
   key => `${SESSION_PREFIX}${key}`
 );
 
@@ -66,12 +67,10 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
 // Setup Passport
 //
 
-const bearerTokenAuth = passport.authenticate("bearer", { session: false });
-
 // Used to authenticate frontend api calls
 passport.use(bearerTokenStrategy(sessionStorage));
 
-const jwtTokenAuth = passport.authenticate("jwt", { session: false });
+const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 
 // Used to call webhook
 passport.use(
@@ -83,6 +82,8 @@ passport.use(
     (jwtPayload, done) => done(null, jwtPayload)
   )
 );
+
+const jwtTokenAuth = passport.authenticate("jwt", { session: false });
 
 //
 // Setup dependecies for controllers
@@ -102,8 +103,8 @@ const secretStorage = RedisObjectStorage(
   redisClient,
   TOKEN_DURATION_IN_SECONDS,
   t.string,
-  value => value,
-  key => key
+  key => `${SECRET_PREFIX}${key}`,
+  key => `${SECRET_PREFIX}${key}`
 );
 
 import packageJson = require("../package.json");
