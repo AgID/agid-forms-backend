@@ -21,6 +21,7 @@ import {
 } from "../middlewares/request_middleware";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { AppUser } from "../types/user";
+import { EmailString } from "italia-ts-commons/lib/strings";
 
 type IGetProfile = (
   user: AppUser
@@ -64,7 +65,7 @@ export function GetProfileHandler(graphqlClient: GraphqlClient): IGetProfile {
     }
     const userInfo = errorOrUserInfo.data.user[0];
     return ResponseSuccessJson({
-      email: userInfo.email,
+      email: userInfo.email as EmailString,
       id: userInfo.id
     });
   };

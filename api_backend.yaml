@@ -243,7 +243,7 @@ definitions:
       email:
         type: string
         format: EmailString
-        x-import: italia-ts-commons/lib/EmailString
+        x-import: italia-ts-commons/lib/strings
       id:
         $ref: "#/definitions/UUIDString"
     required:
