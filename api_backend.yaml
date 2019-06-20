@@ -242,6 +242,7 @@ definitions:
     properties:
       email:
         type: string
+        format: EmailString
         x-import: italia-ts-commons/lib/EmailString
       id:
         $ref: "#/definitions/UUIDString"
