@@ -16,12 +16,33 @@ CREATE FUNCTION public.compute_ipa_column() RETURNS trigger
         RETURN NEW;
     END;
 $$;
+CREATE FUNCTION public.force_serial_id() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+   IF TG_OP = 'UPDATE' AND NEW.id <> OLD.id THEN
+     RAISE EXCEPTION 'Cannot UPDATE with a different ID';
+   ELSIF TG_OP = 'INSERT' THEN
+     NEW.id = gen_random_uuid();
+   END IF;
+   RETURN NEW;
+END
+$$;
 CREATE FUNCTION public.increment_version() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
   IF (TG_OP = 'UPDATE') THEN
-    NEW.version = OLD.version + 1;
+    IF NEW.version < OLD.version + 1 THEN
+        RAISE EXCEPTION 'Cannot update an old revision (latest=%)', OLD.version
+        USING HINT = 'When updating set the current version of the content plus one';
+    ELSIF NEW.version > OLD.version + 1 THEN
+        RAISE EXCEPTION 'Cannot update the current revision with a wrong version (latest=%)', OLD.version 
+        USING HINT = 'When updating set the current version of the content plus one';
+    ELSIF NEW.version IS NULL THEN
+        RAISE EXCEPTION 'Cannot update the current revision without provinding a version (latest=%)', OLD.version 
+        USING HINT = 'When updating set the current version of the content plus one';
+    END IF;
     RETURN NEW;
   END IF;
 END;
@@ -90,14 +111,14 @@ $$;
 CREATE TABLE public.node (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    type text NOT NULL,
     version integer DEFAULT 1 NOT NULL,
     title text NOT NULL,
     content jsonb NOT NULL,
-    status text NOT NULL,
-    language text NOT NULL,
     user_id uuid NOT NULL,
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    status text DEFAULT 'draft'::text NOT NULL,
+    type text NOT NULL,
+    language text NOT NULL
 );
 CREATE TABLE public.ipa_ou (
     cod_ou text NOT NULL,
@@ -139,7 +160,7 @@ CREATE TABLE public.node_revision (
     user_id uuid NOT NULL,
     id uuid NOT NULL
 );
-CREATE TABLE public.node_types (
+CREATE TABLE public.node_type (
     node_type text NOT NULL,
     CONSTRAINT node_types_snake_case CHECK ((node_type ~ '^([a-z\_])+$'::text))
 );
@@ -170,8 +191,8 @@ ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.node_revision
     ADD CONSTRAINT node_revision_pkey PRIMARY KEY (id, version);
-ALTER TABLE ONLY public.node_types
-    ADD CONSTRAINT node_types_pkey PRIMARY KEY (node_type);
+ALTER TABLE ONLY public.node_type
+    ADD CONSTRAINT node_type_pkey PRIMARY KEY (node_type);
 ALTER TABLE ONLY public.role
     ADD CONSTRAINT role_pkey PRIMARY KEY (role);
 ALTER TABLE ONLY public.status
@@ -185,6 +206,8 @@ ALTER TABLE ONLY public.user_role
 CREATE INDEX search_gin_idx ON public.ipa_pa USING gin ((((des_amm || ' '::text) || "Comune")) public.gin_trgm_ops);
 CREATE TRIGGER audit_node AFTER INSERT OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.audit_node();
 CREATE TRIGGER compute_ipa_column BEFORE INSERT OR UPDATE ON public.ipa_pa FOR EACH ROW EXECUTE PROCEDURE public.compute_ipa_column();
+CREATE TRIGGER force_serial_id BEFORE INSERT OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
+CREATE TRIGGER force_serial_id BEFORE INSERT OR UPDATE ON public."user" FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.trigger_updated_at();
 CREATE TRIGGER set_version BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.increment_version();
 ALTER TABLE ONLY public.node
@@ -192,10 +215,10 @@ ALTER TABLE ONLY public.node
 ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_status_fkey FOREIGN KEY (status) REFERENCES public.status(status) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.node
-    ADD CONSTRAINT node_type_fkey FOREIGN KEY (type) REFERENCES public.node_types(node_type) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT node_type_fkey FOREIGN KEY (type) REFERENCES public.node_type(node_type) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.user_role
-    ADD CONSTRAINT user_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.role(role) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT user_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.role(role) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.user_role
     ADD CONSTRAINT user_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;

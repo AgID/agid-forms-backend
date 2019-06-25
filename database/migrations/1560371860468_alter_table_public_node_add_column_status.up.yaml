@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."node" ADD COLUMN "status" text NOT NULL DEFAULT 'draft'
-  type: run_sql

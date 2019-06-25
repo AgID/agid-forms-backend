@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."language" DROP COLUMN "id"
-  type: run_sql

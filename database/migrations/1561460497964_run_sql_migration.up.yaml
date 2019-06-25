@@ -1,9 +1,0 @@
-- args:
-    cascade: false
-    sql: "CREATE OR REPLACE FUNCTION public.increment_version() RETURNS trigger\r\n
-      \   LANGUAGE plpgsql\r\n    AS $$\r\nBEGIN\r\n  IF (TG_OP = 'UPDATE') THEN\r\n
-      \   IF NEW.version <> OLD.version THEN\r\n        RAISE EXCEPTION 'Cannot update
-      an old version, content was already modified by another transaction' USING \r\n
-      \           HINT = 'Try load the latest version before saving again';\r\n    END
-      IF;\r\n    NEW.version = OLD.version + 1;\r\n    RETURN NEW;\r\n  END IF;\r\nEND;\r\n$$;\r\n"
-  type: run_sql

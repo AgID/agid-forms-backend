@@ -1,5 +1,0 @@
-- args:
-    sql: alter table "public"."node" add constraint "node_language_fkey" foreign key
-      ("language") references "public"."language"("language") on update cascade on
-      delete restrict;
-  type: run_sql

@@ -1,3 +1,0 @@
-- args:
-    sql: alter table "public"."role" add constraint "role_role_key" unique ("role");
-  type: run_sql
