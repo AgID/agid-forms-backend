@@ -1,0 +1,10 @@
+- args:
+    cascade: false
+    sql: "CREATE OR REPLACE FUNCTION force_serial_id()\r\n  RETURNS trigger AS\r\n$$\r\nBEGIN\r\n
+      \  IF TG_OP = 'UPDATE' AND NEW.id <> OLD.id THEN\r\n     RAISE EXCEPTION 'Cannot
+      UPDATE with a different ID';\r\n   ELSIF TG_OP = 'INSERT' AND NEW.id IS NOT
+      NULL THEN\r\n     RAISE EXCEPTION 'Cannot INSERT with a user provided ID';\r\n
+      \  END IF;\r\n   RETURN NEW;\r\nEND\r\n$$ LANGUAGE plpgsql;\r\n\r\nDROP trigger
+      force_serial_id ON public.node;\r\nCREATE TRIGGER force_serial_id BEFORE INSERT
+      OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();\r\n\r\n"
+  type: run_sql
