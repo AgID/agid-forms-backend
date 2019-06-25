@@ -32,8 +32,11 @@ import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
+import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
+import { GetProfile } from "./controllers/profile";
 import { AuthWebhook } from "./controllers/webhook";
+import { makeRateLimiterMiddleware } from "./middlewares/rate_limiter";
 import { RedisObjectStorage } from "./services/redis_object_storage";
 import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
@@ -61,6 +64,22 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
   AppUser,
   key => `${SESSION_PREFIX}${key}`,
   key => `${SESSION_PREFIX}${key}`
+);
+
+//
+// Rate limiter (Max 1 reqest per hour)
+//
+const rateLimiterMiddleware = makeRateLimiterMiddleware(
+  new RateLimiterRedis({
+    // number of seconds before consumed points are reset (by IP)
+    duration: 3600,
+    keyPrefix: "authrl",
+    // maximum number of points can be consumed over duration
+    points: 1,
+    redis: redisClient
+    // cast needed due to incorrect typings
+    // tslint:disable-next-line: no-any
+  } as any)
 );
 
 //
@@ -108,7 +127,6 @@ const secretStorage = RedisObjectStorage(
 );
 
 import packageJson = require("../package.json");
-import { GetProfile } from "./controllers/profile";
 const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
@@ -147,6 +165,7 @@ app.use(passport.initialize());
 
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
+  rateLimiterMiddleware,
   SendEmailToRtd(
     GraphqlClient,
     nodedmailerTransporter,
@@ -157,6 +176,7 @@ app.post(
 
 app.post(
   `${API_BASE_PATH}/auth/login/:ipa_code`,
+  rateLimiterMiddleware,
   Login(
     GraphqlClient,
     secretStorage,

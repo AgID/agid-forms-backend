@@ -1,6 +1,6 @@
 {
   "name": "agid-forms-backend",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
@@ -62,6 +62,7 @@
     "passport-strategy": "^1.0.0",
     "patch-package": "^5.1.1",
     "randomstring": "^1.1.5",
+    "rate-limiter-flexible": "^1.0.2",
     "redis": "^2.8.0",
     "redis-clustr": "^1.6.0",
     "typescript": "^3.0.3",
