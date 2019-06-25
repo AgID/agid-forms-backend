@@ -22,8 +22,6 @@ CREATE FUNCTION public.force_serial_id() RETURNS trigger
 BEGIN
    IF TG_OP = 'UPDATE' AND NEW.id <> OLD.id THEN
      RAISE EXCEPTION 'Cannot UPDATE with a different ID';
-   ELSIF TG_OP = 'INSERT' THEN
-     NEW.id = gen_random_uuid();
    END IF;
    RETURN NEW;
 END
@@ -35,13 +33,13 @@ BEGIN
   IF (TG_OP = 'UPDATE') THEN
     IF NEW.version < OLD.version + 1 THEN
         RAISE EXCEPTION 'Cannot update an old revision (latest=%)', OLD.version
-        USING HINT = 'When updating set the current version of the content plus one';
+        USING ERRCODE = 'check_violation';
     ELSIF NEW.version > OLD.version + 1 THEN
         RAISE EXCEPTION 'Cannot update the current revision with a wrong version (latest=%)', OLD.version 
-        USING HINT = 'When updating set the current version of the content plus one';
+        USING ERRCODE = 'check_violation';
     ELSIF NEW.version IS NULL THEN
         RAISE EXCEPTION 'Cannot update the current revision without provinding a version (latest=%)', OLD.version 
-        USING HINT = 'When updating set the current version of the content plus one';
+        USING ERRCODE = 'check_violation';
     END IF;
     RETURN NEW;
   END IF;
@@ -206,8 +204,8 @@ ALTER TABLE ONLY public.user_role
 CREATE INDEX search_gin_idx ON public.ipa_pa USING gin ((((des_amm || ' '::text) || "Comune")) public.gin_trgm_ops);
 CREATE TRIGGER audit_node AFTER INSERT OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.audit_node();
 CREATE TRIGGER compute_ipa_column BEFORE INSERT OR UPDATE ON public.ipa_pa FOR EACH ROW EXECUTE PROCEDURE public.compute_ipa_column();
-CREATE TRIGGER force_serial_id BEFORE INSERT OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
-CREATE TRIGGER force_serial_id BEFORE INSERT OR UPDATE ON public."user" FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
+CREATE TRIGGER force_serial_id BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
+CREATE TRIGGER force_serial_id BEFORE UPDATE ON public."user" FOR EACH ROW EXECUTE PROCEDURE public.force_serial_id();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.trigger_updated_at();
 CREATE TRIGGER set_version BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.increment_version();
 ALTER TABLE ONLY public.node

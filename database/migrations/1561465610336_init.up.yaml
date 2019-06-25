@@ -246,6 +246,7 @@
           - language
           - title
           - type
+          - version
           set:
             user_id: x-hasura-User-Id
         role: rtd
@@ -288,6 +289,7 @@
           - language
           - status
           - title
+          - version
           filter:
             _and:
             - type:
