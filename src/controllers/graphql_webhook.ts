@@ -1,5 +1,6 @@
 import * as express from "express";
 import * as t from "io-ts";
+import * as RedisSMQ from "rsmq";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -36,7 +37,6 @@ const NodeT = t.interface({
   version: NonNegativeInteger
 });
 
-// tslint:disable-next-line: no-commented-code
 const WebhookPayload = t.interface({
   created_at: DateFromString,
   delivery_info: t.interface({
@@ -70,7 +70,8 @@ const WebhookResponse = t.interface({
 type WebhookResponse = t.TypeOf<typeof WebhookResponse>;
 
 type GraphqlWebhookT = (
-  receivedWebhookToken: string
+  receivedWebhookToken: string,
+  payload: WebhookPayload
 ) => Promise<
   // tslint:disable-next-line: max-union-size
   | IResponseErrorInternal
@@ -79,21 +80,42 @@ type GraphqlWebhookT = (
   | IResponseSuccessJson<WebhookResponse>
 >;
 
-function GraphqlWebhookHandler(webhookToken: string): GraphqlWebhookT {
-  return async (receivedWebhookToken: string) => {
+function GraphqlWebhookHandler(
+  webhookToken: string,
+  queueClient: RedisSMQ,
+  queueName: string
+): GraphqlWebhookT {
+  return async (receivedWebhookToken: string, payload: WebhookPayload) => {
     if (receivedWebhookToken !== webhookToken) {
       return ResponseErrorForbiddenNotAuthorized;
     }
+
+    // send event to queue
+    const queues = await queueClient.listQueuesAsync();
+    if (queues.indexOf(queueName) !== -1) {
+      await queueClient.createQueueAsync({ qname: queueName });
+    }
+    const ret = await queueClient.sendMessageAsync({
+      message: JSON.stringify(payload),
+      qname: queueName
+    });
+
     return ResponseSuccessJson({
-      message: "processing"
+      message: ret.toString()
     });
   };
 }
 
 export function GraphqlWebhook(
-  receivedWebhookToken: string
+  receivedWebhookToken: string,
+  queueClient: RedisSMQ,
+  queueName: string
 ): express.RequestHandler {
-  const handler = GraphqlWebhookHandler(receivedWebhookToken);
+  const handler = GraphqlWebhookHandler(
+    receivedWebhookToken,
+    queueClient,
+    queueName
+  );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredHeaderValueMiddleware("x-webhook-token"),
     DecodeBodyMiddleware(WebhookPayload)

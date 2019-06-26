@@ -16,6 +16,7 @@ import {
   HASURA_WEBHOOK_SECRET,
   JWT_EXPIRES_IN,
   JWT_SECRET,
+  NODE_EVENTS_QUEUE_NAME,
   RATE_LIMIT_DURATION,
   RATE_LIMIT_POINTS,
   SECRET_PREFIX,
@@ -36,8 +37,10 @@ import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
 import { RateLimiterRedis } from "rate-limiter-flexible";
+import { makeQueueClient } from "./clients/queue";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
 import { AuthWebhook } from "./controllers/auth_webhook";
+import { GraphqlWebhook } from "./controllers/graphql_webhook";
 import { GetProfile } from "./controllers/profile";
 import { makeRateLimiterMiddleware } from "./middlewares/rate_limiter";
 import { RedisObjectStorage } from "./services/redis_object_storage";
@@ -47,6 +50,8 @@ import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
 import { userWebhook } from "./utils/webhooks";
+
+import packageJson = require("../package.json");
 
 // tslint:disable-next-line: no-any
 const fetchApi = (nodeFetch as any) as typeof fetch;
@@ -129,8 +134,10 @@ const secretStorage = RedisObjectStorage(
   key => `${SECRET_PREFIX}${key}`
 );
 
-import packageJson = require("../package.json");
-import { GraphqlWebhook } from "./controllers/graphql_webhook";
+const queueClient = makeQueueClient({
+  client: redisClient
+});
+
 const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
@@ -210,7 +217,7 @@ app.get(
 
 app.post(
   `${API_BASE_PATH}/graphql/events`,
-  GraphqlWebhook(HASURA_WEBHOOK_SECRET)
+  GraphqlWebhook(HASURA_WEBHOOK_SECRET, queueClient, NODE_EVENTS_QUEUE_NAME)
 );
 
 app.get("/info", (_, res) => {
