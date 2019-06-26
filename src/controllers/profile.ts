@@ -1,5 +1,9 @@
 import * as express from "express";
 import {
+  withRequestMiddlewares,
+  wrapRequestHandler
+} from "italia-ts-commons/lib/request_middleware";
+import {
   IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseErrorValidation,
@@ -16,10 +20,6 @@ import {
   GetUserInfo,
   GetUserInfoVariables
 } from "../generated/graphql/GetUserInfo";
-import {
-  withRequestMiddlewares,
-  wrapRequestHandler
-} from "../middlewares/request_middleware";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { AppUser } from "../types/user";
 

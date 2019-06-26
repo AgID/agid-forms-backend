@@ -22,8 +22,10 @@ import * as t from "io-ts";
 
 import { TypeofApiCall } from "italia-ts-commons/lib/requests";
 
-import { withRequestMiddlewares } from "../middlewares/request_middleware";
-import { wrapRequestHandler } from "../middlewares/request_middleware";
+import {
+  withRequestMiddlewares,
+  wrapRequestHandler
+} from "italia-ts-commons/lib/request_middleware";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";

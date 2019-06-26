@@ -13,6 +13,7 @@ import { GraphqlClient } from "./clients/graphql";
 
 import {
   API_BASE_PATH,
+  HASURA_WEBHOOK_TOKEN,
   JWT_EXPIRES_IN,
   JWT_SECRET,
   RATE_LIMIT_DURATION,
@@ -36,8 +37,8 @@ import nodeFetch from "node-fetch";
 import * as nodemailer from "nodemailer";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
+import { AuthWebhook } from "./controllers/auth_webhook";
 import { GetProfile } from "./controllers/profile";
-import { AuthWebhook } from "./controllers/webhook";
 import { makeRateLimiterMiddleware } from "./middlewares/rate_limiter";
 import { RedisObjectStorage } from "./services/redis_object_storage";
 import { SessionToken } from "./types/token";
@@ -129,6 +130,7 @@ const secretStorage = RedisObjectStorage(
 );
 
 import packageJson = require("../package.json");
+import { GraphqlWebhook } from "./controllers/graphql_webhook";
 const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
@@ -204,6 +206,11 @@ app.get(
   `${API_BASE_PATH}/user/profile`,
   bearerTokenAuth,
   GetProfile(GraphqlClient)
+);
+
+app.post(
+  `${API_BASE_PATH}/graphql/events`,
+  GraphqlWebhook(HASURA_WEBHOOK_TOKEN)
 );
 
 app.get("/info", (_, res) => {
