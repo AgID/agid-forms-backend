@@ -82,7 +82,7 @@ export const RATE_LIMIT_POINTS = 5;
 // 1 hour
 export const RATE_LIMIT_DURATION = 3600;
 
-export const NODE_EVENTS_QUEUE_NAME = "events:node";
+export const NODE_EVENTS_QUEUE_NAME = "events-node";
 
 /////////// Authentication email configuration
 

@@ -92,7 +92,7 @@ function GraphqlWebhookHandler(
 
     // send event to queue
     const queues = await queueClient.listQueuesAsync();
-    if (queues.indexOf(queueName) !== -1) {
+    if (queues.indexOf(queueName) === -1) {
       await queueClient.createQueueAsync({ qname: queueName });
     }
     const ret = await queueClient.sendMessageAsync({
