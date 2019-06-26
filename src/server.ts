@@ -15,6 +15,8 @@ import {
   API_BASE_PATH,
   JWT_EXPIRES_IN,
   JWT_SECRET,
+  RATE_LIMIT_DURATION,
+  RATE_LIMIT_POINTS,
   SECRET_PREFIX,
   SERVER_PORT,
   SESSION_PREFIX,
@@ -67,15 +69,15 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
 );
 
 //
-// Rate limiter (Max 1 reqest per hour)
+// Rate limiter for authentication endpoints
 //
 const rateLimiterMiddleware = makeRateLimiterMiddleware(
   new RateLimiterRedis({
     // number of seconds before consumed points are reset (by IP)
-    duration: 3600,
+    duration: RATE_LIMIT_DURATION,
     keyPrefix: "authrl",
     // maximum number of points can be consumed over duration
-    points: 1,
+    points: RATE_LIMIT_POINTS,
     redis: redisClient
     // cast needed due to incorrect typings
     // tslint:disable-next-line: no-any

@@ -74,6 +74,12 @@ export const SECRET_PREFIX = "SECRET-";
 
 export const RTD_ROLE_NAME = "rtd";
 
+// maximum retries over duration
+export const RATE_LIMIT_POINTS = 5;
+
+// 1 hour
+export const RATE_LIMIT_DURATION = 3600;
+
 /////////// Authentication email configuration
 
 export const SERVICE_NAME = process.env.SERVICE_NAME || "";
