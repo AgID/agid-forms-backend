@@ -13,7 +13,7 @@ import { GraphqlClient } from "./clients/graphql";
 
 import {
   API_BASE_PATH,
-  HASURA_WEBHOOK_TOKEN,
+  HASURA_WEBHOOK_SECRET,
   JWT_EXPIRES_IN,
   JWT_SECRET,
   RATE_LIMIT_DURATION,
@@ -210,7 +210,7 @@ app.get(
 
 app.post(
   `${API_BASE_PATH}/graphql/events`,
-  GraphqlWebhook(HASURA_WEBHOOK_TOKEN)
+  GraphqlWebhook(HASURA_WEBHOOK_SECRET)
 );
 
 app.get("/info", (_, res) => {

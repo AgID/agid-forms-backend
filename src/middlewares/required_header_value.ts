@@ -6,8 +6,10 @@ import { ResponseErrorFromValidationErrors } from "italia-ts-commons/lib/respons
 export function RequiredHeaderValueMiddleware(
   name: string
 ): IRequestMiddleware<"IResponseErrorValidation", string> {
-  return async request =>
-    t.string
+  return async request => {
+    console.log(request.headers);
+    return t.string
       .decode(request.headers[name])
       .mapLeft(ResponseErrorFromValidationErrors(t.string));
+  };
 }

@@ -23,7 +23,7 @@ spec:
         name: hasura
         env:
         - name: EVENTS_WEBHOOK_URL
-          value: "https://backend.danilospinelli.com/api/v1/graphql/events"
+          value: "http://backend/api/v1/graphql/events"
         - name: HASURA_WEBHOOK_SECRET
           valueFrom:
             secretKeyRef:

@@ -67,7 +67,7 @@ export const HASURA_GRAPHQL_ENDPOINT =
 export const HASURA_GRAPHQL_ADMIN_SECRET =
   process.env.HASURA_GRAPHQL_ADMIN_SECRET || "";
 
-export const HASURA_WEBHOOK_TOKEN = process.env.HASURA_WEBHOOK_TOKEN || "";
+export const HASURA_WEBHOOK_SECRET = process.env.HASURA_WEBHOOK_SECRET || "";
 
 export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
 
