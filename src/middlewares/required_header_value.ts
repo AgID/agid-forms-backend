@@ -7,7 +7,6 @@ export function RequiredHeaderValueMiddleware(
   name: string
 ): IRequestMiddleware<"IResponseErrorValidation", string> {
   return async request => {
-    console.log(request.headers);
     return t.string
       .decode(request.headers[name])
       .mapLeft(ResponseErrorFromValidationErrors(t.string));

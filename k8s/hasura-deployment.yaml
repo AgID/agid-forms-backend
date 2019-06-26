@@ -29,7 +29,7 @@ spec:
             secretKeyRef:
               name: backend-secrets
               key: hasura_webhook_secret
-        - name: HASURA_GRAPHQL_UNAUTHORIZED_ROLE 
+        - name: HASURA_GRAPHQL_UNAUTHORIZED_ROLE
           value: "anonymous"
         - name: HASURA_GRAPHQL_ENABLE_CONSOLE
           value: "false"

@@ -15,51 +15,51 @@ import {
   wrapRequestHandler
 } from "italia-ts-commons/lib/request_middleware";
 
+import { DateFromString } from "italia-ts-commons/lib/dates";
 import { NonNegativeInteger } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { UUIDString } from "../generated/api/UUIDString";
 import { RequiredHeaderValueMiddleware } from "../middlewares/required_header_value";
 
-import { UTCISODateFromString } from "italia-ts-commons/lib/dates";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 
 const NodeT = t.interface({
   content: t.object,
-  created_at: UTCISODateFromString,
+  created_at: DateFromString,
   id: UUIDString,
   language: NonEmptyString,
   status: NonEmptyString,
   title: NonEmptyString,
   type: NonEmptyString,
-  updated_at: UTCISODateFromString,
+  updated_at: DateFromString,
   user_id: UUIDString,
   version: NonNegativeInteger
 });
 
 // tslint:disable-next-line: no-commented-code
 const WebhookPayload = t.interface({
+  created_at: DateFromString,
+  delivery_info: t.interface({
+    current_retry: NonNegativeInteger,
+    max_retries: NonNegativeInteger
+  }),
   event: t.interface({
-    created_at: UTCISODateFromString,
     data: t.partial({
       new: NodeT,
       old: NodeT
     }),
-    delivery_info: t.interface({
-      current_retry: NonNegativeInteger,
-      max_retries: NonNegativeInteger
-    }),
-    id: UUIDString,
     op: t.union([t.literal("UPDATE"), t.literal("INSERT")]),
     session_variables: t.partial({
       "x-hasura-role": NonEmptyString
-    }),
-    table: t.interface({
-      name: NonEmptyString,
-      schema: NonEmptyString
-    }),
-    trigger: t.interface({
-      name: NonEmptyString
     })
+  }),
+  id: UUIDString,
+  table: t.interface({
+    name: NonEmptyString,
+    schema: NonEmptyString
+  }),
+  trigger: t.interface({
+    name: NonEmptyString
   })
 });
 type WebhookPayload = t.TypeOf<typeof WebhookPayload>;
