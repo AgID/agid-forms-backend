@@ -22,7 +22,14 @@ spec:
         imagePullPolicy: IfNotPresent
         name: hasura
         env:
-        - name: HASURA_GRAPHQL_UNAUTHORIZED_ROLE 
+        - name: EVENTS_WEBHOOK_URL
+          value: "http://backend/api/v1/graphql/events"
+        - name: HASURA_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: hasura_webhook_secret
+        - name: HASURA_GRAPHQL_UNAUTHORIZED_ROLE
           value: "anonymous"
         - name: HASURA_GRAPHQL_ENABLE_CONSOLE
           value: "false"
