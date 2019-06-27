@@ -98,3 +98,8 @@ export const AUTHMAIL_REPLY_TO = process.env.AUTHMAIL_REPLY_TO;
 export const AUTHMAIL_TEST_ADDRESS = process.env.AUTHMAIL_TEST_ADDRESS;
 
 export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;
+
+// Queues
+
+export const QUEUE_MAX_ATTEMPTS = 20;
+export const QUEUE_INITIAL_DELAY_MS = 1000;

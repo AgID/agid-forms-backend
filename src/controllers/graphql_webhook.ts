@@ -49,7 +49,11 @@ export const WebhookPayload = t.interface({
       new: NodeT,
       old: NodeT
     }),
-    op: t.union([t.literal("UPDATE"), t.literal("INSERT")]),
+    op: t.union([
+      t.literal("UPDATE"),
+      t.literal("INSERT"),
+      t.literal("DELETE")
+    ]),
     session_variables: t.partial({
       "x-hasura-role": NonEmptyString
     })
