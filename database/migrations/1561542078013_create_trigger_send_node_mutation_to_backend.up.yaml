@@ -1,0 +1,27 @@
+- args:
+    enable_manual: true
+    headers: []
+    insert:
+      columns: '*'
+    name: send_node_mutation_to_backend
+    retry_conf:
+      interval_sec: 10
+      num_retries: 10
+      timeout_sec: 60
+    table:
+      name: node
+      schema: public
+    update:
+      columns:
+      - version
+      - status
+      - title
+      - updated_at
+      - id
+      - user_id
+      - language
+      - content
+      - type
+      - created_at
+    webhook_from_env: EVENTS_WEBHOOK_URL
+  type: create_event_trigger
