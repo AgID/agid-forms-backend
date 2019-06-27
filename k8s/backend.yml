@@ -28,7 +28,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: docker.io/gunzip/agid-forms-backend:1.2.1
+      - image: docker.io/gunzip/agid-forms-backend:1.4.0
         name: backend
         ports:
         - name: http-port
@@ -48,6 +48,11 @@ spec:
           value: "http://hasura/v1/graphql"
         - name: "HASURA_GRAPHQL_UNAUTHORIZED_ROLE"
           value: "anonymous"
+        - name: HASURA_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: hasura_webhook_secret
         - name: HASURA_GRAPHQL_ADMIN_SECRET
           valueFrom:
             secretKeyRef:

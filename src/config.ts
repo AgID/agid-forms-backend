@@ -35,6 +35,10 @@ export const CLIENT_ERROR_REDIRECTION_URL =
 export const CLIENT_REDIRECTION_URL =
   process.env.CLIENT_REDIRECTION_URL || "/login";
 
+export const REDIS_PORT = process.env.REDIS_PORT || "6379";
+export const REDIS_URL = process.env.REDIS_URL || "";
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || "";
+
 // Set default session duration to 30 days
 const DEFAULT_TOKEN_DURATION_IN_SECONDS = 3600 * 24 * 30;
 export const TOKEN_DURATION_IN_SECONDS = process.env.TOKEN_DURATION_IN_SECONDS
@@ -67,12 +71,22 @@ export const HASURA_GRAPHQL_ENDPOINT =
 export const HASURA_GRAPHQL_ADMIN_SECRET =
   process.env.HASURA_GRAPHQL_ADMIN_SECRET || "";
 
+export const HASURA_WEBHOOK_SECRET = process.env.HASURA_WEBHOOK_SECRET || "";
+
 export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
 
 export const SESSION_PREFIX = "SESSION-";
 export const SECRET_PREFIX = "SECRET-";
 
 export const RTD_ROLE_NAME = "rtd";
+
+// maximum retries over duration
+export const RATE_LIMIT_POINTS = 5;
+
+// 1 hour
+export const RATE_LIMIT_DURATION = 3600;
+
+export const NODE_EVENTS_CHANNEL_NAME = "events-node";
 
 /////////// Authentication email configuration
 
@@ -84,3 +98,8 @@ export const AUTHMAIL_REPLY_TO = process.env.AUTHMAIL_REPLY_TO;
 export const AUTHMAIL_TEST_ADDRESS = process.env.AUTHMAIL_TEST_ADDRESS;
 
 export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;
+
+// Queues
+
+export const QUEUE_MAX_ATTEMPTS = 20;
+export const QUEUE_INITIAL_DELAY_MS = 1000;

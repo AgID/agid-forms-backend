@@ -13,7 +13,7 @@ import {
 import {
   withRequestMiddlewares,
   wrapRequestHandler
-} from "../middlewares/request_middleware";
+} from "italia-ts-commons/lib/request_middleware";
 import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 
 import { GraphqlClient, UPSERT_USER } from "../clients/graphql";

@@ -1,6 +1,6 @@
 {
   "name": "agid-forms-backend",
-  "version": "1.2.1",
+  "version": "1.4.0",
   "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
@@ -35,10 +35,12 @@
   },
   "homepage": "https://github.com/AGID/agid-forms-backend#readme",
   "dependencies": {
+    "abort-controller": "^3.0.0",
     "apollo-cache-inmemory": "^1.6.1",
     "apollo-client": "^2.6.1",
     "apollo-link-http": "^1.5.14",
     "body-parser": "^1.18.3",
+    "bull": "^3.10.0",
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "email-templates": "^5.0.5",
@@ -65,12 +67,12 @@
     "rate-limiter-flexible": "^1.0.2",
     "redis": "^2.8.0",
     "redis-clustr": "^1.6.0",
-    "typescript": "^3.0.3",
     "ulid": "^2.2.2",
     "winston": "^3.0.0",
     "xmldom": "^0.1.27"
   },
   "devDependencies": {
+    "@types/bull": "^3.5.14",
     "@types/cors": "^2.8.5",
     "@types/dotenv": "^4.0.2",
     "@types/email-templates": "^3.5.1",
@@ -110,6 +112,7 @@
     "ts-jest": "^23.10.4",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
+    "typescript": "^3.5.2",
     "typescript-tslint-plugin": "^0.4.0",
     "typestrict": "^1.0.1"
   },

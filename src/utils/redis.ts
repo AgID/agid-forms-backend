@@ -8,8 +8,6 @@ import RedisClustr = require("redis-clustr");
 import { isNumber } from "util";
 import { log } from "../utils/logger";
 
-export const DEFAULT_REDIS_PORT = "6379";
-
 export function createSimpleRedisClient(
   redisPort: number,
   redisHost: string,

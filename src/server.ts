@@ -13,8 +13,15 @@ import { GraphqlClient } from "./clients/graphql";
 
 import {
   API_BASE_PATH,
+  HASURA_WEBHOOK_SECRET,
   JWT_EXPIRES_IN,
   JWT_SECRET,
+  NODE_EVENTS_CHANNEL_NAME,
+  RATE_LIMIT_DURATION,
+  RATE_LIMIT_POINTS,
+  REDIS_PASSWORD,
+  REDIS_PORT,
+  REDIS_URL,
   SECRET_PREFIX,
   SERVER_PORT,
   SESSION_PREFIX,
@@ -33,16 +40,18 @@ import nodeFetch from "node-fetch";
 
 import * as nodemailer from "nodemailer";
 import { RateLimiterRedis } from "rate-limiter-flexible";
+import packageJson = require("../package.json");
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
+import { AuthWebhook } from "./controllers/auth_webhook";
+import { GraphqlWebhook } from "./controllers/graphql_webhook";
 import { GetProfile } from "./controllers/profile";
-import { AuthWebhook } from "./controllers/webhook";
 import { makeRateLimiterMiddleware } from "./middlewares/rate_limiter";
 import { RedisObjectStorage } from "./services/redis_object_storage";
 import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
-import { createSimpleRedisClient, DEFAULT_REDIS_PORT } from "./utils/redis";
+import { createSimpleRedisClient } from "./utils/redis";
 import { userWebhook } from "./utils/webhooks";
 
 // tslint:disable-next-line: no-any
@@ -53,9 +62,9 @@ const fetchApi = (nodeFetch as any) as typeof fetch;
 //
 
 const redisClient = createSimpleRedisClient(
-  parseInt(process.env.REDIS_PORT || DEFAULT_REDIS_PORT, 10),
-  process.env.REDIS_URL!,
-  process.env.REDIS_PASSWORD!
+  parseInt(REDIS_PORT, 10),
+  REDIS_URL,
+  REDIS_PASSWORD
 );
 
 const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
@@ -67,15 +76,15 @@ const sessionStorage = RedisObjectStorage<AppUser, SessionToken>(
 );
 
 //
-// Rate limiter (Max 1 reqest per hour)
+// Rate limiter for authentication endpoints
 //
 const rateLimiterMiddleware = makeRateLimiterMiddleware(
   new RateLimiterRedis({
     // number of seconds before consumed points are reset (by IP)
-    duration: 3600,
+    duration: RATE_LIMIT_DURATION,
     keyPrefix: "authrl",
     // maximum number of points can be consumed over duration
-    points: 1,
+    points: RATE_LIMIT_POINTS,
     redis: redisClient
     // cast needed due to incorrect typings
     // tslint:disable-next-line: no-any
@@ -126,7 +135,6 @@ const secretStorage = RedisObjectStorage(
   key => `${SECRET_PREFIX}${key}`
 );
 
-import packageJson = require("../package.json");
 const version = t.string.decode(packageJson.version).getOrElse("UNKNOWN");
 
 // Create and setup the Express app.
@@ -202,6 +210,11 @@ app.get(
   `${API_BASE_PATH}/user/profile`,
   bearerTokenAuth,
   GetProfile(GraphqlClient)
+);
+
+app.post(
+  `${API_BASE_PATH}/graphql/events`,
+  GraphqlWebhook(HASURA_WEBHOOK_SECRET, redisClient, NODE_EVENTS_CHANNEL_NAME)
 );
 
 app.get("/info", (_, res) => {
