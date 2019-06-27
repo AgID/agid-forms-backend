@@ -1,6 +1,6 @@
 {
   "name": "agid-forms-backend",
-  "version": "1.2.1",
+  "version": "1.4.0",
   "description": "agid-forms-backend",
   "main": "index.js",
   "engines": {
@@ -39,6 +39,7 @@
     "apollo-client": "^2.6.1",
     "apollo-link-http": "^1.5.14",
     "body-parser": "^1.18.3",
+    "bull": "^3.10.0",
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "email-templates": "^5.0.5",
@@ -71,6 +72,7 @@
     "xmldom": "^0.1.27"
   },
   "devDependencies": {
+    "@types/bull": "^3.5.14",
     "@types/cors": "^2.8.5",
     "@types/dotenv": "^4.0.2",
     "@types/email-templates": "^3.5.1",
