@@ -1,0 +1,24 @@
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - created_at
+      - updated_at
+      - version
+      - title
+      - content
+      - user_id
+      - id
+      - status
+      - type
+      - language
+      filter:
+        _and:
+        - status:
+            _eq: published
+      limit: null
+    role: anonymous
+    table:
+      name: node
+      schema: public
+  type: create_select_permission

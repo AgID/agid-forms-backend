@@ -144,7 +144,11 @@ const app = express();
 app.use(helmet());
 
 // Set up CORS (free access to the API from browser clients)
-app.use(cors());
+app.use(
+  cors({
+    exposedHeaders: ["retry-after", "x-ratelimit-reset"]
+  })
+);
 
 // Add a request logger.
 const loggerFormat =
