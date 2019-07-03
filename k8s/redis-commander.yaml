@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-commander
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-commander
+  template:
+    metadata:
+      labels:
+        app: redis-commander
+        tier: backend
+    spec:
+      containers:
+      - name: redis-commander
+        image: rediscommander/redis-commander
+        env:
+        - name: REDIS_HOST
+          value: redis-master
+        - name: REDIS_PORT          
+          value: "6379"
+        - name: K8S_HANDLE
+          value: "1"
+        - name: "REDIS_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: redis_password
+        ports:
+        - name: redis-commander
+          containerPort: 8081
+        resources:
+          limits:
+            cpu: 500m
+            memory: 2Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-commander
+  labels:
+    app: redis-commander
+    tier: backend
+spec:
+  ports:
+  - port: 8081
+    targetPort: redis-commander
+    name: redis-commander
+  selector:
+    app: redis-commander
+    tier: backend
