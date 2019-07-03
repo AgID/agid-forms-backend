@@ -7,7 +7,7 @@ import { UUIDString } from "../generated/api/UUIDString";
 import { GraphqlToken } from "../types/token";
 import { AppUser } from "../types/user";
 
-export const HasuraJwtService = (secret: string, expiresIn: string) => ({
+export const HasuraJwtService = (secret: string, expiresInSeconds: number) => ({
   /**
    * Generates a new JWT for a Drupal user's uid.
    */
@@ -29,7 +29,7 @@ export const HasuraJwtService = (secret: string, expiresIn: string) => ({
       name
     };
     return sign(user, secret, {
-      expiresIn
+      expiresIn: expiresInSeconds
     }) as GraphqlToken;
   }
 });
@@ -38,13 +38,16 @@ export type HasuraJwtService = typeof HasuraJwtService;
 
 ///////////////////////////////////////////////////////
 
-export const WebhookJwtService = (secret: string, expiresIn: string) => ({
+export const WebhookJwtService = (
+  secret: string,
+  expiresInSeconds: number
+) => ({
   /**
    * Generates a new JWT for webhook.
    */
   getJwtForWebhook: (user: AppUser): string => {
     return sign(user, Buffer.from(secret, "base64"), {
-      expiresIn
+      expiresIn: expiresInSeconds
     });
   }
 });

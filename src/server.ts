@@ -14,7 +14,6 @@ import { GraphqlClient } from "./clients/graphql";
 import {
   API_BASE_PATH,
   HASURA_WEBHOOK_SECRET,
-  JWT_EXPIRES_IN,
   JWT_SECRET,
   NODE_EVENTS_CHANNEL_NAME,
   RATE_LIMIT_DURATION,
@@ -116,9 +115,15 @@ const jwtTokenAuth = passport.authenticate("jwt", { session: false });
 //
 // Setup dependecies for controllers
 //
-const hasuraJwtService = HasuraJwtService(JWT_SECRET, JWT_EXPIRES_IN);
+const hasuraJwtService = HasuraJwtService(
+  JWT_SECRET,
+  TOKEN_DURATION_IN_SECONDS
+);
 
-const webhookJwtService = WebhookJwtService(WEBHOOK_JWT_SECRET, JWT_EXPIRES_IN);
+const webhookJwtService = WebhookJwtService(
+  WEBHOOK_JWT_SECRET,
+  TOKEN_DURATION_IN_SECONDS
+);
 
 const userWebhookRequest = createFetchRequestForApi(userWebhook, {
   baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
