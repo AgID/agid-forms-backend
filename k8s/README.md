@@ -126,7 +126,7 @@ Happy Helming!
 ### Install Redis instance
 
 ```
-$helm install --name redis stable/redis
+$helm install --name redis stable/redis --set master.disableCommands="[]"
 ```
 
 ### Installing Cert Manager
