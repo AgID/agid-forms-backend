@@ -9,11 +9,10 @@ in the Kubernetes (K8S) cluster.
 
   1. Install and setup `kubectl`
   1. Configure the K8S cluster credentials
-  1. Install and configure [Helm](https://helm.sh/) (the package manager for
-     Kubernetes) properly configured for your cluster (see
-     the below)
-  1. [Switch the context](https://kubernetes-v1-4.github.io/docs/user-guide/kubectl/kubectl_config_use-context/)
-     for the environment you want to work on (e.g. `test` or `production`).
+  1. Run `kubectl apply -f k8s/system/cluster-admin.yml`
+  1. Run `kubectl apply -f k8s/system/tiller-rbac-config.yml`
+  1. Install [Helm](https://helm.sh/)
+  1. Run `helm init --service-account tiller`
 
 ## Configuring resources
 
@@ -82,7 +81,7 @@ Add a `postgresql-password` entry (file) to backend-secrets then install
 postgresql with helm:
 
 ```
-$ helm install --name postgresql --set existingSecret=backend-secrets,postgresqlDatabase=agid
+$ helm install stable/postgresql --name postgresql --set existingSecret=backend-secrets,postgresqlDatabase=agid
 ```
 
 ## Additional components
@@ -126,7 +125,7 @@ Happy Helming!
 ### Install Redis instance
 
 ```
-$helm install --name redis stable/redis --set master.disableCommands="[]"
+$ helm install --name redis stable/redis --set master.disableCommands=""
 ```
 
 ### Installing Cert Manager

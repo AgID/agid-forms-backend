@@ -1,25 +1,117 @@
-version: "2"
+version: "3"
 
 services:
-  agid-forms-backend:
-    command: ["yarn", "hot-reload"]
-    container_name: agid-forms-backend
-    environment:
-      - NODE_ENV=dev
-    expose:
-      - "443"
-    ports:
-      - "443:443"
-    image: node:8.9.4-alpine
-    volumes:
-      - ".:/usr/src/app"
-      - "./certs:/usr/src/app/certs"
-    working_dir: "/usr/src/app"
 
   redis:
-    container_name: redis
-    image: wodby/redis:3.2-2.1.5
+    image: bitnami/redis:5.0
+    env_file: 
+      - .env
+    ports:
+      - "6379"
+    networks:
+      - app-tier
+    volumes:
+      - /data/redis:/bitnami/redis/data
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander
+    env_file: 
+      - .env
     environment:
-      REDIS_TIMEOUT: 300
-      REDIS_TCP_KEEPALIVE: 60
-      REDIS_MAXMEMORY: 182m
+      - PORT=${REDIS_PORT}
+    ports:
+      - "8081"
+    networks:
+      - app-tier
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  postgresql:
+    image: bitnami/postgresql:11
+    env_file: 
+      - .env
+    ports:
+      - '5432'
+    networks:
+      - app-tier
+    volumes:
+      - /data/postgresql:/bitnami
+    restart: unless-stopped
+
+  hasura:
+    image: hasura/graphql-engine:v1.0.0-beta.3
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:${HASURA_HOST}
+      - traefik.docker.network=app-tier
+    env_file:
+      - .env
+    ports:
+      - "8080"
+    networks:
+      - app-tier
+    depends_on:
+      - postgresql
+    restart: unless-stopped
+
+  agid-forms-backend:
+    image: docker.io/gunzip/agid-forms-backend:1.4.2
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:${BACKEND_HOST}
+      - traefik.docker.network=app-tier
+    env_file: 
+      - .env
+    ports:
+      - "80"
+    command: ["yarn", "start"]
+    networks:
+      - app-tier
+    depends_on:
+      - hasura
+      - redis
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v1.7
+    command: |-
+      --api
+      --api.dashboard=true
+      --debug=false
+      --loglevel=ERROR
+      --retry
+      --defaultentrypoints=http,https
+      --entryPoints='Name:traefik Address::${TRAEFIK_DASHBOARD_PORT} Auth.Basic.Users:${TRAEFIK_DASHBOARD_USER}:${TRAEFIK_DASHBOARD_PASSWORD}'
+      --entryPoints='Name:http Address::80 Redirect.EntryPoint:https'
+      --entryPoints='Name:https Address::443 TLS'
+      --docker
+      --docker.endpoint="unix:///var/run/docker.sock"
+      --docker.domain=${TRAEFIK_DOMAIN}
+      --docker.watch=true
+      --docker.exposedbydefault=false
+      --acme
+      --acme.email=${TRAEFIK_ACME_EMAIL} 
+      --acme.entrypoint=https
+      --acme.httpchallenge.entrypoint=http
+      --acme.storage=acme.json
+      --acme.onhostrule=true
+    labels:
+      - traefik.docker.network=app-tier
+    env_file: 
+      - .env
+    ports:
+      - 80:80
+      - 443:443
+      - ${TRAEFIK_DASHBOARD_PORT}:${TRAEFIK_DASHBOARD_PORT}
+    networks:
+      - app-tier
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./conf/traefik/acme.json:/acme.json
+    restart: unless-stopped
+
+networks:
+  app-tier:
+    driver: bridge
