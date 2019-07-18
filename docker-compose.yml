@@ -38,6 +38,7 @@ services:
       - app-tier
     volumes:
       - /data/postgresql:/bitnami
+      - ./scripts/ipa-import-local.sh:/ipa-import-local.sh
     restart: unless-stopped
 
   hasura:
@@ -115,3 +116,5 @@ services:
 networks:
   app-tier:
     driver: bridge
+    driver_opts:                         
+      com.docker.network.driver.mtu: 1450

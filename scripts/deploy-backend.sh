@@ -16,4 +16,4 @@ docker build -t gunzip/agid-forms-backend:$version .
 
 docker push gunzip/agid-forms-backend:$version
 
-kubectl apply -f ./k8s/backend.yml
+# kubectl apply -f ./k8s/backend.yml

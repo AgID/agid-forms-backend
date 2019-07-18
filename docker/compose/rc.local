@@ -1,8 +1,13 @@
 #!/bin/sh -e
 
+# install docker & docker-compose
+
 # needed to run redis
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 sysctl vm.overcommit_memory=1
 sysctl net.core.somaxconn=512
+
+# import data from indicepa
+(crontab -l; echo "00 00 * * * docker-compose exec postgresql ./ipa-import-local.sh") | sort | uniq | crontab
 
 exit 0
