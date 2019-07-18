@@ -1,0 +1,39 @@
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - version
+      - status
+      - title
+      - updated_at
+      - id
+      - user_id
+      - language
+      - content
+      - type
+      - created_at
+      filter:
+        _and:
+        - type:
+            _in:
+            - dichiarazione_accessibilita
+        - user_id:
+            _eq: X-Hasura-User-Id
+      limit: 20
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: create_select_permission
+- args:
+    role: rtd
+    table:
+      name: node
+      schema: public
+  type: drop_select_permission
+- args:
+    role: rtd
+    table:
+      name: node_revision
+      schema: public
+  type: drop_select_permission
