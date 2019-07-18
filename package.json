@@ -19,8 +19,12 @@
     "start": "node src/server.js",
     "generate:templates": "gulp generate:templates",
     "generate:backend:api-models": "gen-api-models --api-spec api_backend.yaml --no-strict --out-dir src/generated/api",
-    "generate:graphql:schema": "dotenv -- cross-var gq $HASURA_GRAPHQL_ENDPOINT -H \"X-Hasura-Admin-Secret: $HASURA_GRAPHQL_ADMIN_SECRET\" --introspect > schema.graphql",
+    "get:graphql:schema": "dotenv -- cross-var gq \\$HASURA_GRAPHQL_ENDPOINT -H \"X-Hasura-Admin-Secret: \\$HASURA_GRAPHQL_ADMIN_SECRET\" --introspect > schema.graphql",
     "generate:graphql:hasura": "dotenv -- apollo client:codegen --tag hasura --target typescript --tagName=gql --clientName GraphqlClient --useReadOnlyTypes --outputFlat ./src/generated/graphql",
+    "generate": "npm-run-all -s generate:**",
+    "run-process:node-events-dispatcher": "node src/workers/node_events_dispatcher.js",
+    "run-process:email-processor": "node src/workers/email_processor.js",
+    "run-process:link-verifier-processor": "node src/workers/link_verifier_processor.js",
     "postversion": "git push && git push --tags"
   },
   "repository": {
@@ -96,6 +100,7 @@
     "apollo": "^2.13.1",
     "cross-var": "^1.1.0",
     "dotenv-cli": "^2.0.0",
+    "graphqurl": "^0.3.3",
     "gulp": "^4.0.2",
     "gulp-prettier": "^2.1.0",
     "gulp-rename": "^1.4.0",
