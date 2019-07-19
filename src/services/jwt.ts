@@ -7,6 +7,8 @@ import { UUIDString } from "../generated/api/UUIDString";
 import { GraphqlToken } from "../types/token";
 import { AppUser } from "../types/user";
 
+const HASURA_AUTHENTICATED_ROLE = "authenticated";
+
 export const HasuraJwtService = (secret: string, expiresInSeconds: number) => ({
   /**
    * Generates a new JWT for a Drupal user's uid.
@@ -14,16 +16,17 @@ export const HasuraJwtService = (secret: string, expiresInSeconds: number) => ({
   getJwtForUser: (
     name: string,
     userId: UUIDString,
-    organizationId: string,
+    groupId: string,
     roles: ReadonlyArray<string>,
-    admin: boolean = false
   ): GraphqlToken => {
     const user = {
-      admin,
       "https://hasura.io/jwt/claims": {
-        "x-hasura-allowed-roles": roles,
-        "x-hasura-default-role": roles[0],
-        "x-hasura-org-id": organizationId,
+        "x-hasura-allowed-roles": [HASURA_AUTHENTICATED_ROLE, ...roles],
+        // if you want to use a different role for a graphql request
+        // add a custom http header "x-hasura-role"
+        // see https://docs.hasura.io/1.0/graphql/manual/auth/authentication/jwt.html#the-spec
+        "x-hasura-default-role": HASURA_AUTHENTICATED_ROLE,
+        "x-hasura-group-id": groupId,
         "x-hasura-user-id": userId
       },
       name

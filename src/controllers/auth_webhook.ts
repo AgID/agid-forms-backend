@@ -61,7 +61,7 @@ function AuthWebhookHandler(
               user_group_group: {
                 data: {
                   // assumes user.name = cod_amm
-                  group: user.name
+                  group: user.group
                 },
                 on_conflict: {
                   constraint: group_constraint.groups_pkey,
@@ -111,7 +111,7 @@ function AuthWebhookHandler(
     const jwt = hasuraJwtService.getJwtForUser(
       user.email,
       userUuid,
-      user.name,
+      user.group,
       user.roles
     );
 
