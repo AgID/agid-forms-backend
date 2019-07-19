@@ -1,0 +1,3 @@
+- args:
+    sql: ALTER TABLE "public"."node" ADD COLUMN "group" text NOT NULL DEFAULT 'global'
+  type: run_sql

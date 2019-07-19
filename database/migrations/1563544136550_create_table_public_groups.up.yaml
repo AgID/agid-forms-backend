@@ -1,0 +1,8 @@
+- args:
+    sql: CREATE TABLE "public"."groups"("group" text NOT NULL, PRIMARY KEY ("group")
+      ); COMMENT ON TABLE "public"."groups" IS 'snake case group names';
+  type: run_sql
+- args:
+    name: groups
+    schema: public
+  type: add_existing_table_or_view

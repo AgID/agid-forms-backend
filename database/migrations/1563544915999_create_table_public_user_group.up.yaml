@@ -1,0 +1,12 @@
+- args:
+    sql: CREATE TABLE "public"."user_group"("user_id" uuid NOT NULL, "group" text
+      NOT NULL, "role" text NOT NULL, PRIMARY KEY ("user_id","group","role") , FOREIGN
+      KEY ("user_id") REFERENCES "public"."user"("id") ON UPDATE cascade ON DELETE
+      cascade, FOREIGN KEY ("group") REFERENCES "public"."group"("group") ON UPDATE
+      cascade ON DELETE cascade, FOREIGN KEY ("role") REFERENCES "public"."role"("role")
+      ON UPDATE cascade ON DELETE cascade);
+  type: run_sql
+- args:
+    name: user_group
+    schema: public
+  type: add_existing_table_or_view

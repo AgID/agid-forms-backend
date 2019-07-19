@@ -1,0 +1,6 @@
+- args:
+    sql: ALTER TABLE "public"."node_type" ADD COLUMN "role" text
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."node_type" ALTER COLUMN "role" DROP NOT NULL
+  type: run_sql

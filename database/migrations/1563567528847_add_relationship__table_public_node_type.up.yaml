@@ -1,0 +1,12 @@
+- args:
+    name: node_type_perms
+    table:
+      name: node_type
+      schema: public
+    using:
+      foreign_key_constraint_on:
+        column: node_type
+        table:
+          name: node_type_perm
+          schema: public
+  type: create_array_relationship

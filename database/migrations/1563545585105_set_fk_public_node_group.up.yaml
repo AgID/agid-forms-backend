@@ -1,0 +1,6 @@
+- args:
+    sql: "\n           alter table \"public\".\"node\"\n           add constraint
+      \"node_group_fkey\" \n           foreign key (\"group\") \n           references
+      \"public\".\"group\"\n           (\"group\") on update cascade on delete restrict;\n
+      \     "
+  type: run_sql

@@ -1,0 +1,11 @@
+- args:
+    sql: CREATE TABLE "public"."node_type_perm"("node_type" text NOT NULL, "role"
+      text NOT NULL, "insert" boolean NOT NULL, PRIMARY KEY ("node_type","role") ,
+      FOREIGN KEY ("node_type") REFERENCES "public"."node_type"("node_type") ON UPDATE
+      cascade ON DELETE cascade, FOREIGN KEY ("role") REFERENCES "public"."role"("role")
+      ON UPDATE cascade ON DELETE cascade);
+  type: run_sql
+- args:
+    name: node_type_perm
+    schema: public
+  type: add_existing_table_or_view

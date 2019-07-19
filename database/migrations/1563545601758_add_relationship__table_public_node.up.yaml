@@ -1,0 +1,8 @@
+- args:
+    name: node_group
+    table:
+      name: node
+      schema: public
+    using:
+      foreign_key_constraint_on: group
+  type: create_object_relationship

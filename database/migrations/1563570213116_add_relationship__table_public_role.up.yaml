@@ -1,0 +1,12 @@
+- args:
+    name: user_groups
+    table:
+      name: role
+      schema: public
+    using:
+      foreign_key_constraint_on:
+        column: role
+        table:
+          name: user_group
+          schema: public
+  type: create_array_relationship
