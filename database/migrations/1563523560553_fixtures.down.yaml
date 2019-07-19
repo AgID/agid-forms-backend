@@ -1,0 +1,7 @@
+- type: run_sql
+  args:
+    sql: |
+        DELETE FROM node_type;
+        DELETE FROM language;
+        DELETE FROM role;
+        DELETE FROM status;
