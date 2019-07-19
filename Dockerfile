@@ -1,5 +1,8 @@
 FROM circleci/node:8.11.3 as builder
 
+ARG HASURA_GRAPHQL_ENDPOINT
+ARG HASURA_GRAPHQL_ADMIN_SECRET
+
 RUN sudo apt-get -y install --no-install-recommends libunwind8=1.1-3.2
 
 WORKDIR /usr/src/app
@@ -11,11 +14,11 @@ COPY /tsconfig.json /usr/src/app/tsconfig.json
 COPY /yarn.lock /usr/src/app/yarn.lock
 COPY /api_backend.yaml /usr/src/app/api_backend.yaml
 COPY /gulpfile.js /usr/src/app/gulpfile.js
+COPY /apollo.config.js /usr/src/app/apollo.config.js
 
 RUN sudo chmod -R 777 /usr/src/app \
   && yarn install \
-  && yarn generate:backend:api-models \
-  && yarn generate:templates \
+  && yarn generate \
   && yarn build
 
 FROM node:8.11.3-alpine

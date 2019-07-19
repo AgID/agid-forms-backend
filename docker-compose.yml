@@ -58,13 +58,19 @@ services:
     restart: unless-stopped
 
   agid-forms-backend:
-    image: docker.io/gunzip/agid-forms-backend:1.4.2
+    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
+    image: agid-forms-backend:local
+    env_file: 
+      - .env
+    build:
+      context: .
+      args:
+        - HASURA_GRAPHQL_ENDPOINT
+        - HASURA_GRAPHQL_ADMIN_SECRET
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${BACKEND_HOST}
       - traefik.docker.network=app-tier
-    env_file: 
-      - .env
     ports:
       - "80"
     command: ["yarn", "start"]
@@ -73,6 +79,44 @@ services:
     depends_on:
       - hasura
       - redis
+      # to get graphql endpoint with https
+      - traefik
+    restart: unless-stopped
+
+  agid-forms-backend-dispatcher:
+    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
+    image: agid-forms-backend:local
+    env_file: 
+      - .env
+    command: ["yarn", "run-process:node-events-dispatcher"]
+    networks:
+      - app-tier
+    depends_on:
+      - agid-forms-backend
+    restart: unless-stopped
+
+  agid-forms-backend-worker-01:
+    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
+    image: agid-forms-backend:local
+    env_file: 
+      - .env
+    command: ["yarn", "run-process:email-processor"]
+    networks:
+      - app-tier
+    depends_on:
+      - agid-forms-backend
+    restart: unless-stopped
+
+  agid-forms-backend-worker-02:
+    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
+    image: agid-forms-backend:local
+    env_file: 
+      - .env
+    command: ["yarn", "run-process:link-verifier-processor"]
+    networks:
+      - app-tier
+    depends_on:
+      - agid-forms-backend
     restart: unless-stopped
 
   traefik:
@@ -110,7 +154,7 @@ services:
       - app-tier
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./conf/traefik/acme.json:/acme.json
+      - /data/traefik/acme.json:/acme.json
     restart: unless-stopped
 
 networks:

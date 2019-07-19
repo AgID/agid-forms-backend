@@ -2,6 +2,16 @@
 
 # install docker & docker-compose
 
+mount /dev/vdb /data/
+
+mkdir -p /data/redis && chmod 777 /data/redis
+mkdir -p /data/postgresql && chmod 777 /data/postgresql
+mkdir -p /data/wal-logs && chmod 777 /data/wal-logs
+mkdir -p /data/traefik && chmod 777 /data/traefik
+
+touch /data/traefik/acme.json
+chmod 600 /data/traefik/acme.json
+
 # needed to run redis
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 sysctl vm.overcommit_memory=1
