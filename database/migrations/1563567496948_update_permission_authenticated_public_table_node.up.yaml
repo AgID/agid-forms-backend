@@ -1,0 +1,24 @@
+- args:
+    permission:
+      allow_upsert: true
+      check:
+        _and:
+        - user:
+            user_groups:
+              user_id:
+                _eq: X-Hasura-User-Id
+        - user:
+            user_groups:
+              user_group_group:
+                group:
+                  _eq: X-Hasura-Group-Id
+      columns: []
+      localPresets:
+      - key: ""
+        value: ""
+      set: {}
+    role: authenticated
+    table:
+      name: node
+      schema: public
+  type: create_insert_permission

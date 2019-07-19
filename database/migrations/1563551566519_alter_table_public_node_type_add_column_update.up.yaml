@@ -1,0 +1,4 @@
+- args:
+    sql: ALTER TABLE "public"."node_type" ADD COLUMN "update" boolean NOT NULL DEFAULT
+      false
+  type: run_sql

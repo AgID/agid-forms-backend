@@ -1,0 +1,4 @@
+- args:
+    sql: "\n          alter table \"public\".\"node\" drop constraint \"node_group_fkey\"\n
+      \     "
+  type: run_sql

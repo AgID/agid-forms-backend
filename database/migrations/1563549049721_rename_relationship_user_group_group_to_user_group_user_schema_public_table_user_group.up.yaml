@@ -1,0 +1,7 @@
+- args:
+    name: user_group_group
+    new_name: user_group_user
+    table:
+      name: user_group
+      schema: public
+  type: rename_relationship

@@ -1,0 +1,9 @@
+- args:
+    sql: ALTER TABLE "public"."node_type" ADD COLUMN "insert" bool
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."node_type" ALTER COLUMN "insert" DROP NOT NULL
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."node_type" ALTER COLUMN "insert" SET DEFAULT false
+  type: run_sql

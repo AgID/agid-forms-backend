@@ -1,0 +1,3 @@
+- args:
+    sql: alter table "public"."groups" rename to "group";
+  type: run_sql
