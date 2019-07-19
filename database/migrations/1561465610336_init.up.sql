@@ -6,8 +6,8 @@ CREATE FUNCTION public.audit_node() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        INSERT INTO node_revision(id, created_at, updated_at, user_id, type, version, title, content, status, language)
-            VALUES (NEW.id, NEW.created_at, NEW.updated_at, NEW.user_id, NEW.type, NEW.version, NEW.title, NEW.content, NEW.status, NEW.language);
+        INSERT INTO node_revision(id, created_at, updated_at, user_id, type, version, title, content, status, language, "group")
+            VALUES (NEW.id, NEW.created_at, NEW.updated_at, NEW.user_id, NEW.type, NEW.version, NEW.title, NEW.content, NEW.status, NEW.language, NEW.group);
         RETURN NEW;
     END;
 $$;

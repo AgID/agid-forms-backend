@@ -20,7 +20,7 @@ import { GraphqlClient, UPSERT_USER } from "../clients/graphql";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { UUIDString } from "../generated/api/UUIDString";
-import { user_role_constraint } from "../generated/graphql/globalTypes";
+import { user_group_constraint, group_constraint, role_constraint, group_update_column, role_update_column } from "../generated/graphql/globalTypes";
 import {
   UpsertUser,
   UpsertUserVariables
@@ -56,12 +56,30 @@ function AuthWebhookHandler(
         user: {
           email: user.email,
           metadata: user.metadata,
-          user_roles: {
+          user_groups: {
             data: user.roles.map(role => ({
-              role_id: role
+              user_group_group: {
+                data: {
+                  // assumes user.name = cod_amm
+                  group: user.name
+                },
+                on_conflict: {
+                  constraint: group_constraint.groups_pkey,
+                  update_columns: [group_update_column.group]
+                }
+              },
+              user_group_role: {
+                data: {
+                  role: role
+                },
+                on_conflict: {
+                  constraint: role_constraint.role_pkey,
+                  update_columns: [role_update_column.role]
+                }
+              }
             })),
             on_conflict: {
-              constraint: user_role_constraint.user_role_pkey,
+              constraint: user_group_constraint.user_group_pkey,
               update_columns: []
             }
           }

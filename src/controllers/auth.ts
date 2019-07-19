@@ -252,6 +252,8 @@ export function LoginHandler(
       created_at: new Date().getTime(),
       email: rtdEmail as EmailString,
       name: ipaCode,
+      // this kind of login (via rtd email)
+      // assigns the "RTD" role to the user
       roles: [RTD_ROLE_NAME],
       session_token: token
     };
