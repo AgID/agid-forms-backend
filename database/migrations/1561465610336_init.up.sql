@@ -1,3 +1,6 @@
+CREATE EXTENSION pg_trgm;
+CREATE EXTENSION citext;
+
 SET xmloption = content;
 CREATE FUNCTION public.audit_node() RETURNS trigger
     LANGUAGE plpgsql
