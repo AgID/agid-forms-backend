@@ -1,0 +1,13 @@
+- args:
+    name: node_revision_group
+    table:
+      name: node_revision
+      schema: public
+    using:
+      manual_configuration:
+        column_mapping:
+          group: group
+        remote_table:
+          name: group
+          schema: public
+  type: create_object_relationship
