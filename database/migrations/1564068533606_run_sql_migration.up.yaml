@@ -1,0 +1,11 @@
+- args:
+    cascade: false
+    sql: "\nCREATE OR REPLACE VIEW last_published_or_draft\n\nAS SELECT * FROM (SELECT
+      DISTINCT ON (r.id) r.* FROM node_revision r INNER JOIN\n    (SELECT id, MAX(version)
+      OVER (PARTITION BY id) AS max_version FROM node_revision WHERE status = 'published')
+      AS r2\n    ON r.id = r2.id AND r.version = r2.max_version\n\nUNION\n\n    SELECT
+      n.* from node_revision n INNER JOIN node n1 ON n1.id = n.id AND n1.version =
+      n.version \n        LEFT JOIN node_revision r2 ON r2.id = n1.id AND r2.status
+      = 'published'\n        WHERE n.status = 'draft' AND r2.id IS NULL\n) AS nodes
+      ORDER BY updated_at DESC;\n"
+  type: run_sql

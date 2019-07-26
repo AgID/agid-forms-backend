@@ -1,0 +1,48 @@
+- args:
+    role: authenticated
+    table:
+      name: ipa_pa
+      schema: public
+  type: drop_select_permission
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - acronimo
+      - Cap
+      - Cf
+      - cf_validato
+      - cod_amm
+      - cogn_resp
+      - Comune
+      - des_amm
+      - des_amm_Comune
+      - Indirizzo
+      - liv_accessibili
+      - mail1
+      - mail2
+      - mail3
+      - mail4
+      - mail5
+      - nome_resp
+      - Provincia
+      - Regione
+      - sito_istituzionale
+      - tipologia_amm
+      - tipologia_istat
+      - tipo_mail1
+      - tipo_mail2
+      - tipo_mail3
+      - tipo_mail4
+      - tipo_mail5
+      - titolo_resp
+      - url_facebook
+      - url_googleplus
+      - url_twitter
+      - url_youtube
+      filter: {}
+    role: authenticated
+    table:
+      name: ipa_pa
+      schema: public
+  type: create_select_permission

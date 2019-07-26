@@ -1,0 +1,10 @@
+- args:
+    cascade: false
+    sql: "CREATE OR REPLACE VIEW \"public\".\"last_published_or_draft\" AS \n SELECT
+      DISTINCT ON (r.id) \n    r.created_at,\n    r.updated_at,\n    r.type,\n    r.version,\n
+      \   r.title,\n    r.content,\n    r.status,\n    r.language,\n    r.user_id,\n
+      \   r.id,\n    r.\"group\"\n   FROM (node_revision r\n     LEFT JOIN node n
+      ON (((r.id = n.id) AND (r.version = n.version))))\n  WHERE ((r.status = 'published'::text)
+      OR ((n.status = 'draft'::text) AND (NOT (EXISTS ( SELECT 1\n           FROM
+      node_revision r2\n          WHERE ((r2.id = n.id) AND (r2.status = 'published'::text)))))));"
+  type: run_sql

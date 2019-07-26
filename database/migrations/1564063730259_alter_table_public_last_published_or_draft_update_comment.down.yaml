@@ -1,0 +1,3 @@
+- args:
+    sql: COMMENT ON VIEW "public"."last_published_or_draft" IS NULL
+  type: run_sql

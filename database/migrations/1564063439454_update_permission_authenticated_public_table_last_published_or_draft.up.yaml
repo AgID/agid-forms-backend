@@ -1,0 +1,24 @@
+- args:
+    permission:
+      allow_aggregations: false
+      columns:
+      - created_at
+      - updated_at
+      - type
+      - version
+      - title
+      - content
+      - status
+      - language
+      - user_id
+      - id
+      - group
+      filter:
+        user_id:
+          _eq: X-Hasura-User-Id
+      limit: null
+    role: authenticated
+    table:
+      name: last_published_or_draft
+      schema: public
+  type: create_select_permission
