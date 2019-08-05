@@ -6,7 +6,6 @@ import { readableReport } from "italia-ts-commons/lib/reporters";
 import * as nodeFetch from "node-fetch";
 import { WebhookPayload } from "../controllers/graphql_webhook";
 import { log } from "../utils/logger";
-import { makeQueueClient } from "./queue_client";
 
 const FETCH_TIMEOUT_MS = 10000;
 
@@ -18,7 +17,7 @@ const fetchApi = (nodeFetch as any) as typeof fetch;
 
 const abortableFetch = AbortableFetch(fetchApi);
 
-function LinkVerifierProcessor(queueClient: Bull.Queue): void {
+export function LinkVerifierProcessor(queueClient: Bull.Queue): void {
   queueClient.process("link-verifier", async job => {
     log.info("** link-verifier processing %s", job.id);
     const errorOrPayload = WebhookPayload.decode(JSON.parse(job.data));
@@ -57,6 +56,3 @@ function LinkVerifierProcessor(queueClient: Bull.Queue): void {
   });
 }
 
-log.info("** Starts link verifier processor");
-
-LinkVerifierProcessor(makeQueueClient());
