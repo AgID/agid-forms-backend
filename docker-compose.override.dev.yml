@@ -9,20 +9,9 @@ services:
     command: ["yarn", "hot-reload"]
     working_dir: "/usr/src/app"
 
-  agid-forms-backend-dispatcher:
+  agid-forms-backend-processor:
     image: node:8.11.3-alpine
     volumes:
       - .:/usr/src/app
-    working_dir: "/usr/src/app"
-
-  agid-forms-backend-worker-01:
-    image: node:8.11.3-alpine
-    volumes:
-      - .:/usr/src/app
-    working_dir: "/usr/src/app"
-
-  agid-forms-backend-worker-02:
-    image: node:8.11.3-alpine
-    volumes:
-      - .:/usr/src/app
+    command: ["yarn", "run-processor:reload"]
     working_dir: "/usr/src/app"

@@ -5,7 +5,7 @@
 
 import * as express from "express";
 import * as htmlToText from "html-to-text";
-
+import * as hash from "object-hash";
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
@@ -29,7 +29,7 @@ import {
 
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
-import * as nodemailer from "nodemailer";
+import * as Bull from "bull";
 import { GET_RTD_FROM_IPA, GraphqlClient } from "../clients/graphql";
 import {
   AUTHMAIL_FROM,
@@ -66,6 +66,8 @@ import {
 } from "../generated/graphql/GetPaFromIpa";
 import { UserWebhookT } from "../utils/webhooks";
 
+import { SendmailProcessorInputT } from "../workers/email_processor";
+
 const isPaFound = (errorOrPaInfo: ApolloQueryResult<GraphqlGetPaFromIpa>) =>
   errorOrPaInfo.data.ipa_ou &&
   errorOrPaInfo.data.ipa_pa &&
@@ -87,8 +89,8 @@ const generateKey = (secretCode: string, ipaCode: string) =>
 
 export function SendEmailToRtdHandler(
   graphqlClient: GraphqlClient,
-  transporter: nodemailer.Transporter,
   generateCode: () => string,
+  queueClient: Bull.Queue,
   secretStorage: IObjectStorage<string, string>
 ): ISendMailToRtd {
   return async (ipaCode: string) => {
@@ -139,14 +141,22 @@ export function SendEmailToRtdHandler(
       emailAuthCodeContent.html
     );
 
-    // Send email with the secret to the RTD
-    await transporter.sendMail({
-      from: AUTHMAIL_FROM,
+    const message: SendmailProcessorInputT = {
+      from: AUTHMAIL_FROM || "",
       html: emailAuthCodeHtml,
-      replyTo: AUTHMAIL_REPLY_TO,
+      replyTo: AUTHMAIL_REPLY_TO || "",
       subject: emailAuthCodeContent.title,
       text: htmlToText.fromString(emailAuthCodeHtml),
       to: AUTHMAIL_TEST_ADDRESS || rtdEmail
+    };
+
+    log.debug(
+      "dispatch sendmail event to processor: %s",
+      JSON.stringify(message)
+    );
+
+    await queueClient.add("sendmail", message, {
+      jobId: `sendmail:${hash(message)}`
     });
 
     const pa = paInfo.ipa_pa[0];
@@ -172,14 +182,14 @@ export function SendEmailToRtdHandler(
 
 export function SendEmailToRtd(
   graphqlClient: GraphqlClient,
-  transporter: nodemailer.Transporter,
   generateCode: () => string,
+  queueClient: Bull.Queue,
   secretStorage: IObjectStorage<string, string>
 ): express.RequestHandler {
   const handler = SendEmailToRtdHandler(
     graphqlClient,
-    transporter,
     generateCode,
+    queueClient,
     secretStorage
   );
   const withrequestMiddlewares = withRequestMiddlewares(

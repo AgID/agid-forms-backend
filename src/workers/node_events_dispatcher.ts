@@ -1,11 +1,6 @@
 import * as Bull from "bull";
 import * as redis from "redis";
 
-import { NODE_EVENTS_CHANNEL_NAME } from "../config";
-
-import { makeQueueClient } from "./queue_client";
-import { makeRedisClient } from "./redis_client";
-
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { WebhookPayload } from "../controllers/graphql_webhook";
 import { log } from "../utils/logger";
@@ -77,11 +72,3 @@ export function NodeEventsDispatcher(
     });
   });
 }
-
-log.info("** Starts node events dispatcher");
-
-NodeEventsDispatcher(
-  makeQueueClient(),
-  makeRedisClient(),
-  NODE_EVENTS_CHANNEL_NAME
-);
