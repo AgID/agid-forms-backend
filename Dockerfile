@@ -19,7 +19,7 @@ COPY /api_backend.yaml /usr/src/app/api_backend.yaml
 COPY /gulpfile.js /usr/src/app/gulpfile.js
 COPY /apollo.config.js /usr/src/app/apollo.config.js
 
-RUN sudo chmod -R 777 /usr/src/app
+RUN sudo chmod -R 777 /usr/src/app/src
 RUN yarn generate && yarn build
 
 FROM node:8.11.3-alpine
@@ -27,11 +27,12 @@ LABEL maintainer="https://www.agid.gov.it"
 
 WORKDIR /usr/src/app
 
+COPY --from=builder /usr/src/app/node_modules /usr/src/app/node_modules
+
 COPY /package.json /usr/src/app/package.json
 COPY /public /usr/src/app/public
 
 COPY --from=builder /usr/src/app/src /usr/src/app/src
-COPY --from=builder /usr/src/app/node_modules /usr/src/app/node_modules
 
 EXPOSE 80
 

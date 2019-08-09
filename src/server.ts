@@ -48,9 +48,9 @@ import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
+import { makeQueueClient } from "./utils/queue_client";
 import { createSimpleRedisClient } from "./utils/redis";
 import { userWebhook } from "./utils/webhooks";
-import { makeQueueClient } from "./utils/queue_client";
 
 // tslint:disable-next-line: no-any
 const fetchApi = (nodeFetch as any) as typeof fetch;
