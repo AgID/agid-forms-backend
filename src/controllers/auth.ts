@@ -126,7 +126,10 @@ export function SendEmailToRtdHandler(
     }
 
     // Get email content from template
-    const emailAuthCodeContent = emailAuthCode(secretCode, ipaCode);
+    const emailAuthCodeContent = emailAuthCode(
+      secretCode,
+      paInfo.ipa_pa[0].des_amm
+    );
 
     const message: SendmailProcessorInputT = {
       content: emailAuthCodeContent.html,

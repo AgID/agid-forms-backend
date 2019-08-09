@@ -41,12 +41,12 @@ export function SendmailProcessor(queueClient: Bull.Queue): void {
           ORGANIZATION_NAME,
           SERVICE_NAME,
           sendmailProcessorInput.content
-        );
+        ).replace("''", "'");
         const message = {
           from: AUTHMAIL_FROM || "",
           html: emailHtml,
           replyTo: AUTHMAIL_REPLY_TO || "",
-          subject: sendmailProcessorInput.subject,
+          subject: sendmailProcessorInput.subject.replace("''", "'"),
           text: htmlToText.fromString(emailHtml),
           to: AUTHMAIL_TEST_ADDRESS || sendmailProcessorInput.to
         };

@@ -60,11 +60,6 @@ export function NodeEventsDispatcher(
             isNodeOfType(payload, "dichiarazione_accessibilita") &&
             transitionedTo(payload, "published")
           ) {
-            // dispatch published event to email processor
-            const declPublishedContent = emailDeclPublished(
-              payload.event.data.new.id
-            );
-
             // get user email
             const errorOrUserInfo = await GraphqlClient.query<
               GetUserInfo,
@@ -89,6 +84,12 @@ export function NodeEventsDispatcher(
               );
               return;
             }
+
+            // dispatch published event to email processor
+            const declPublishedContent = emailDeclPublished(
+              payload.event.data.new.id,
+              payload.event.data.new.title
+            );
 
             const declPublishedMessage = {
               content: declPublishedContent.html,
