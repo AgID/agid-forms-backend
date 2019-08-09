@@ -21,6 +21,7 @@ export const makeRateLimiterMiddleware = (
         .set("X-RateLimit-Remaining", rateLimiterRes.remainingPoints.toString())
         .set(
           "X-RateLimit-Reset",
+          // tslint:disable-next-line:restrict-plus-operands
           new Date(Date.now() + rateLimiterRes.msBeforeNext).toString()
         )
         .status(429)

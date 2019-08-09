@@ -30,7 +30,7 @@ export function LinkVerifierProcessor(queueClient: Bull.Queue): void {
     }
     const payload = errorOrPayload.value;
     const node = payload.event.data.new;
-    log.info("** link-verifier processing node %s", JSON.stringify(node));
+    log.debug("** link-verifier processing node %s", JSON.stringify(node));
     if (!node) {
       return;
     }
@@ -55,4 +55,3 @@ export function LinkVerifierProcessor(queueClient: Bull.Queue): void {
     }
   });
 }
-

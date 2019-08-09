@@ -4,8 +4,6 @@
  */
 
 import * as express from "express";
-import * as htmlToText from "html-to-text";
-import * as hash from "object-hash";
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
@@ -27,18 +25,13 @@ import {
   wrapRequestHandler
 } from "italia-ts-commons/lib/request_middleware";
 
+import * as Bull from "bull";
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
-import * as Bull from "bull";
 import { GET_RTD_FROM_IPA, GraphqlClient } from "../clients/graphql";
 import {
-  AUTHMAIL_FROM,
-  AUTHMAIL_REPLY_TO,
-  AUTHMAIL_TEST_ADDRESS,
   DUMB_IPA_VALUE_FOR_NULL,
-  ORGANIZATION_NAME,
   RTD_ROLE_NAME,
-  SERVICE_NAME,
   WEBHOOK_USER_LOGIN_PATH
 } from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
@@ -47,7 +40,6 @@ import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
 import { WebhookJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
-import { withDefaultEmailTemplate } from "../templates/html/default";
 import { emailAuthCode } from "../templates/html/email/authcode";
 import { GraphqlToken, SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
@@ -66,6 +58,7 @@ import {
 } from "../generated/graphql/GetPaFromIpa";
 import { UserWebhookT } from "../utils/webhooks";
 
+import { queueEmail } from "../utils/queue_client";
 import { SendmailProcessorInputT } from "../workers/email_processor";
 
 const isPaFound = (errorOrPaInfo: ApolloQueryResult<GraphqlGetPaFromIpa>) =>
@@ -134,20 +127,11 @@ export function SendEmailToRtdHandler(
 
     // Get email content from template
     const emailAuthCodeContent = emailAuthCode(secretCode, ipaCode);
-    const emailAuthCodeHtml = withDefaultEmailTemplate(
-      emailAuthCodeContent.title,
-      ORGANIZATION_NAME,
-      SERVICE_NAME,
-      emailAuthCodeContent.html
-    );
 
     const message: SendmailProcessorInputT = {
-      from: AUTHMAIL_FROM || "",
-      html: emailAuthCodeHtml,
-      replyTo: AUTHMAIL_REPLY_TO || "",
+      content: emailAuthCodeContent.html,
       subject: emailAuthCodeContent.title,
-      text: htmlToText.fromString(emailAuthCodeHtml),
-      to: AUTHMAIL_TEST_ADDRESS || rtdEmail
+      to: rtdEmail
     };
 
     log.debug(
@@ -155,9 +139,7 @@ export function SendEmailToRtdHandler(
       JSON.stringify(message)
     );
 
-    await queueClient.add("sendmail", message, {
-      jobId: `sendmail:${hash(message)}`
-    });
+    await queueEmail(queueClient, message);
 
     const pa = paInfo.ipa_pa[0];
     const ou = paInfo.ipa_ou[0];
