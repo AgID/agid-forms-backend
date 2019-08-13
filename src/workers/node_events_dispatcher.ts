@@ -49,12 +49,8 @@ export function NodeEventsDispatcher(
       // forward the message into a queue for later processing
       WebhookPayload.decode(JSON.parse(message))
         .map(async payload => {
-          log.info(
-            "Forwarding received message (%s=%s) on %s",
-            channel,
-            message,
-            channelName
-          );
+          log.info("Forwarding received message on %s", channel, channelName);
+          log.debug("Forwarding received message: %s", message);
           if (
             payload.event.data.new &&
             isNodeOfType(payload, "dichiarazione_accessibilita") &&

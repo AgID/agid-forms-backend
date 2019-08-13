@@ -97,5 +97,5 @@ export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;
 
 // Queues
 
-export const QUEUE_MAX_ATTEMPTS = 20;
+export const QUEUE_MAX_ATTEMPTS = 30;
 export const QUEUE_INITIAL_DELAY_MS = 1000;
