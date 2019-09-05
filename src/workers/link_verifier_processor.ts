@@ -121,9 +121,20 @@ export function LinkVerifierProcessor(queueClient: Bull.Queue): void {
       JSON.stringify(publishedNode)
     );
 
+    if (
+      publishedNode.content.metadata &&
+      publishedNode.content.metadata.verified
+    ) {
+      log.info(
+        "** link-verifier node %s has already been verified, skipping",
+        publishedNode.id
+      );
+      return;
+    }
+
     const url = publishedNode.content.values["website-url"];
     if (!url) {
-      log.debug(
+      log.error(
         "** link-verifier node %s has no website-url set",
         publishedNode.id
       );

@@ -77,7 +77,7 @@ export const SECRET_PREFIX = "SECRET-";
 export const RTD_ROLE_NAME = "rtd";
 
 // maximum retries over duration
-export const RATE_LIMIT_POINTS = 5;
+export const RATE_LIMIT_POINTS = 30;
 
 // 1 hour
 export const RATE_LIMIT_DURATION = 3600;

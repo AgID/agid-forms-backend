@@ -61,6 +61,7 @@ export function NodeEventsDispatcher(
               GetUserInfo,
               GetUserInfoVariables
             >({
+              fetchPolicy: "no-cache",
               query: GET_USER_INFO,
               variables: {
                 id: payload.event.data.new.user_id

@@ -92,6 +92,7 @@ export function SendEmailToRtdHandler(
       GraphqlGetPaFromIpa,
       GraphqlGetPaFromIpaVariables
     >({
+      fetchPolicy: "no-cache",
       query: GET_RTD_FROM_IPA,
       variables: {
         code: ipaCode
@@ -226,6 +227,7 @@ export function LoginHandler(
       GraphqlGetPaFromIpa,
       GraphqlGetPaFromIpaVariables
     >({
+      fetchPolicy: "no-cache",
       query: GET_RTD_FROM_IPA,
       variables: {
         code: ipaCode

@@ -45,6 +45,7 @@ export function GetProfileHandler(graphqlClient: GraphqlClient): IGetProfile {
       GetUserInfo,
       GetUserInfoVariables
     >({
+      fetchPolicy: "no-cache",
       query: GET_USER_INFO,
       variables: {
         id: user.metadata.id
