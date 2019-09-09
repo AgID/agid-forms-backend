@@ -146,6 +146,7 @@ const app = express();
 
 // Add security to http headers.
 app.use(helmet());
+app.use(helmet.frameguard({ action: "sameorigin" }));
 
 // Set up CORS (free access to the API from browser clients)
 app.use(

@@ -121,6 +121,8 @@ services:
       --acme.onhostrule=true
     labels:
       - traefik.docker.network=app-tier
+      - traefik.frontend.headers.STSPreload=true
+      - traefik.frontend.headers.STSSeconds=31536000
     env_file: 
       - .env
     ports:
