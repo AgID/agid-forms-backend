@@ -6,7 +6,7 @@ export const emailAuthCode = (
   ipaCode: string
 ) => ({
   html: `
-  <p>All’attenzione dell’RTD dell’Amministrazione '${ipaName}',<br />
+  <p>All’attenzione dell’RTD dell’Amministrazione '${ipaName}',
   in data ${format(new Date(), "DD/MM/YYYY")} alle ore ${format(
     new Date(),
     "HH:mm"
@@ -16,7 +16,7 @@ export const emailAuthCode = (
   </p>
   <p>
   Per accedere al servizio è necessario collegarsi alla seguente pagina 
-  [https://form.agid.gov.it](https://form.agid.gov.it/?ipa=${ipaCode})
+  <a href="https://form.agid.gov.it/?ipa=${ipaCode}">form.agid.gov.it</a>
   inserendo la chiave di accesso:
   </p>
   <h2>${secretCode}</h2>
