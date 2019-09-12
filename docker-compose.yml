@@ -39,7 +39,10 @@ services:
     volumes:
       - /data/postgresql:/bitnami/postgresql
       - /data/wal-logs:/bitnami/wal-logs
+      - /data/db-backups:/db-backups
       - ./scripts/ipa-import-local.sh:/ipa-import-local.sh
+      - ./scripts/backup-db.sh:/backup-db.sh
+      - ./scripts/cleanup-hasura-events.sh:/cleanup-hasura-events.sh
     restart: unless-stopped
 
   hasura:
