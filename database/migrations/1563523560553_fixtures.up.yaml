@@ -1,7 +1,10 @@
 - type: run_sql
   args:
     sql: |
+      INSERT INTO "public"."node_type" (node_type) VALUES ('dichiarazione_linee_guida');
       INSERT INTO "public"."node_type" (node_type) VALUES ('dichiarazione_accessibilita');
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_linee_guida', 'rtd', true);
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_accessibilita', 'rtd', true);
       INSERT INTO "public"."language" (language) VALUES ('en');
       INSERT INTO "public"."language" (language) VALUES ('it');
       INSERT INTO "public"."role" (role) VALUES ('admin');

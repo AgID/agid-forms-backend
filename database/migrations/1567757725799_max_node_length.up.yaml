@@ -1,0 +1,6 @@
+- args:
+    cascade: false
+    sql: |+
+      ALTER TABLE node ADD CONSTRAINT max_node_length CHECK (pg_column_size(content) <= 64000);
+
+  type: run_sql
