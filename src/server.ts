@@ -24,7 +24,6 @@ import {
   SECRET_PREFIX,
   SERVER_PORT,
   SESSION_PREFIX,
-  SMTP_CONNECTION_URL,
   TOKEN_DURATION_IN_SECONDS,
   WEBHOOK_JWT_SECRET,
   WEBHOOK_USER_LOGIN_BASE_URL,
@@ -37,7 +36,6 @@ import bearerTokenStrategy from "./strategies/bearer_token";
 import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
 import nodeFetch from "node-fetch";
 
-import * as nodemailer from "nodemailer";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import packageJson = require("../package.json");
 import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
@@ -50,6 +48,7 @@ import { SessionToken } from "./types/token";
 import { AppUser } from "./types/user";
 import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
+import { makeQueueClient } from "./utils/queue_client";
 import { createSimpleRedisClient } from "./utils/redis";
 import { userWebhook } from "./utils/webhooks";
 
@@ -115,6 +114,8 @@ const jwtTokenAuth = passport.authenticate("jwt", { session: false });
 //
 // Setup dependecies for controllers
 //
+const queueClient = makeQueueClient();
+
 const hasuraJwtService = HasuraJwtService(
   JWT_SECRET,
   TOKEN_DURATION_IN_SECONDS
@@ -129,8 +130,6 @@ const userWebhookRequest = createFetchRequestForApi(userWebhook, {
   baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
   fetchApi
 });
-
-const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
 
 const secretStorage = RedisObjectStorage(
   redisClient,
@@ -147,6 +146,7 @@ const app = express();
 
 // Add security to http headers.
 app.use(helmet());
+app.use(helmet.frameguard({ action: "sameorigin" }));
 
 // Set up CORS (free access to the API from browser clients)
 app.use(
@@ -183,12 +183,7 @@ app.use(passport.initialize());
 app.post(
   `${API_BASE_PATH}/auth/email/:ipa_code`,
   rateLimiterMiddleware,
-  SendEmailToRtd(
-    GraphqlClient,
-    nodedmailerTransporter,
-    generateCode,
-    secretStorage
-  )
+  SendEmailToRtd(GraphqlClient, generateCode, queueClient, secretStorage)
 );
 
 app.post(

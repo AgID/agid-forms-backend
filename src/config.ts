@@ -77,7 +77,7 @@ export const SECRET_PREFIX = "SECRET-";
 export const RTD_ROLE_NAME = "rtd";
 
 // maximum retries over duration
-export const RATE_LIMIT_POINTS = 5;
+export const RATE_LIMIT_POINTS = 30;
 
 // 1 hour
 export const RATE_LIMIT_DURATION = 3600;
@@ -97,5 +97,5 @@ export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;
 
 // Queues
 
-export const QUEUE_MAX_ATTEMPTS = 20;
+export const QUEUE_MAX_ATTEMPTS = 30;
 export const QUEUE_INITIAL_DELAY_MS = 1000;

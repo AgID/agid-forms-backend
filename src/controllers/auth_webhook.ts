@@ -20,7 +20,13 @@ import { GraphqlClient, UPSERT_USER } from "../clients/graphql";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { UUIDString } from "../generated/api/UUIDString";
-import { user_group_constraint, group_constraint, role_constraint, group_update_column, role_update_column } from "../generated/graphql/globalTypes";
+import {
+  group_constraint,
+  group_update_column,
+  role_constraint,
+  role_update_column,
+  user_group_constraint
+} from "../generated/graphql/globalTypes";
 import {
   UpsertUser,
   UpsertUserVariables
@@ -70,7 +76,7 @@ function AuthWebhookHandler(
               },
               user_group_role: {
                 data: {
-                  role: role
+                  role
                 },
                 on_conflict: {
                   constraint: role_constraint.role_pkey,

@@ -18,6 +18,14 @@ sysctl vm.overcommit_memory=1
 sysctl net.core.somaxconn=512
 
 # import data from indicepa
-(crontab -l; echo "00 00 * * * docker-compose exec postgresql ./ipa-import-local.sh") | sort | uniq | crontab
+
+cat << __EOF__ 
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+0 0 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./ipa-import-local.sh
+0 2 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./backup-db.sh
+0 5 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./cleanup-hasura-events.sh
+
+__EOF__ | crontab
 
 exit 0

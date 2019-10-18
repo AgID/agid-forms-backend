@@ -39,7 +39,10 @@ services:
     volumes:
       - /data/postgresql:/bitnami/postgresql
       - /data/wal-logs:/bitnami/wal-logs
+      - /data/db-backups:/db-backups
       - ./scripts/ipa-import-local.sh:/ipa-import-local.sh
+      - ./scripts/backup-db.sh:/backup-db.sh
+      - ./scripts/cleanup-hasura-events.sh:/cleanup-hasura-events.sh
     restart: unless-stopped
 
   hasura:
@@ -84,36 +87,12 @@ services:
       - traefik
     restart: unless-stopped
 
-  agid-forms-backend-dispatcher:
+  agid-forms-backend-processor:
     # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
     image: agid-forms-backend:local
     env_file: 
       - .env
-    command: ["yarn", "run-process:node-events-dispatcher"]
-    networks:
-      - app-tier
-    depends_on:
-      - agid-forms-backend
-    restart: unless-stopped
-
-  agid-forms-backend-worker-01:
-    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
-    image: agid-forms-backend:local
-    env_file: 
-      - .env
-    command: ["yarn", "run-process:email-processor"]
-    networks:
-      - app-tier
-    depends_on:
-      - agid-forms-backend
-    restart: unless-stopped
-
-  agid-forms-backend-worker-02:
-    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
-    image: agid-forms-backend:local
-    env_file: 
-      - .env
-    command: ["yarn", "run-process:link-verifier-processor"]
+    command: ["yarn", "run-processor"]
     networks:
       - app-tier
     depends_on:
@@ -145,6 +124,8 @@ services:
       --acme.onhostrule=true
     labels:
       - traefik.docker.network=app-tier
+      - traefik.frontend.headers.STSPreload=true
+      - traefik.frontend.headers.STSSeconds=31536000
     env_file: 
       - .env
     ports:

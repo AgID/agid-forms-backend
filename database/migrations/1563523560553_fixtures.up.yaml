@@ -13,3 +13,4 @@
       INSERT INTO "public"."status" (status) VALUES ('published');
       INSERT INTO "public"."status" (status) VALUES ('archived');
       INSERT INTO "public"."status" (status) VALUES ('draft');
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_accessibilita', 'rtd', true);

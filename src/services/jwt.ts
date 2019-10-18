@@ -17,7 +17,7 @@ export const HasuraJwtService = (secret: string, expiresInSeconds: number) => ({
     name: string,
     userId: UUIDString,
     groupId: string,
-    roles: ReadonlyArray<string>,
+    roles: ReadonlyArray<string>
   ): GraphqlToken => {
     const user = {
       "https://hasura.io/jwt/claims": {

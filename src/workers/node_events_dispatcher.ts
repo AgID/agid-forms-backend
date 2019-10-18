@@ -1,14 +1,16 @@
 import * as Bull from "bull";
 import * as redis from "redis";
 
-import { NODE_EVENTS_CHANNEL_NAME } from "../config";
-
-import { makeQueueClient } from "./queue_client";
-import { makeRedisClient } from "./redis_client";
-
 import { readableReport } from "italia-ts-commons/lib/reporters";
+import { GET_USER_INFO, GraphqlClient } from "../clients/graphql";
 import { WebhookPayload } from "../controllers/graphql_webhook";
+import {
+  GetUserInfo,
+  GetUserInfoVariables
+} from "../generated/graphql/GetUserInfo";
+import { emailDeclPublished } from "../templates/html/email/decl_published";
 import { log } from "../utils/logger";
+import { queueEmail } from "../utils/queue_client";
 
 type StatusT = "draft" | "needs_review" | "published" | "archived";
 type NodeTypeT = "dichiarazione_accessibilita";
@@ -33,6 +35,7 @@ const isNodeOfType = (payload: WebhookPayload, type: NodeTypeT) => {
   return newContent && newContent.type === type;
 };
 
+// tslint:disable-next-line: cognitive-complexity
 export function NodeEventsDispatcher(
   queueClient: Bull.Queue,
   redisClient: redis.RedisClient,
@@ -46,25 +49,63 @@ export function NodeEventsDispatcher(
       // forward the message into a queue for later processing
       WebhookPayload.decode(JSON.parse(message))
         .map(async payload => {
-          log.info(
-            "Forwarding received message (%s=%s) on %s",
-            channel,
-            message,
-            channelName
-          );
+          log.info("Forwarding received message on %s", channel, channelName);
+          log.debug("Forwarding received message: %s", message);
           if (
+            payload.event.data.new &&
             isNodeOfType(payload, "dichiarazione_accessibilita") &&
-            transitionedTo(payload, "needs_review")
+            transitionedTo(payload, "published")
           ) {
-            // dispatch to email processor
-            log.info("dispatching event to sendmail processor");
-            await queueClient.add("sendmail", message, {
-              jobId: `sendmail:${payload.id}`
+            // get user email
+            const errorOrUserInfo = await GraphqlClient.query<
+              GetUserInfo,
+              GetUserInfoVariables
+            >({
+              fetchPolicy: "no-cache",
+              query: GET_USER_INFO,
+              variables: {
+                id: payload.event.data.new.user_id
+              }
             });
+            if (errorOrUserInfo.errors) {
+              log.error(errorOrUserInfo.errors.join("\n"));
+              return;
+            }
+
+            const userInfo = errorOrUserInfo.data;
+            if (!userInfo || !userInfo.user[0].email) {
+              log.error(
+                "cannot get user email for node %s (id:%s)",
+                payload.event.data.new.id,
+                payload.event.data.new.user_id
+              );
+              return;
+            }
+
+            // dispatch published event to email processor
+            const declPublishedContent = emailDeclPublished(
+              payload.event.data.new.id,
+              payload.event.data.new.title
+            );
+
+            const declPublishedMessage = {
+              content: declPublishedContent.html,
+              subject: declPublishedContent.title,
+              to: userInfo.user[0].email
+            };
+            log.info(
+              "dispatching decl-published message to sendmail processor (%s)",
+              JSON.stringify(declPublishedMessage)
+            );
+            await queueEmail(
+              queueClient,
+              declPublishedMessage,
+              `publish:${payload.event.data.new.id}_${payload.event.data.new.version}`
+            );
           }
           if (
             isNodeOfType(payload, "dichiarazione_accessibilita") &&
-            transitionedTo(payload, "needs_review")
+            transitionedTo(payload, "published")
           ) {
             // dispatch to link verifier processor
             log.info("dispatching event to link verifier processor");
@@ -77,11 +118,3 @@ export function NodeEventsDispatcher(
     });
   });
 }
-
-log.info("** Starts node events dispatcher");
-
-NodeEventsDispatcher(
-  makeQueueClient(),
-  makeRedisClient(),
-  NODE_EVENTS_CHANNEL_NAME
-);
