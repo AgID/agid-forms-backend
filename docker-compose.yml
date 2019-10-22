@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
 
   hasura:
-    image: hasura/graphql-engine:v1.0.0-beta.3
+    image: hasura/graphql-engine:v1.0.0-beta.8
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${HASURA_HOST}
