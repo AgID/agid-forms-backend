@@ -7,10 +7,8 @@ export const emailAuthCode = (
 ) => ({
   html: `
   <p>All’attenzione dell’RTD dell’Amministrazione '${ipaName}',
-  in data ${format(new Date(), "DD/MM/YYYY")} alle ore ${format(
-    new Date(),
-    "HH:mm"
-  )} è stata effettuata una richiesta di accesso al servizio eForm
+  in data ${format(new Date(), "DD/MM/YYYY")} 
+  è stata effettuata una richiesta di accesso al servizio eForm
   di AGID che permette la compilazione di moduli online.
   </p>
   <p>
