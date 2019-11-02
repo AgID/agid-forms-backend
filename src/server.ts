@@ -234,7 +234,7 @@ app.get("/ping", (_, res) => res.status(200).send("ok"));
 //  Start HTTP server
 //
 
-// HTTPS is terminated by the Kubernetes Ingress controller
+// HTTPS is terminated by proxy
 http.createServer(app).listen(SERVER_PORT, () => {
   log.info("Listening on port %d", SERVER_PORT);
 });

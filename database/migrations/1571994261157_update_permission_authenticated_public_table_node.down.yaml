@@ -1,0 +1,50 @@
+- args:
+    role: authenticated
+    table:
+      name: node
+      schema: public
+  type: drop_insert_permission
+- args:
+    permission:
+      check:
+        _and:
+        - user:
+            user_groups:
+              user_id:
+                _eq: X-Hasura-User-Id
+        - user:
+            user_groups:
+              user_group_group:
+                group:
+                  _eq: X-Hasura-Group-Id
+        - user:
+            user_groups:
+              user_group_role:
+                node_type_perms:
+                  insert:
+                    _eq: true
+      columns:
+      - content
+      - id
+      - language
+      - title
+      - type
+      - version
+      localPresets:
+      - key: group
+        value: x-hasura-group-id
+      - key: status
+        value: draft
+      - key: user_id
+        value: x-hasura-user-id
+      - key: ""
+        value: ""
+      set:
+        group: x-hasura-group-id
+        status: draft
+        user_id: x-hasura-user-id
+    role: authenticated
+    table:
+      name: node
+      schema: public
+  type: create_insert_permission

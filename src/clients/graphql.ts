@@ -109,3 +109,25 @@ export const GET_USER_INFO = gql`
     }
   }
 `;
+
+export const INSERT_NODE = gql`
+  mutation InsertNode($node: node_insert_input!) {
+    insert_node(objects: [$node]) {
+      returning {
+        id
+        version
+      }
+    }
+  }
+`;
+
+export const UPDATE_NODE = gql`
+  mutation UpdateNode($node: node_update_input!) {
+    update_node(objects: [$node]) {
+      returning {
+        id
+        version
+      }
+    }
+  }
+`;

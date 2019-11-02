@@ -1,10 +1,21 @@
 version: "3"
 
 services:
+  minio:
+    image: bitnami/minio:2019.10.12-r3
+    env_file:
+      - .env
+    ports:
+      - "9000"
+    networks:
+      - app-tier
+    volumes:
+      - /data/minio:/data
+    restart: unless-stopped
 
   redis:
     image: bitnami/redis:5.0
-    env_file: 
+    env_file:
       - .env
     ports:
       - "6379"
@@ -16,7 +27,7 @@ services:
 
   redis-commander:
     image: rediscommander/redis-commander
-    env_file: 
+    env_file:
       - .env
     environment:
       - PORT=${REDIS_PORT}
@@ -30,10 +41,10 @@ services:
 
   postgresql:
     image: bitnami/postgresql:11
-    env_file: 
+    env_file:
       - .env
     ports:
-      - '5432'
+      - "5432"
     networks:
       - app-tier
     volumes:
@@ -46,7 +57,7 @@ services:
     restart: unless-stopped
 
   hasura:
-    image: hasura/graphql-engine:v1.0.0-beta.3
+    image: hasura/graphql-engine:v1.0.0-beta.9
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${HASURA_HOST}
@@ -62,9 +73,8 @@ services:
     restart: unless-stopped
 
   agid-forms-backend:
-    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
     image: agid-forms-backend:local
-    env_file: 
+    env_file:
       - .env
     build:
       context: .
@@ -88,11 +98,27 @@ services:
     restart: unless-stopped
 
   agid-forms-backend-processor:
-    # image: docker.io/gunzip/agid-forms-backend:${BACKEND_VERSION}
     image: agid-forms-backend:local
-    env_file: 
+    env_file:
       - .env
     command: ["yarn", "run-processor"]
+    networks:
+      - app-tier
+    depends_on:
+      - agid-forms-backend
+    restart: unless-stopped
+
+  agid-forms-backend-updloads:
+    image: agid-forms-backend:local
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:${UPLOAD_SERVER_HOST}
+      - traefik.docker.network=app-tier
+    ports:
+      - ${UPLOAD_SERVER_PORT}
+    command: ["yarn", "run-uploads"]
     networks:
       - app-tier
     depends_on:
@@ -126,7 +152,7 @@ services:
       - traefik.docker.network=app-tier
       - traefik.frontend.headers.STSPreload=true
       - traefik.frontend.headers.STSSeconds=31536000
-    env_file: 
+    env_file:
       - .env
     ports:
       - 80:80
@@ -142,5 +168,5 @@ services:
 networks:
   app-tier:
     driver: bridge
-    driver_opts:                         
+    driver_opts:
       com.docker.network.driver.mtu: 1450
