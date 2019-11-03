@@ -8,6 +8,7 @@ mkdir -p /data/redis && chown -R 1001:root /data/redis && chmod 750 /data/redis
 mkdir -p /data/postgresql && chown -R 1001:root /data/postgresql && chmod 750 /data/postgresql
 mkdir -p /data/wal-logs && chown -R 1001:root /data/wal-logs && chmod 750 /data/wal-logs
 mkdir -p /data/traefik && chmod 750 /data/traefik
+mkdir -p /data/minio && chown -R 1001:root && chmod 750 /data/minio
 
 touch /data/traefik/acme.json
 chmod 600 /data/traefik/acme.json

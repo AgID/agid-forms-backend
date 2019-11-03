@@ -1,4 +1,4 @@
-version: "3"
+version: "3.4"
 
 services:
   minio:
@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     ports:
-      - "9000"
+      - ${MINIO_PORT}
     networks:
       - app-tier
     volumes:
@@ -18,7 +18,7 @@ services:
     env_file:
       - .env
     ports:
-      - "6379"
+      - ${REDIS_PORT}
     networks:
       - app-tier
     volumes:
@@ -32,7 +32,7 @@ services:
     environment:
       - PORT=${REDIS_PORT}
     ports:
-      - "8081"
+      - ${REDIS_COMMANDER_PORT}
     networks:
       - app-tier
     depends_on:
@@ -44,7 +44,7 @@ services:
     env_file:
       - .env
     ports:
-      - "5432"
+      - ${POSTGRESQL_PORT}
     networks:
       - app-tier
     volumes:
@@ -65,7 +65,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8080"
+      - ${HASURA_EXTERNAL_PORT}
     networks:
       - app-tier
     depends_on:
@@ -78,6 +78,7 @@ services:
       - .env
     build:
       context: .
+      network: ${COMPOSE_PROJECT_NAME}_app-tier
       args:
         - HASURA_GRAPHQL_ENDPOINT
         - HASURA_GRAPHQL_ADMIN_SECRET
@@ -86,7 +87,7 @@ services:
       - traefik.frontend.rule=Host:${BACKEND_HOST}
       - traefik.docker.network=app-tier
     ports:
-      - "80"
+      - ${BACKEND_PORT}
     command: ["yarn", "start"]
     networks:
       - app-tier
