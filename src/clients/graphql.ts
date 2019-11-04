@@ -122,8 +122,8 @@ export const INSERT_NODE = gql`
 `;
 
 export const UPDATE_NODE = gql`
-  mutation UpdateNode($node: node_update_input!) {
-    update_node(objects: [$node]) {
+  mutation UpdateNode($id: uuid!, $node: node_set_input!) {
+    update_node(where: { id: { _eq: $id } }, _set: $node) {
       returning {
         id
         version

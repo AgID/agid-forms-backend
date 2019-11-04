@@ -65,7 +65,7 @@ services:
     env_file:
       - .env
     ports:
-      - ${HASURA_EXTERNAL_PORT}
+      - ${HASURA_PORT}
     networks:
       - app-tier
     depends_on:
