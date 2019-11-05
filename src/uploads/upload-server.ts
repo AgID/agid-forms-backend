@@ -5,6 +5,7 @@ import { ulid } from "ulid";
 
 import {
   MINIO_ACCESS_KEY,
+  MINIO_DEFAULT_BUCKETS,
   MINIO_DEFAULT_REGION,
   MINIO_ENDPOINT,
   MINIO_PORT,
@@ -30,8 +31,8 @@ const dbGlobal: Record<string, IFileType> = {};
  * Stores a GraphQL file upload.
  */
 const getStoreUpload = (minioClient: Minio.Client) => async (
-  bucketName: string,
-  upload: FileUpload
+  upload: FileUpload,
+  bucketName?: string
 ): Promise<IFileType> => {
   const { createReadStream, filename, mimetype } = upload;
 
@@ -39,11 +40,13 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
   // node.id (upsert status=draft)
   const id = ulid();
 
+  const computedBucketName = bucketName || MINIO_DEFAULT_BUCKETS.split(",")[0];
+
   // create bucket if not exists
-  const bucketExists = await minioClient.bucketExists(bucketName);
+  const bucketExists = await minioClient.bucketExists(computedBucketName);
   if (!bucketExists) {
     log.info("bucket '%s' does not exists, try to create it", bucketName);
-    await minioClient.makeBucket(bucketName, MINIO_DEFAULT_REGION);
+    await minioClient.makeBucket(computedBucketName, MINIO_DEFAULT_REGION);
   }
 
   const metaData = {
@@ -54,7 +57,7 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
 
   // store the file in minio
   await minioClient.putObject(
-    bucketName,
+    computedBucketName,
     filename,
     createReadStream(),
     undefined, // size
@@ -84,7 +87,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    singleUpload(file: Upload!): File!
+    singleUpload(file: Upload!, bucketName: String): File!
   }
 `;
 
@@ -102,7 +105,7 @@ const resolvers = {
       { db, storeUpload }: IGraphqlUploadContext
     ) => {
       const fileObj = await file;
-      const meta = await storeUpload(bucketName, fileObj);
+      const meta = await storeUpload(fileObj, bucketName);
       log.info("source (%s) args=(%s)", meta, db);
     }
   },

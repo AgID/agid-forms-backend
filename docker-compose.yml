@@ -61,6 +61,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${HASURA_HOST}
+      - traefik.port=${HASURA_PORT}
       - traefik.docker.network=app-tier
     env_file:
       - .env
@@ -85,6 +86,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${BACKEND_HOST}
+      - traefik.port=${BACKEND_PORT}
       - traefik.docker.network=app-tier
     ports:
       - ${BACKEND_PORT}
@@ -109,13 +111,14 @@ services:
       - agid-forms-backend
     restart: unless-stopped
 
-  agid-forms-backend-updloads:
+  agid-forms-backend-uploads:
     image: agid-forms-backend:local
     env_file:
       - .env
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=Host:${UPLOAD_SERVER_HOST}
+      - traefik.port=${UPLOAD_SERVER_PORT}
       - traefik.docker.network=app-tier
     ports:
       - ${UPLOAD_SERVER_PORT}
