@@ -103,8 +103,11 @@ export const QUEUE_INITIAL_DELAY_MS = 1000;
 // Minio
 
 export const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || "";
-export const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || "";
-export const MINIO_PORT = parseInt(process.env.MINIO_PORT || "9000", 10);
+export const MINIO_SERVER_HOST = process.env.MINIO_SERVER_HOST || "";
+export const MINIO_SERVER_PORT_NUMBER = parseInt(
+  process.env.MINIO_SERVER_PORT_NUMBER || "9000",
+  10
+);
 export const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || "";
 export const MINIO_DEFAULT_BUCKETS = process.env.MINIO_DEFAULT_BUCKETS || "";
 export const MINIO_DEFAULT_REGION = "eu-west-1";

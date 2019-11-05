@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     ports:
-      - ${MINIO_PORT}
+      - ${MINIO_SERVER_PORT_NUMBER}
     networks:
       - app-tier
     volumes:
