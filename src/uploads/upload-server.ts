@@ -1,85 +1,232 @@
-import { ApolloServer, gql } from "apollo-server";
+import { gql } from "apollo-server";
+import { ApolloServer as ApolloServerExpress } from "apollo-server-express";
+import * as cors from "cors";
+import * as express from "express";
 import { FileUpload } from "graphql-upload";
+import helmet = require("helmet");
+import * as http from "http";
 import * as Minio from "minio";
-import { ulid } from "ulid";
+import morgan = require("morgan");
 
 import {
+  GET_NODE_REVISION,
+  GraphqlClient,
+  INSERT_NODE
+} from "../clients/graphql";
+import {
+  MAX_FILE_SIZE,
+  MAX_UPLOADED_FILES,
   MINIO_ACCESS_KEY,
-  MINIO_DEFAULT_BUCKETS,
   MINIO_DEFAULT_REGION,
   MINIO_SECRET_KEY,
   MINIO_SERVER_HOST,
   MINIO_SERVER_PORT_NUMBER,
   UPLOAD_SERVER_PORT
 } from "../config";
+import {
+  GetNodeRevision,
+  GetNodeRevisionVariables
+} from "../generated/graphql/GetNodeRevision";
+import {
+  InsertNode,
+  InsertNodeVariables
+} from "../generated/graphql/InsertNode";
 import { log } from "../utils/logger";
-
-// 10MB
-const MAX_FILE_SIZE = 10000000;
-const MAX_UPLOADED_FILES = 10;
 
 export interface IFileType {
   filename: string;
   id: string;
   mimetype: string;
+  version: number;
 }
 
-// TODO: real database
-// tslint:disable-next-line: readonly-array
-const dbGlobal: IFileType[] = [];
+const globalMinioClient = new Minio.Client({
+  accessKey: MINIO_ACCESS_KEY,
+  endPoint: MINIO_SERVER_HOST,
+  port: MINIO_SERVER_PORT_NUMBER,
+  secretKey: MINIO_SECRET_KEY,
+  useSSL: false
+});
+
+const getStoredDownload = (minioClient: Minio.Client) => async (
+  jwt: string | undefined,
+  response: express.Response,
+  id: string,
+  version: number
+) => {
+  try {
+    log.info("getStoredDownload: id:%s for jwt:%s", id, jwt);
+
+    // we forward the jwt passed from client (browser)
+    // to check required rights against the node table
+    // some files may be public and do not need a jwt
+    const getResult = await GraphqlClient.query<
+      GetNodeRevision,
+      GetNodeRevisionVariables
+    >({
+      context: {
+        clientName: "forwarding",
+        headers: jwt
+          ? {
+              Authorization: jwt
+            }
+          : {}
+      },
+      query: GET_NODE_REVISION,
+      variables: {
+        id,
+        version
+      }
+    });
+
+    if (getResult.errors) {
+      log.info(
+        "Cannot get node for attachment: %s",
+        JSON.stringify(getResult.errors)
+      );
+      throw new Error(
+        "Cannot get node for attachment: " + JSON.stringify(getResult.errors)
+      );
+    }
+
+    if (
+      !getResult.data ||
+      !getResult.data.revision ||
+      !getResult.data.revision[0]
+    ) {
+      log.info("Cannot get node for id: %s", id);
+      throw new Error("Cannot get node");
+    }
+
+    const node = getResult.data.revision[0];
+
+    const computedBucketName = node.user_id;
+
+    log.info(
+      "getStoredDownload: handling '%s' %s",
+      computedBucketName,
+      node.id
+    );
+
+    // retrive the readstream from minio
+    const fileStream = await minioClient.getObject(computedBucketName, node.id);
+
+    fileStream.on("error", error => {
+      response.writeHead(404, { "Content-Type": "text/plain" });
+      response.end("error retrieving file: " + JSON.stringify(error));
+    });
+
+    fileStream.on("open", () => {
+      response.writeHead(200, { "Content-Type": node.content.mimetype });
+    });
+
+    fileStream.on("end", () => {
+      log.info("sent file %s", node.id);
+    });
+
+    fileStream.pipe(response);
+  } catch (e) {
+    log.info("storedDownload error: %s", e.message);
+    throw e;
+  }
+};
+
+const storeDownload = getStoredDownload(globalMinioClient);
 
 /**
  * Stores a GraphQL file upload.
  */
 const getStoreUpload = (minioClient: Minio.Client) => async (
-  upload: FileUpload,
-  bucketName?: string
+  jwt: string,
+  upload: FileUpload
 ): Promise<IFileType> => {
   try {
     const { createReadStream, filename, mimetype } = upload;
 
-    // TODO: create file node in hasura and get back
-    // node.id (upsert status=draft) and node.user.id
-    const id = ulid();
+    log.info("storeUpload: using jwt=%s", jwt);
 
-    // TODO: bucketName must start with the current node.user.id
+    const nodeContent = {
+      node: {
+        content: {
+          filename,
+          mimetype
+        },
+        language: "it",
+        status: "draft",
+        title: filename,
+        type: "file"
+      }
+    };
 
-    const computedBucketName =
-      bucketName || MINIO_DEFAULT_BUCKETS.split(",")[0];
+    // we forward the jwt passed from client (browser)
+    // to check required rights against the node table
+    const insertResult = await GraphqlClient.mutate<
+      InsertNode,
+      InsertNodeVariables
+    >({
+      context: {
+        clientName: "forwarding",
+        headers: {
+          Authorization: jwt
+        }
+      },
+      mutation: INSERT_NODE,
+      variables: nodeContent
+    });
+
+    if (insertResult.errors) {
+      throw new Error(
+        "Cannot create new node for attachment: " +
+          JSON.stringify(insertResult.errors)
+      );
+    }
+
+    if (
+      !insertResult.data ||
+      !insertResult.data.insert_node ||
+      !insertResult.data.insert_node.returning ||
+      !insertResult.data.insert_node.returning[0]
+    ) {
+      throw new Error("Cannot create new node");
+    }
+
+    const node = insertResult.data.insert_node.returning[0];
+
+    const computedBucketName = node.user_id;
+
     log.info("getStoreUpload: handling '%s' %s", computedBucketName, filename);
 
     // create bucket if not exists
-    const bucketExists = await minioClient.bucketExists(computedBucketName);
-    if (!bucketExists) {
-      log.info("bucket '%s' does not exists, try to create it", bucketName);
+    const isExistingBucket = await minioClient.bucketExists(computedBucketName);
+    if (!isExistingBucket) {
+      log.info(
+        "bucket '%s' does not exists, try to create it",
+        computedBucketName
+      );
       await minioClient.makeBucket(computedBucketName, MINIO_DEFAULT_REGION);
     } else {
-      log.info("bucket '%s' exists", bucketName);
+      log.info("bucket '%s' exists", computedBucketName);
     }
 
     const metaData = {
       filename,
-      id,
+      id: node.id,
       mimetype
     };
 
     // store the file in minio
+    // object name id the node.id
     await minioClient.putObject(
       computedBucketName,
-      filename,
+      node.id,
       createReadStream(),
       undefined, // size
       metaData
     );
 
-    const file = { id, filename, mimetype };
-
-    // TODO: update file metadata in hasura (upsert status=published)
-    dbGlobal.push(file);
-
-    return file;
+    return { ...metaData, version: node.version };
   } catch (e) {
-    log.info("storeUpload error: %s", JSON.stringify(e));
+    log.info("storeUpload error: %s", e.message);
     throw e;
   }
 };
@@ -89,22 +236,22 @@ export type StoreUploadT = ReturnType<typeof getStoreUpload>;
 const typeDefs = gql`
   type File {
     id: String!
+    version: Int!
     filename: String!
     mimetype: String!
   }
 
-  type Query {
-    uploads: [File]
+  type Mutation {
+    singleUpload(file: Upload!): File!
   }
 
-  type Mutation {
-    singleUpload(file: Upload!, bucketName: String): File!
+  type Query {
+    download(id: String!): String
   }
 `;
 
 interface IGraphqlUploadContext {
-  // tslint:disable-next-line: readonly-array
-  db: IFileType[];
+  jwt: string;
   storeUpload: StoreUploadT;
 }
 
@@ -113,44 +260,29 @@ const resolvers = {
     singleUpload: async (
       // tslint:disable-next-line: no-any
       _: any,
-      { file, bucketName }: { file: Promise<FileUpload>; bucketName: string },
-      { storeUpload }: IGraphqlUploadContext
+      { file }: { file: Promise<FileUpload> },
+      { jwt, storeUpload }: IGraphqlUploadContext
     ): Promise<IFileType> => {
       const fileObj = await file;
-      log.info("singleUpload: bucket=%s file=%s", bucketName, file);
-      const meta = await storeUpload(fileObj, bucketName);
+      log.info("singleUpload: file=%s", file);
+      const meta = await storeUpload(jwt, fileObj);
       log.info("singleUpload: meta=%s", JSON.stringify(meta));
       return meta;
     }
   },
   Query: {
-    uploads: async (
-      // tslint:disable-next-line: no-any
-      _: any,
-      // tslint:disable-next-line: no-any
-      args: any,
-      { db }: IGraphqlUploadContext
-    ): // tslint:disable-next-line: readonly-array
-    Promise<IFileType[]> => {
-      // TODO: get metadata from hasura
-      log.info("uploads: source (%s) args=(%s)", JSON.stringify(db), args);
-      return db;
-    }
+    // needed to satisfy apollo server bootstrap
+    download: () => void 0
   }
 };
 
-const storeUploadGlobal = getStoreUpload(
-  new Minio.Client({
-    accessKey: MINIO_ACCESS_KEY,
-    endPoint: MINIO_SERVER_HOST,
-    port: MINIO_SERVER_PORT_NUMBER,
-    secretKey: MINIO_SECRET_KEY,
-    useSSL: false
-  })
-);
-
-const apolloUploadServer = new ApolloServer({
-  context: { db: dbGlobal, storeUpload: storeUploadGlobal },
+const apolloUploadServer = new ApolloServerExpress({
+  context: ({ req }) => {
+    return {
+      jwt: req.header("Authorization"),
+      storeUpload: getStoreUpload(globalMinioClient)
+    };
+  },
   resolvers,
   typeDefs,
   uploads: {
@@ -158,17 +290,46 @@ const apolloUploadServer = new ApolloServer({
     // infrastructure such as Nginx so errors can be handled elegantly by
     // graphql-upload:
     // https://github.com/jaydenseric/graphql-upload#type-processrequestoptions
-    maxFileSize: MAX_FILE_SIZE, // 10 MB
+    maxFileSize: MAX_FILE_SIZE,
     maxFiles: MAX_UPLOADED_FILES
   }
 });
 
-apolloUploadServer
-  .listen({
-    cors: "*",
-    port: UPLOAD_SERVER_PORT
+// Create and setup the Express app.
+const app = express();
+
+// Add security to http headers.
+app.use(helmet());
+app.use(helmet.frameguard({ action: "sameorigin" }));
+
+// Set up CORS (free access to the API from browser clients)
+app.use(
+  cors({
+    exposedHeaders: ["retry-after", "x-ratelimit-reset"]
   })
-  .then(({ url }) => {
-    log.info("GraphQL upload server ready at url=%s", url);
-  })
-  .catch(log.error.bind(log));
+);
+
+// Add a request logger.
+const loggerFormat =
+  ":date[iso] [info]: :method :url :status - :response-time ms";
+app.use(morgan(loggerFormat));
+
+app.get(
+  `/file/:id/:version`,
+  async (req: express.Request, res: express.Response) => {
+    const jwt = req.headers.authorization;
+    try {
+      return await storeDownload(jwt, res, req.params.id, req.params.version);
+    } catch (e) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end(`error retrieving file: ${e.message}`);
+    }
+  }
+);
+
+apolloUploadServer.applyMiddleware({ app });
+
+// HTTPS is terminated by proxy
+http.createServer(app).listen(UPLOAD_SERVER_PORT, () => {
+  log.info("Listening on port %d", UPLOAD_SERVER_PORT);
+});

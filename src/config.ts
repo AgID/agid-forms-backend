@@ -116,3 +116,7 @@ export const UPLOAD_SERVER_PORT = parseInt(
   process.env.UPLOAD_SERVER_PORT || "8888",
   10
 );
+
+// 10MB
+export const MAX_FILE_SIZE = 10000000;
+export const MAX_UPLOADED_FILES = 10;
