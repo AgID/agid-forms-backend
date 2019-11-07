@@ -193,7 +193,7 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
   try {
     const { createReadStream, filename, mimetype } = upload;
 
-    log.info("storeUpload: using jwt=%s", jwt);
+    log.debug("storeUpload: using jwt=%s", jwt);
 
     const nodeContent = {
       node: {
@@ -276,7 +276,7 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
 
     return { ...metaData, version: node.version };
   } catch (e) {
-    log.info("storeUpload error: %s", e.message);
+    log.error("storeUpload error: %s", e.message);
     throw e;
   }
 };
@@ -313,11 +313,7 @@ const resolvers = {
       { file }: { file: Promise<FileUpload> },
       { jwt, storeUpload }: IGraphqlUploadContext
     ): Promise<IFileType> => {
-      const fileObj = await file;
-      log.info("singleUpload: file=%s", file);
-      const meta = await storeUpload(jwt, fileObj);
-      log.info("singleUpload: meta=%s", JSON.stringify(meta));
-      return meta;
+      return storeUpload(jwt, await file);
     }
   },
   Query: {
