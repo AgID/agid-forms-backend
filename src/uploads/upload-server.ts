@@ -51,11 +51,13 @@ const globalMinioClient = new Minio.Client({
 const getStoredDownload = (minioClient: Minio.Client) => async (
   jwt: string | undefined,
   response: express.Response,
-  id: string,
-  version: number
+  parentNodeId: string,
+  parentNodeVersion: number,
+  fieldName: string,
+  index: number
 ) => {
   try {
-    log.info("getStoredDownload: id:%s for jwt:%s", id, jwt);
+    log.debug("storedDownload: id:%s for jwt:%s", parentNodeId, jwt);
 
     // we forward the jwt passed from client (browser)
     // to check required rights against the node table
@@ -74,18 +76,14 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
       },
       query: GET_NODE_REVISION,
       variables: {
-        id,
-        version
+        id: parentNodeId,
+        version: parentNodeVersion
       }
     });
 
     if (getResult.errors) {
-      log.info(
-        "Cannot get node for attachment: %s",
-        JSON.stringify(getResult.errors)
-      );
       throw new Error(
-        "Cannot get node for attachment: " + JSON.stringify(getResult.errors)
+        `Cannot get node for attachment: ${JSON.stringify(getResult.errors)}`
       );
     }
 
@@ -94,24 +92,76 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
       !getResult.data.revision ||
       !getResult.data.revision[0]
     ) {
-      log.info("Cannot get node for id: %s", id);
-      throw new Error("Cannot get node");
+      throw new Error(`Cannot get node for id: ${parentNodeId}`);
     }
 
     const node = getResult.data.revision[0];
+    if (
+      !node.content.values ||
+      !node.content.values[fieldName] ||
+      !node.content.values[fieldName][index]
+    ) {
+      throw new Error(
+        `Cannot get file reference for id: ${parentNodeId} fieldName=${fieldName} index=${index}`
+      );
+    }
 
-    const computedBucketName = node.user_id;
+    // get file node id and version from reference
+    const fileRef = node.content.values[fieldName][index];
+    if (!fileRef.id || !fileRef.version) {
+      throw new Error(
+        `Cannot get id / version for id: ${parentNodeId} fieldName=${fieldName} index=${index}`
+      );
+    }
 
-    log.info(
-      "getStoredDownload: handling '%s' %s",
+    // retrieve fileNode
+    // no matter what permission we have here now
+    // so we query using the admin account credentials
+    const fileNodeResult = await GraphqlClient.query<
+      GetNodeRevision,
+      GetNodeRevisionVariables
+    >({
+      query: GET_NODE_REVISION,
+      variables: {
+        id: fileRef.id,
+        version: fileRef.version
+      }
+    });
+
+    if (fileNodeResult.errors) {
+      throw new Error(
+        `Cannot get file node for attachment: ${JSON.stringify(
+          fileNodeResult.errors
+        )}`
+      );
+    }
+
+    if (
+      !fileNodeResult.data ||
+      !fileNodeResult.data.revision ||
+      !fileNodeResult.data.revision[0]
+    ) {
+      throw new Error(`Cannot get file node for id: ${fileRef.id}`);
+    }
+
+    const fileNode = fileNodeResult.data.revision[0];
+
+    const computedBucketName = fileNode.user_id;
+
+    log.debug(
+      "storedDownload: serving '%s/%s",
       computedBucketName,
-      node.id
+      fileNode.id
     );
 
     // retrive the readstream from minio
-    const fileStream = await minioClient.getObject(computedBucketName, node.id);
+    const fileStream = await minioClient.getObject(
+      computedBucketName,
+      fileNode.id
+    );
 
     fileStream.on("error", error => {
+      // tslint:disable-next-line: no-duplicate-string
       response.writeHead(404, { "Content-Type": "text/plain" });
       response.end("error retrieving file: " + JSON.stringify(error));
     });
@@ -121,12 +171,12 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
     });
 
     fileStream.on("end", () => {
-      log.info("sent file %s", node.id);
+      log.info("sent file %s", fileNode.id);
     });
 
     fileStream.pipe(response);
   } catch (e) {
-    log.info("storedDownload error: %s", e.message);
+    log.error("storedDownload error: %s", e.message);
     throw e;
   }
 };
@@ -315,11 +365,18 @@ const loggerFormat =
 app.use(morgan(loggerFormat));
 
 app.get(
-  `/file/:id/:version`,
+  `/file/:parent_node_id/:parent_node_version/:field_name/:index`,
   async (req: express.Request, res: express.Response) => {
     const jwt = req.headers.authorization;
     try {
-      return await storeDownload(jwt, res, req.params.id, req.params.version);
+      return await storeDownload(
+        jwt,
+        res,
+        req.params.parent_node_id,
+        req.params.parent_node_version,
+        req.params.field_name,
+        req.params.index
+      );
     } catch (e) {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end(`error retrieving file: ${e.message}`);
