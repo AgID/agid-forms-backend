@@ -17,6 +17,7 @@ npm-debug.log
 
 # Exclude custom local enviroment variables.
 /.env
+/.env.*
 
 # Exclude typescript generated javascript files.
 src/**/*.js

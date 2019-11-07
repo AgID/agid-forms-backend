@@ -9,6 +9,7 @@ module.exports = {
         "X-Hasura-Admin-Secret": process.env.HASURA_GRAPHQL_ADMIN_SECRET
       }
     },
+    excludes: ["./src/uploads/*.ts"],
     includes: ["./src/**/*.ts"]
   }
 };

@@ -99,3 +99,24 @@ export const SMTP_CONNECTION_URL = process.env.SMTP_CONNECTION_URL;
 
 export const QUEUE_MAX_ATTEMPTS = 30;
 export const QUEUE_INITIAL_DELAY_MS = 1000;
+
+// Minio
+
+export const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || "";
+export const MINIO_SERVER_HOST = process.env.MINIO_SERVER_HOST || "";
+export const MINIO_SERVER_PORT_NUMBER = parseInt(
+  process.env.MINIO_SERVER_PORT_NUMBER || "9000",
+  10
+);
+export const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || "";
+export const MINIO_DEFAULT_BUCKETS = process.env.MINIO_DEFAULT_BUCKETS || "";
+export const MINIO_DEFAULT_REGION = "eu-west-1";
+
+export const UPLOAD_SERVER_PORT = parseInt(
+  process.env.UPLOAD_SERVER_PORT || "8888",
+  10
+);
+
+// 10MB
+export const MAX_FILE_SIZE = 10000000;
+export const MAX_UPLOADED_FILES = 10;

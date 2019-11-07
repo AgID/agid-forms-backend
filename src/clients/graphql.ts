@@ -6,6 +6,7 @@ import {
   HASURA_GRAPHQL_ENDPOINT
 } from "../config";
 
+import { ApolloLink } from "apollo-link";
 import gql from "graphql-tag";
 import nodeFetch from "node-fetch";
 
@@ -14,16 +15,31 @@ const getHeaders = () => ({
 });
 
 const cache = new InMemoryCache();
-const link = new HttpLink({
+const adminHttpLink = new HttpLink({
   // tslint:disable-next-line: no-any
   fetch: (nodeFetch as any) as typeof fetch,
   headers: getHeaders(),
   uri: HASURA_GRAPHQL_ENDPOINT
 });
 
+const forwardingHttpLink = new HttpLink({
+  // tslint:disable-next-line: no-any
+  fetch: (nodeFetch as any) as typeof fetch,
+  uri: HASURA_GRAPHQL_ENDPOINT
+});
+
+// tslint:disable-next-line: no-any
+const isForwardingClient = (context: any) => {
+  return context.clientName === "forwarding";
+};
+
 export const GraphqlClient = new ApolloClient({
   cache,
-  link
+  link: ApolloLink.split(
+    operation => isForwardingClient(operation.getContext()),
+    forwardingHttpLink,
+    adminHttpLink
+  )
 });
 
 export type GraphqlClient = ApolloClient<NormalizedCacheObject>;
@@ -108,4 +124,52 @@ export const GET_USER_INFO = gql`
       email
     }
   }
+`;
+
+export const INSERT_NODE = gql`
+  mutation InsertNode($node: node_insert_input!) {
+    insert_node(objects: [$node]) {
+      returning {
+        id
+        version
+        user_id
+      }
+    }
+  }
+`;
+
+export const UPDATE_NODE = gql`
+  mutation UpdateNode($id: uuid!, $node: node_set_input!) {
+    update_node(where: { id: { _eq: $id } }, _set: $node) {
+      returning {
+        id
+        version
+        user_id
+      }
+    }
+  }
+`;
+
+export const NodeRevisionFragment = gql`
+  fragment NodeRevisionFragment on node_revision {
+    id
+    title
+    status
+    content
+    version
+    user_id
+    type
+  }
+`;
+
+export const GET_NODE_REVISION = gql`
+  query GetNodeRevision($id: uuid!, $version: Int!) {
+    revision: node_revision(
+      where: { _and: { id: { _eq: $id }, version: { _eq: $version } } }
+      limit: 1
+    ) {
+      ...NodeRevisionFragment
+    }
+  }
+  ${NodeRevisionFragment}
 `;
