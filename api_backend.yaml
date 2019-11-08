@@ -27,7 +27,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
 
-  "/auth/email/{ipa_code}":
+  "/auth/ipa/token/{ipa_code}":
     post:
       summary: Send an email with a secret code to the RTD.
       description: |
@@ -46,7 +46,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         "404":
-          description: No organizaion found for the provided IPA code.
+          description: No organization found for the provided IPA code.
           schema:
             $ref: "#/definitions/ProblemJson"
         "500":
@@ -60,7 +60,7 @@ paths:
           type: string
           required: true
 
-  "/auth/login/{ipa_code}":
+  "/auth/ipa/session/{ipa_code}":
     post:
       summary: Get a bearer token to use with subsequent API calls.
       description: |
@@ -81,7 +81,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         "404":
-          description: No organizaion found for the provided IPA code.
+          description: No organization found for the provided IPA code.
           schema:
             $ref: "#/definitions/ProblemJson"
         "500":
@@ -99,6 +99,68 @@ paths:
           schema:
             $ref: "#/definitions/LoginCredentials"
           required: true
+
+  ######################
+
+  "/auth/email/token":
+    post:
+      summary: Send an email with a secret code to the email address provided.
+      description: |
+        Send an email with a secret code to the email address provided in input. 
+        The secret code will be used by the client to login into the backend.
+      responses:
+        "200":
+          description: Found.
+          schema:
+            "$ref": "#/definitions/EmailPayload"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the organization.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: body
+          in: body
+          description: Email address.
+          schema:
+            $ref: "#/definitions/EmailPayload"
+          required: true
+
+  "/auth/email/session":
+    post:
+      summary: Get a bearer token to use with subsequent API calls.
+      description: |
+        The client post a secret code and the email address the secret code was sent to.
+        If the secret is valid for the provided email address,
+        then the backend returns a bearer token to authenicate subsequent API calls.
+      responses:
+        "200":
+          description: Authorized.
+          schema:
+            "$ref": "#/definitions/LoginTokens"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "401":
+          description: Not authorized.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+        "500":
+          description: There was an error retrieving the organization.
+          schema:
+            $ref: "#/definitions/ProblemJson"
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "#/definitions/EmailLoginCredentials"
+          required: true
+
+  ######################
 
   "/auth/logout":
     post:
@@ -211,6 +273,14 @@ definitions:
     required:
       - ipa_ou
       - ipa_pa
+  EmailPayload:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+    required:
+      - email
   LoginTokens:
     type: object
     properties:
@@ -227,6 +297,17 @@ definitions:
       secret:
         type: string
     required:
+      - secret
+  EmailLoginCredentials:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+      secret:
+        type: string
+    required:
+      - email
       - secret
   SuccessResponse:
     type: object

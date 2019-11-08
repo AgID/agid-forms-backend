@@ -36,11 +36,11 @@ import {
 } from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
-import { UserFromRequestMiddleware } from "../middlewares/user_from_request";
+
 import { WebhookJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
-import { emailAuthCode } from "../templates/html/email/authcode";
+import { emailAuthCode } from "../templates/html/email/auth_ipa_template";
 import { GraphqlToken, SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
@@ -48,7 +48,7 @@ import { log } from "../utils/logger";
 import { ApolloQueryResult } from "apollo-client";
 import { GetPaFromIpa } from "../generated/api/GetPaFromIpa";
 import { LoginCredentials } from "../generated/api/LoginCredentials";
-import { SuccessResponse } from "../generated/api/SuccessResponse";
+
 import { UserProfile } from "../generated/api/UserProfile";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
@@ -318,35 +318,6 @@ export function Login(
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
     DecodeBodyMiddleware(LoginCredentials)
-  );
-  return wrapRequestHandler(withrequestMiddlewares(handler));
-}
-
-//////////////////////////////////////////////////////////
-
-type ILogout = (
-  user: AppUser
-) => Promise<IResponseErrorInternal | IResponseSuccessJson<SuccessResponse>>;
-
-export function LogoutHandler(
-  sessionStorage: IObjectStorage<AppUser, SessionToken>
-): ILogout {
-  return async user => {
-    // Delete user session
-    const errorOrSession = await sessionStorage.del(user.session_token);
-    if (isLeft(errorOrSession) || !errorOrSession.value) {
-      return ResponseErrorInternal("Cannot delete user session");
-    }
-    return ResponseSuccessJson({ message: "logout" });
-  };
-}
-
-export function Logout(
-  sessionStorage: IObjectStorage<AppUser, SessionToken>
-): express.RequestHandler {
-  const handler = LogoutHandler(sessionStorage);
-  const withrequestMiddlewares = withRequestMiddlewares(
-    UserFromRequestMiddleware(AppUser)
   );
   return wrapRequestHandler(withrequestMiddlewares(handler));
 }

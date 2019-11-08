@@ -75,6 +75,7 @@ export const SESSION_PREFIX = "SESSION-";
 export const SECRET_PREFIX = "SECRET-";
 
 export const RTD_ROLE_NAME = "rtd";
+export const DEFAULT_ROLE_NAME = "authenticated";
 
 // maximum retries over duration
 export const RATE_LIMIT_POINTS = 30;

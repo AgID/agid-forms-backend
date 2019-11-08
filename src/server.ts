@@ -38,7 +38,9 @@ import nodeFetch from "node-fetch";
 
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import packageJson = require("../package.json");
-import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
+import { Login as EmailLogin, SendEmail } from "./controllers/auth_email";
+import { Login as IpaLogin, SendEmailToRtd } from "./controllers/auth_ipa";
+import { Logout } from "./controllers/auth_logout";
 import { AuthWebhook } from "./controllers/auth_webhook";
 import { GraphqlWebhook } from "./controllers/graphql_webhook";
 import { GetProfile } from "./controllers/profile";
@@ -181,16 +183,33 @@ app.use(passport.initialize());
 //
 
 app.post(
-  `${API_BASE_PATH}/auth/email/:ipa_code`,
+  `${API_BASE_PATH}/auth/ipa/token/:ipa_code`,
   rateLimiterMiddleware,
   SendEmailToRtd(GraphqlClient, generateCode, queueClient, secretStorage)
 );
 
 app.post(
-  `${API_BASE_PATH}/auth/login/:ipa_code`,
+  `${API_BASE_PATH}/auth/ipa/session/:ipa_code`,
   rateLimiterMiddleware,
-  Login(
+  IpaLogin(
     GraphqlClient,
+    secretStorage,
+    sessionStorage,
+    userWebhookRequest,
+    webhookJwtService
+  )
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/email/token`,
+  rateLimiterMiddleware,
+  SendEmail(generateCode, queueClient, secretStorage)
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/email/session`,
+  rateLimiterMiddleware,
+  EmailLogin(
     secretStorage,
     sessionStorage,
     userWebhookRequest,
