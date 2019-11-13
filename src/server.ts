@@ -8,7 +8,6 @@ import * as t from "io-ts";
 import * as morgan from "morgan";
 import * as passport from "passport";
 
-import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 import { GraphqlClient } from "./clients/graphql";
 
 import {
@@ -24,22 +23,17 @@ import {
   SECRET_PREFIX,
   SERVER_PORT,
   SESSION_PREFIX,
-  TOKEN_DURATION_IN_SECONDS,
-  WEBHOOK_JWT_SECRET,
-  WEBHOOK_USER_LOGIN_BASE_URL,
-  WEBHOOK_USER_LOGIN_PATH
+  TOKEN_DURATION_IN_SECONDS
 } from "./config";
-import { HasuraJwtService, WebhookJwtService } from "./services/jwt";
+import { HasuraJwtService } from "./services/jwt";
 
 import bearerTokenStrategy from "./strategies/bearer_token";
 
-import { createFetchRequestForApi } from "italia-ts-commons/lib/requests";
-import nodeFetch from "node-fetch";
-
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import packageJson = require("../package.json");
-import { Login, Logout, SendEmailToRtd } from "./controllers/auth";
-import { AuthWebhook } from "./controllers/auth_webhook";
+import { Login as EmailLogin, SendEmail } from "./controllers/auth_email";
+import { Login as IpaLogin, SendEmailToRtd } from "./controllers/auth_ipa";
+import { Logout } from "./controllers/auth_logout";
 import { GraphqlWebhook } from "./controllers/graphql_webhook";
 import { GetProfile } from "./controllers/profile";
 import { makeRateLimiterMiddleware } from "./middlewares/rate_limiter";
@@ -50,10 +44,6 @@ import { generateCode } from "./utils/code_generator";
 import { log } from "./utils/logger";
 import { makeQueueClient } from "./utils/queue_client";
 import { createSimpleRedisClient } from "./utils/redis";
-import { userWebhook } from "./utils/webhooks";
-
-// tslint:disable-next-line: no-any
-const fetchApi = (nodeFetch as any) as typeof fetch;
 
 //
 // Create Redis session storage
@@ -98,19 +88,6 @@ passport.use(bearerTokenStrategy(sessionStorage));
 
 const bearerTokenAuth = passport.authenticate("bearer", { session: false });
 
-// Used to call webhook
-passport.use(
-  new JwtStrategy(
-    {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: Buffer.from(WEBHOOK_JWT_SECRET, "base64")
-    },
-    (jwtPayload, done) => done(null, jwtPayload)
-  )
-);
-
-const jwtTokenAuth = passport.authenticate("jwt", { session: false });
-
 //
 // Setup dependecies for controllers
 //
@@ -120,16 +97,6 @@ const hasuraJwtService = HasuraJwtService(
   JWT_SECRET,
   TOKEN_DURATION_IN_SECONDS
 );
-
-const webhookJwtService = WebhookJwtService(
-  WEBHOOK_JWT_SECRET,
-  TOKEN_DURATION_IN_SECONDS
-);
-
-const userWebhookRequest = createFetchRequestForApi(userWebhook, {
-  baseUrl: WEBHOOK_USER_LOGIN_BASE_URL,
-  fetchApi
-});
 
 const secretStorage = RedisObjectStorage(
   redisClient,
@@ -181,33 +148,33 @@ app.use(passport.initialize());
 //
 
 app.post(
-  `${API_BASE_PATH}/auth/email/:ipa_code`,
+  `${API_BASE_PATH}/auth/ipa/token/:ipa_code`,
   rateLimiterMiddleware,
   SendEmailToRtd(GraphqlClient, generateCode, queueClient, secretStorage)
 );
 
 app.post(
-  `${API_BASE_PATH}/auth/login/:ipa_code`,
+  `${API_BASE_PATH}/auth/ipa/session/:ipa_code`,
   rateLimiterMiddleware,
-  Login(
-    GraphqlClient,
-    secretStorage,
-    sessionStorage,
-    userWebhookRequest,
-    webhookJwtService
-  )
+  IpaLogin(GraphqlClient, secretStorage, sessionStorage, hasuraJwtService)
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/email/token`,
+  rateLimiterMiddleware,
+  SendEmail(generateCode, queueClient, secretStorage)
+);
+
+app.post(
+  `${API_BASE_PATH}/auth/email/session`,
+  rateLimiterMiddleware,
+  EmailLogin(GraphqlClient, secretStorage, sessionStorage, hasuraJwtService)
 );
 
 app.post(
   `${API_BASE_PATH}/auth/logout`,
   bearerTokenAuth,
   Logout(sessionStorage)
-);
-
-app.post(
-  WEBHOOK_USER_LOGIN_PATH,
-  jwtTokenAuth,
-  AuthWebhook(GraphqlClient, hasuraJwtService)
 );
 
 app.get(

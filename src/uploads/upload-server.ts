@@ -62,6 +62,8 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
     // we forward the jwt passed from client (browser)
     // to check required rights against the node table
     // some files may be public and do not need a jwt
+    // the node checked for permission is the "parent"
+    // node that contains the reference to the file entry
     const getResult = await GraphqlClient.query<
       GetNodeRevision,
       GetNodeRevisionVariables
