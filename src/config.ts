@@ -51,15 +51,10 @@ export const AUTHENTICATION_BASE_PATH =
 
 export const API_BASE_PATH = process.env.API_BASE_PATH || "/api/v1";
 
-export const WEBHOOK_USER_LOGIN_PATH = "/webhook/user";
-export const WEBHOOK_USER_LOGIN_BASE_URL =
-  process.env.WEBHOOK_USER_LOGIN_BASE_URL || "http://localhost";
-
 export const DEFAULT_USER_ROLE_ID = "authenticated";
 export const USER_ROLE_ID = process.env.USER_ROLE_ID || DEFAULT_USER_ROLE_ID;
 
 export const JWT_SECRET = process.env.JWT_SECRET || "";
-export const WEBHOOK_JWT_SECRET = process.env.WEBHOOK_JWT_SECRET || "";
 
 export const HASURA_GRAPHQL_ENDPOINT =
   process.env.HASURA_GRAPHQL_ENDPOINT || "http://hasura/v1/graphql";
@@ -76,6 +71,7 @@ export const SECRET_PREFIX = "SECRET-";
 
 export const RTD_ROLE_NAME = "rtd";
 export const DEFAULT_ROLE_NAME = "authenticated";
+export const DEFAULT_GROUP_NAME = "user";
 
 // maximum retries over duration
 export const RATE_LIMIT_POINTS = 30;

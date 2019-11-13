@@ -17,8 +17,6 @@ import {
 
 import * as t from "io-ts";
 
-import { TypeofApiCall } from "italia-ts-commons/lib/requests";
-
 import {
   withRequestMiddlewares,
   wrapRequestHandler
@@ -28,20 +26,21 @@ import * as Bull from "bull";
 import { isLeft } from "fp-ts/lib/Either";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import { DEFAULT_ROLE_NAME, WEBHOOK_USER_LOGIN_PATH } from "../config";
+import { DEFAULT_GROUP_NAME, DEFAULT_ROLE_NAME } from "../config";
 import { UserProfile } from "../generated/api/UserProfile";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
-import { WebhookJwtService } from "../services/jwt";
+import { HasuraJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { emailAuthCode } from "../templates/html/email/auth_email_template";
 import { GraphqlToken, SessionToken } from "../types/token";
 import { AppUser } from "../types/user";
 import { log } from "../utils/logger";
-import { UserWebhookT } from "../utils/webhooks";
 
+import { GraphqlClient } from "../clients/graphql";
 import { EmailLoginCredentials } from "../generated/api/EmailLoginCredentials";
 import { EmailPayload } from "../generated/api/EmailPayload";
+import { GetOrCreateUser } from "../utils/auth";
 import { queueEmail } from "../utils/queue_client";
 import { SendmailProcessorInputT } from "../workers/email_processor";
 
@@ -132,10 +131,10 @@ type ILogin = (
 >;
 
 export function LoginHandler(
+  graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): ILogin {
   return async creds => {
     const emailAddress = creds.email;
@@ -152,29 +151,23 @@ export function LoginHandler(
     const user: AppUser = {
       created_at: new Date().getTime(),
       email: emailAddress,
-      group: emailAddress,
+      group: DEFAULT_GROUP_NAME,
       roles: [DEFAULT_ROLE_NAME],
       session_token: token
     };
 
-    // Call webhook and retrieve metadata
-    const webhookJwt = webhookJwtService.getJwtForWebhook(user);
-    const errorOrWebhookResponse = await userWebhookRequest({
-      jwt: webhookJwt,
-      webhookPath: WEBHOOK_USER_LOGIN_PATH
-    });
-    if (
-      isLeft(errorOrWebhookResponse) ||
-      errorOrWebhookResponse.value.status !== 200
-    ) {
-      log.error(
-        "Error calling webhook: %s",
-        JSON.stringify(errorOrWebhookResponse.value)
+    const errorOrMetadata = await GetOrCreateUser(
+      graphqlClient,
+      hasuraJwtService,
+      user
+    ).run();
+
+    if (isLeft(errorOrMetadata)) {
+      return ResponseErrorInternal(
+        "Error creating user: " + errorOrMetadata.value.message
       );
-      return ResponseErrorInternal("Error calling webhook.");
     }
-    const webhookResponse = errorOrWebhookResponse.value;
-    const metadata = webhookResponse.value;
+    const metadata = errorOrMetadata.value;
 
     // Create user session for bearer authentication
     const errorOrSession = await sessionStorage.set(token, {
@@ -190,7 +183,8 @@ export function LoginHandler(
       graphql_token: metadata.jwt,
       user: {
         email: emailAddress,
-        id: metadata.id
+        id: metadata.id,
+        roles: user.roles
       }
     }).fold<IResponseSuccessJson<LoginResultT> | IResponseErrorInternal>(
       errs =>
@@ -203,16 +197,16 @@ export function LoginHandler(
 }
 
 export function Login(
+  graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
+    graphqlClient,
     secretStorage,
     sessionStorage,
-    userWebhookRequest,
-    webhookJwtService
+    hasuraJwtService
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     DecodeBodyMiddleware(EmailLoginCredentials)

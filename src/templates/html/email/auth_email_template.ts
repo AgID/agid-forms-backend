@@ -4,17 +4,16 @@ export const emailAuthCode = (secretCode: string) => ({
   html: `
   <p>Ciao,<br/>
   in data ${format(new Date(), "DD/MM/YYYY")} 
-  è stata effettuata una richiesta di accesso al servizio eForm
-  di AGID che permette la compilazione di moduli online.
+  è stata effettuata una richiesta
+  di accesso al <a href="https://form.agid.gov.it">servizio eForm di AGID</a>
+  che permette la compilazione di moduli online.
   </p>
   <p>
-  Per accedere al servizio è necessario collegarsi alla seguente pagina 
-  <a href="https://form.agid.gov.it/">form.agid.gov.it</a>
-  inserendo la chiave di accesso:
+  La chiave di accesso per confermare l'indirizzo email è:
   </p>
   <h2>${secretCode}</h2>
   <p>Distinti saluti,</p>
   <p>AGID</p>
   `,
-  title: `eForm AGID - codice d'accesso`
+  title: `eForm AGID - chiave d'accesso`
 });

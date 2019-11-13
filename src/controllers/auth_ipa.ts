@@ -18,8 +18,6 @@ import {
 
 import * as t from "io-ts";
 
-import { TypeofApiCall } from "italia-ts-commons/lib/requests";
-
 import {
   withRequestMiddlewares,
   wrapRequestHandler
@@ -29,15 +27,11 @@ import * as Bull from "bull";
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
 import { GET_RTD_FROM_IPA, GraphqlClient } from "../clients/graphql";
-import {
-  DUMB_IPA_VALUE_FOR_NULL,
-  RTD_ROLE_NAME,
-  WEBHOOK_USER_LOGIN_PATH
-} from "../config";
+import { DUMB_IPA_VALUE_FOR_NULL, RTD_ROLE_NAME } from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
 
-import { WebhookJwtService } from "../services/jwt";
+import { HasuraJwtService } from "../services/jwt";
 import { IObjectStorage } from "../services/object_storage";
 import { generateNewToken } from "../services/token";
 import { emailAuthCode } from "../templates/html/email/auth_ipa_template";
@@ -56,8 +50,8 @@ import {
   GetPaFromIpa as GraphqlGetPaFromIpa,
   GetPaFromIpaVariables as GraphqlGetPaFromIpaVariables
 } from "../generated/graphql/GetPaFromIpa";
-import { UserWebhookT } from "../utils/webhooks";
 
+import { GetOrCreateUser } from "../utils/auth";
 import { queueEmail } from "../utils/queue_client";
 import { SendmailProcessorInputT } from "../workers/email_processor";
 
@@ -210,8 +204,7 @@ export function LoginHandler(
   graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): ILogin {
   return async (ipaCode, creds) => {
     // Check if secret (user's credentials) is valid
@@ -256,24 +249,18 @@ export function LoginHandler(
       session_token: token
     };
 
-    // Call webhook and retrieve metadata
-    const webhookJwt = webhookJwtService.getJwtForWebhook(user);
-    const errorOrWebhookResponse = await userWebhookRequest({
-      jwt: webhookJwt,
-      webhookPath: WEBHOOK_USER_LOGIN_PATH
-    });
-    if (
-      isLeft(errorOrWebhookResponse) ||
-      errorOrWebhookResponse.value.status !== 200
-    ) {
-      log.error(
-        "Error calling webhook: %s",
-        JSON.stringify(errorOrWebhookResponse.value)
+    const errorOrMetadata = await GetOrCreateUser(
+      graphqlClient,
+      hasuraJwtService,
+      user
+    ).run();
+
+    if (isLeft(errorOrMetadata)) {
+      return ResponseErrorInternal(
+        "Error creating user: " + errorOrMetadata.value.message
       );
-      return ResponseErrorInternal("Error calling webhook.");
     }
-    const webhookResponse = errorOrWebhookResponse.value;
-    const metadata = webhookResponse.value;
+    const metadata = errorOrMetadata.value;
 
     // Create user session for bearer authentication
     const errorOrSession = await sessionStorage.set(token, {
@@ -289,7 +276,8 @@ export function LoginHandler(
       graphql_token: metadata.jwt,
       user: {
         email: rtdEmail,
-        id: metadata.id
+        id: metadata.id,
+        roles: user.roles
       }
     }).fold<IResponseSuccessJson<LoginResultT> | IResponseErrorInternal>(
       errs =>
@@ -305,15 +293,13 @@ export function Login(
   graphqlClient: GraphqlClient,
   secretStorage: IObjectStorage<string, string>,
   sessionStorage: IObjectStorage<AppUser, SessionToken>,
-  userWebhookRequest: TypeofApiCall<UserWebhookT>,
-  webhookJwtService: ReturnType<WebhookJwtService>
+  hasuraJwtService: ReturnType<HasuraJwtService>
 ): express.RequestHandler {
   const handler = LoginHandler(
     graphqlClient,
     secretStorage,
     sessionStorage,
-    userWebhookRequest,
-    webhookJwtService
+    hasuraJwtService
   );
   const withrequestMiddlewares = withRequestMiddlewares(
     RequiredParamMiddleware("ipa_code", t.string),
