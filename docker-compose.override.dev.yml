@@ -1,6 +1,27 @@
-version: "3.4"
+version: "3"
 
 services:
+  minio:
+    volumes:
+      - miniovol:/data
+
+  # hasura:
+  #   networks:
+  #     app-tier:
+  #       ipv4_address: 10.5.0.5
+
+  redis:
+    volumes:
+      - redisvol:/bitnami/redis/data
+
+  postgresql:
+    volumes:
+      - postgresqlvol:/bitnami/postgresql
+      - walvol:/bitnami/wal-logs
+      - backupvol:/db-backups
+      - ./scripts/ipa-import-local.sh:/ipa-import-local.sh
+      - ./scripts/backup-db.sh:/backup-db.sh
+      - ./scripts/cleanup-hasura-events.sh:/cleanup-hasura-events.sh
 
   agid-forms-backend:
     image: node:8.11.3-alpine
@@ -8,3 +29,37 @@ services:
       - .:/usr/src/app
     command: ["yarn", "hot-reload"]
     working_dir: "/usr/src/app"
+
+  agid-forms-backend-processor:
+    image: node:8.11.3-alpine
+    volumes:
+      - .:/usr/src/app
+    command: ["yarn", "run-processor:reload"]
+    working_dir: "/usr/src/app"
+
+  agid-forms-backend-uploads:
+    image: node:8.11.3-alpine
+    volumes:
+      - .:/usr/src/app
+    command: ["yarn", "run-upload-server:reload"]
+    working_dir: "/usr/src/app"
+
+  traefik:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./local/acme.json:/acme.json
+
+volumes:
+  postgresqlvol:
+  walvol:
+  redisvol:
+  backupvol:
+  miniovol:
+#
+#
+# networks:
+#   app-tier:
+#     ipam:
+#       config:
+#         - subnet: 10.5.0.0/16
+# #         gateway: 10.5.0.1
