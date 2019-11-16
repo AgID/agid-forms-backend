@@ -204,7 +204,9 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
           mimetype
         },
         language: "it",
-        status: "draft",
+        // the archived status here prevents
+        // public access of files metadata
+        status: "archived",
         title: filename,
         type: "file"
       }

@@ -47,7 +47,7 @@ export const WebhookPayload = t.interface({
   event: t.interface({
     data: t.partial({
       new: NodeT,
-      old: NodeT
+      old: t.union([NodeT, t.null])
     }),
     op: t.union([
       t.literal("UPDATE"),
