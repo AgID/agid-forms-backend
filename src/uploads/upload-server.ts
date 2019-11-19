@@ -21,6 +21,7 @@ import {
   MINIO_SECRET_KEY,
   MINIO_SERVER_HOST,
   MINIO_SERVER_PORT_NUMBER,
+  TRAEFIK_DOMAIN,
   UPLOAD_SERVER_PORT
 } from "../config";
 import {
@@ -49,6 +50,7 @@ const globalMinioClient = new Minio.Client({
 });
 
 const getStoredDownload = (minioClient: Minio.Client) => async (
+  hasuraAdminSecret: string | undefined,
   jwt: string | undefined,
   response: express.Response,
   parentNodeId: string,
@@ -57,7 +59,11 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
   index: number
 ) => {
   try {
-    log.debug("storedDownload: id:%s for jwt:%s", parentNodeId, jwt);
+    log.info(
+      "storedDownload: querying parent_id=%s using=%s",
+      parentNodeId,
+      jwt ? "jwt" : hasuraAdminSecret ? "admin secret" : "noauth"
+    );
 
     // we forward the jwt passed from client (browser)
     // to check required rights against the node table
@@ -70,7 +76,11 @@ const getStoredDownload = (minioClient: Minio.Client) => async (
     >({
       context: {
         clientName: "forwarding",
-        headers: jwt
+        headers: hasuraAdminSecret
+          ? {
+              "X-Hasura-Admin-Secret": hasuraAdminSecret
+            }
+          : jwt
           ? {
               Authorization: jwt
             }
@@ -355,7 +365,8 @@ app.use(helmet.frameguard({ action: "sameorigin" }));
 // Set up CORS (free access to the API from browser clients)
 app.use(
   cors({
-    exposedHeaders: ["retry-after", "x-ratelimit-reset"]
+    exposedHeaders: ["retry-after", "x-ratelimit-reset"],
+    origin: ["http://localhost", `https://${TRAEFIK_DOMAIN}`]
   })
 );
 
@@ -368,8 +379,10 @@ app.get(
   `/file/:parent_node_id/:parent_node_version/:field_name/:index`,
   async (req: express.Request, res: express.Response) => {
     const jwt = req.headers.authorization;
+    const hasuraAdminSecret = req.headers["x-hasura-admin-secret"] as string;
     try {
       return await storeDownload(
+        hasuraAdminSecret,
         jwt,
         res,
         req.params.parent_node_id,

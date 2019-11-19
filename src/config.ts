@@ -109,6 +109,7 @@ export const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || "";
 export const MINIO_DEFAULT_BUCKETS = process.env.MINIO_DEFAULT_BUCKETS || "";
 export const MINIO_DEFAULT_REGION = "eu-west-1";
 
+export const UPLOAD_SERVER_HOST = process.env.UPLOAD_SERVER_HOST;
 export const UPLOAD_SERVER_PORT = parseInt(
   process.env.UPLOAD_SERVER_PORT || "8888",
   10
@@ -117,3 +118,7 @@ export const UPLOAD_SERVER_PORT = parseInt(
 // 10MB
 export const MAX_FILE_SIZE = 10000000;
 export const MAX_UPLOADED_FILES = 10;
+
+export const OMBUDSMAN_EMAIL = process.env.OMBUDSMAN_EMAIL;
+
+export const TRAEFIK_DOMAIN = process.env.TRAEFIK_DOMAIN || "localhost";

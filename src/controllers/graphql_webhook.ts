@@ -25,7 +25,7 @@ import { RequiredHeaderValueMiddleware } from "../middlewares/required_header_va
 import { RedisClient } from "redis";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 
-const NodeT = t.interface({
+export const NodeT = t.interface({
   content: t.object,
   created_at: DateFromString,
   id: UUIDString,
@@ -37,6 +37,7 @@ const NodeT = t.interface({
   user_id: UUIDString,
   version: NonNegativeInteger
 });
+export type NodeT = t.TypeOf<typeof NodeT>;
 
 export const WebhookPayload = t.interface({
   created_at: DateFromString,
