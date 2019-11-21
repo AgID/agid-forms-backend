@@ -41,7 +41,7 @@ services:
     image: node:8.11.3-alpine
     volumes:
       - .:/usr/src/app
-    command: ["yarn", "run-upload-server:reload"]
+    command: ["yarn", "run-uploads:reload"]
     working_dir: "/usr/src/app"
 
   traefik:

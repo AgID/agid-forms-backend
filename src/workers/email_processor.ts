@@ -14,11 +14,23 @@ import {
 import { withDefaultEmailTemplate } from "../templates/html/default";
 import { log } from "../utils/logger";
 
-export const SendmailProcessorInputT = t.interface({
-  content: t.string,
-  subject: t.string,
-  to: t.string
-});
+export const SendmailProcessorInputT = t.intersection([
+  t.interface({
+    content: t.string,
+    subject: t.string,
+    to: t.string
+  }),
+  t.partial({
+    attachments: t.array(
+      t.interface({
+        filename: t.string,
+        httpHeaders: t.union([t.undefined, t.record(t.string, t.string)]),
+        path: t.string
+      })
+    )
+  })
+]);
+
 export type SendmailProcessorInputT = t.TypeOf<typeof SendmailProcessorInputT>;
 
 const nodedmailerTransporter = nodemailer.createTransport(SMTP_CONNECTION_URL);
@@ -43,6 +55,7 @@ export function SendmailProcessor(queueClient: Bull.Queue): void {
           sendmailProcessorInput.content
         ).replace("''", "'");
         const message = {
+          attachments: sendmailProcessorInput.attachments,
           from: AUTHMAIL_FROM || "",
           html: emailHtml,
           replyTo: AUTHMAIL_REPLY_TO || "",

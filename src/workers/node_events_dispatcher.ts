@@ -2,38 +2,14 @@ import * as Bull from "bull";
 import * as redis from "redis";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import { GET_USER_INFO, GraphqlClient } from "../clients/graphql";
+import { EmailString } from "italia-ts-commons/lib/strings";
+import { OMBUDSMAN_EMAIL } from "../config";
 import { WebhookPayload } from "../controllers/graphql_webhook";
-import {
-  GetUserInfo,
-  GetUserInfoVariables
-} from "../generated/graphql/GetUserInfo";
 import { emailDeclPublished } from "../templates/html/email/decl_published";
+import { emailReportPublished } from "../templates/html/email/report_published";
 import { log } from "../utils/logger";
 import { queueEmail } from "../utils/queue_client";
-
-type StatusT = "draft" | "needs_review" | "published" | "archived";
-type NodeTypeT = "dichiarazione_accessibilita";
-
-const transitionedTo = (
-  payload: WebhookPayload,
-  to: StatusT,
-  from?: StatusT
-) => {
-  const newContent = payload.event.data.new;
-  const oldContent = payload.event.data.old;
-  return (
-    oldContent &&
-    newContent &&
-    (from ? oldContent.status === from : oldContent.status !== to) &&
-    newContent.status === to
-  );
-};
-
-const isNodeOfType = (payload: WebhookPayload, type: NodeTypeT) => {
-  const newContent = payload.event.data.new;
-  return newContent && newContent.type === type;
-};
+import { getUserInfo, isNodeOfType, transitionedTo } from "./utils";
 
 // tslint:disable-next-line: cognitive-complexity
 export function NodeEventsDispatcher(
@@ -56,23 +32,7 @@ export function NodeEventsDispatcher(
             isNodeOfType(payload, "dichiarazione_accessibilita") &&
             transitionedTo(payload, "published")
           ) {
-            // get user email
-            const errorOrUserInfo = await GraphqlClient.query<
-              GetUserInfo,
-              GetUserInfoVariables
-            >({
-              fetchPolicy: "no-cache",
-              query: GET_USER_INFO,
-              variables: {
-                id: payload.event.data.new.user_id
-              }
-            });
-            if (errorOrUserInfo.errors) {
-              log.error(errorOrUserInfo.errors.join("\n"));
-              return;
-            }
-
-            const userInfo = errorOrUserInfo.data;
+            const userInfo = await getUserInfo(payload.event.data.new.user_id);
             if (!userInfo || !userInfo.user[0].email) {
               log.error(
                 "cannot get user email for node %s (id:%s)",
@@ -93,7 +53,7 @@ export function NodeEventsDispatcher(
               subject: declPublishedContent.title,
               to: userInfo.user[0].email
             };
-            log.info(
+            log.debug(
               "dispatching decl-published message to sendmail processor (%s)",
               JSON.stringify(declPublishedMessage)
             );
@@ -112,6 +72,47 @@ export function NodeEventsDispatcher(
             await queueClient.add("link-verifier", message, {
               jobId: `link-verifier:${payload.id}`
             });
+          }
+
+          if (
+            OMBUDSMAN_EMAIL &&
+            payload.event.data.new &&
+            !payload.event.data.old &&
+            isNodeOfType(payload, "segnalazione_accessibilita")
+          ) {
+            log.info("nuova segnalazione di accessibilita");
+
+            const userInfo = await getUserInfo(payload.event.data.new.user_id);
+            if (!userInfo || !EmailString.is(userInfo.user[0].email)) {
+              log.error(
+                "cannot get user email for node %s (id:%s)",
+                payload.event.data.new.id,
+                payload.event.data.new.user_id
+              );
+              return;
+            }
+
+            // dispatch published event to email processor
+            const declPublishedContent = emailReportPublished(
+              payload.event.data.new,
+              userInfo.user[0].email
+            );
+
+            const reportPublishedMessage = {
+              attachments: declPublishedContent.attachments,
+              content: declPublishedContent.html,
+              subject: declPublishedContent.title,
+              to: OMBUDSMAN_EMAIL
+            };
+            log.debug(
+              "dispatching report-published message to sendmail processor (%s)",
+              JSON.stringify(reportPublishedMessage)
+            );
+            await queueEmail(
+              queueClient,
+              reportPublishedMessage,
+              `publish:${payload.event.data.new.id}_${payload.event.data.new.version}`
+            );
           }
         })
         .mapLeft(errs => log.error(readableReport(errs)));
