@@ -22,6 +22,7 @@ import {
   MINIO_SERVER_HOST,
   MINIO_SERVER_PORT_NUMBER,
   TRAEFIK_DOMAIN,
+  UPLOAD_SERVER_HOST,
   UPLOAD_SERVER_PORT
 } from "../config";
 import {
@@ -33,6 +34,15 @@ import {
   InsertNodeVariables
 } from "../generated/graphql/InsertNode";
 import { log } from "../utils/logger";
+
+export function getDownloadPath(
+  nodeId: string,
+  nodeVersion: number,
+  fieldName: string,
+  fieldIndex: number
+): string {
+  return `https://${UPLOAD_SERVER_HOST}/file/${nodeId}/${nodeVersion}/${fieldName}/${fieldIndex}`;
+}
 
 export interface IFileType {
   filename: string;
@@ -363,12 +373,18 @@ app.use(helmet());
 app.use(helmet.frameguard({ action: "sameorigin" }));
 
 // Set up CORS (free access to the API from browser clients)
-app.use(
-  cors({
-    exposedHeaders: ["retry-after", "x-ratelimit-reset"],
-    origin: ["http://localhost", `https://${TRAEFIK_DOMAIN}`]
-  })
-);
+const appCors = cors({
+  exposedHeaders: ["retry-after", "x-ratelimit-reset"],
+  origin: [
+    "http://localhost",
+    // gatsby dev
+    "http://localhost:8000",
+    `https://${TRAEFIK_DOMAIN}`
+  ]
+});
+app.use(appCors);
+// needed for preflight
+app.options(`*`, appCors);
 
 // Add a request logger.
 const loggerFormat =

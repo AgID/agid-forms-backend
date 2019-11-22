@@ -1,10 +1,8 @@
 import { format } from "date-fns";
 import { EmailString } from "italia-ts-commons/lib/strings";
-import {
-  HASURA_GRAPHQL_ADMIN_SECRET,
-  UPLOAD_SERVER_HOST
-} from "../../../config";
+import { HASURA_GRAPHQL_ADMIN_SECRET } from "../../../config";
 import { NodeT } from "../../../controllers/graphql_webhook";
+import { getDownloadPath } from "../../../uploads/upload-server";
 
 // tslint:disable:no-nested-template-literals
 
@@ -13,27 +11,34 @@ import { NodeT } from "../../../controllers/graphql_webhook";
 export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
   // tslint:disable-next-line: no-any
   const values = (node.content as any).values;
+
+  const feedbackAttachment = (values["notified-feedback"] || [undefined])[0];
+  const answerAttachment = (values["notified-answer"] || [undefined])[0];
+
+  // we must send the hasura admin header key to download a file
+  // we don't own as a background process (all downloads are authenticated against the current user)
+  const httpHeaders = {
+    "X-Hasura-Admin-Secret": HASURA_GRAPHQL_ADMIN_SECRET
+  };
+  const dummyAttachment = { filename: "", path: "", httpHeaders: undefined };
+
   return {
     attachments: [
-      values["notified-feedback"][0] && values["notified-feedback"][0].id
+      feedbackAttachment && feedbackAttachment.id
         ? {
-            filename: `${values["notified-feedback"].filename}`,
-            httpHeaders: {
-              "X-Hasura-Admin-Secret": HASURA_GRAPHQL_ADMIN_SECRET
-            },
-            path: `https://${UPLOAD_SERVER_HOST}/file/${node.id}/${node.version}/notified-feedback/0`
+            filename: `${feedbackAttachment.filename}`,
+            httpHeaders,
+            path: getDownloadPath(node.id, node.version, "notified-feedback", 0)
           }
-        : { filename: "", path: "", httpHeaders: undefined },
-      values["notified-answer"][0] && values["notified-answer"][0].id
+        : dummyAttachment,
+      answerAttachment && answerAttachment.id
         ? {
-            filename: `${values["notified-answer"][0].filename}`,
-            httpHeaders: {
-              "X-Hasura-Admin-Secret": HASURA_GRAPHQL_ADMIN_SECRET
-            },
-            path: `https://${UPLOAD_SERVER_HOST}/file/${node.id}/${node.version}/notified-answer/0`
+            filename: `${answerAttachment.filename}`,
+            httpHeaders,
+            path: getDownloadPath(node.id, node.version, "notified-answer", 0)
           }
-        : { filename: "", path: "", httpHeaders: undefined }
-    ].filter(v => v.path !== ""),
+        : dummyAttachment
+    ].filter(v => v.httpHeaders),
     html: `
     <p>Il ${format(new Date(), "DD/MM/YYYY")} alle ore ${format(
       new Date(),
