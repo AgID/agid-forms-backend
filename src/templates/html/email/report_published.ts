@@ -64,10 +64,11 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
           ? `<span>Indirizzo del sito web:</span><br /><span>${values["website-url"]}</span><br /><br />`
           : `<span>Indirizzo APP nello store:</span><br /><span>${values["app-url"]}</span><br /><br />`
       }
-      <span>Data della notifica:</span><br /><span>${
-        values["reported-date"]
-      }</span><br /><br />
-      <span>Descrizione del problema:</span><br /><span>${
+      <span>Data della notifica:</span><br /><span>${format(
+        new Date(values["reported-date"]),
+        "DD/MM/YYYY"
+      )}</span><br /><br />
+      <span>Motivi del reclamo:</span><br /><span>${
         values["report-text"]
       }</span><br /><br />
 
@@ -84,6 +85,6 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
       }
     </p>
 `,
-    title: `Segnalazione inaccessibilità ${values.name} / ${values["reported-pa"]}`
+    title: `Reclamo ${values.name} / ${values["reported-pa"]}`
   };
 };
