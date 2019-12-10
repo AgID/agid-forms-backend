@@ -1,7 +1,3 @@
-CREATE EXTENSION pg_trgm;
-CREATE EXTENSION citext;
-
-SET xmloption = content;
 CREATE FUNCTION public.audit_node() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -119,8 +115,15 @@ CREATE TABLE public.node (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     status text DEFAULT 'draft'::text NOT NULL,
     type text NOT NULL,
-    language text NOT NULL
+    language text NOT NULL,
+    "group" text DEFAULT 'global'::text NOT NULL,
+    CONSTRAINT max_node_length CHECK ((pg_column_size(content) <= 64000))
 );
+CREATE TABLE public."group" (
+    "group" text NOT NULL,
+    CONSTRAINT group_snake_case CHECK (("group" ~ '^([a-z\_])+$'::text))
+);
+COMMENT ON TABLE public."group" IS 'snake case group names';
 CREATE TABLE public.ipa_ou (
     cod_ou text NOT NULL,
     cod_aoo text DEFAULT '""'::text NOT NULL,
@@ -159,11 +162,77 @@ CREATE TABLE public.node_revision (
     status text NOT NULL,
     language text NOT NULL,
     user_id uuid NOT NULL,
-    id uuid NOT NULL
+    id uuid NOT NULL,
+    "group" text
 );
+CREATE VIEW public.last_published_or_draft AS
+ WITH latest_not_draft AS (
+         SELECT DISTINCT ON (r.id) r.created_at,
+            r.updated_at,
+            r.type,
+            r.version,
+            r.title,
+            r.content,
+            r.status,
+            r.language,
+            r.user_id,
+            r.id,
+            r."group"
+           FROM public.node_revision r
+          WHERE (r.status <> 'draft'::text)
+          ORDER BY r.id, r.version DESC
+        ), drafts_only AS (
+         SELECT DISTINCT ON (n.id) n.created_at,
+            n.updated_at,
+            n.type,
+            n.version,
+            n.title,
+            n.content,
+            n.status,
+            n.language,
+            n.user_id,
+            n.id,
+            n."group"
+           FROM (public.node_revision n
+             LEFT JOIN public.node_revision rr ON (((rr.id = n.id) AND (rr.status <> 'draft'::text))))
+          WHERE ((n.status = 'draft'::text) AND (rr.id IS NULL))
+          ORDER BY n.id, n.version DESC
+        )
+ SELECT latest_not_draft.created_at,
+    latest_not_draft.updated_at,
+    latest_not_draft.type,
+    latest_not_draft.version,
+    latest_not_draft.title,
+    latest_not_draft.content,
+    latest_not_draft.status,
+    latest_not_draft.language,
+    latest_not_draft.user_id,
+    latest_not_draft.id,
+    latest_not_draft."group"
+   FROM latest_not_draft
+UNION
+ SELECT drafts_only.created_at,
+    drafts_only.updated_at,
+    drafts_only.type,
+    drafts_only.version,
+    drafts_only.title,
+    drafts_only.content,
+    drafts_only.status,
+    drafts_only.language,
+    drafts_only.user_id,
+    drafts_only.id,
+    drafts_only."group"
+   FROM drafts_only
+  ORDER BY 2 DESC;
+COMMENT ON VIEW public.last_published_or_draft IS 'helper view to show list of nodes in users dashboards';
 CREATE TABLE public.node_type (
     node_type text NOT NULL,
     CONSTRAINT node_types_snake_case CHECK ((node_type ~ '^([a-z\_])+$'::text))
+);
+CREATE TABLE public.node_type_perm (
+    node_type text NOT NULL,
+    role text NOT NULL,
+    insert boolean DEFAULT false NOT NULL
 );
 CREATE TABLE public.role (
     role text NOT NULL,
@@ -178,10 +247,13 @@ CREATE TABLE public."user" (
     metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
     id uuid DEFAULT public.gen_random_uuid() NOT NULL
 );
-CREATE TABLE public.user_role (
-    role_id text NOT NULL,
-    user_id uuid NOT NULL
+CREATE TABLE public.user_group (
+    user_id uuid NOT NULL,
+    "group" text NOT NULL,
+    role text NOT NULL
 );
+ALTER TABLE ONLY public."group"
+    ADD CONSTRAINT groups_pkey PRIMARY KEY ("group");
 ALTER TABLE ONLY public.ipa_ou
     ADD CONSTRAINT ipa_ou_pkey PRIMARY KEY (cod_ou, cod_amm);
 ALTER TABLE ONLY public.ipa_pa
@@ -192,6 +264,8 @@ ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.node_revision
     ADD CONSTRAINT node_revision_pkey PRIMARY KEY (id, version);
+ALTER TABLE ONLY public.node_type_perm
+    ADD CONSTRAINT node_type_perm_pkey PRIMARY KEY (node_type, role);
 ALTER TABLE ONLY public.node_type
     ADD CONSTRAINT node_type_pkey PRIMARY KEY (node_type);
 ALTER TABLE ONLY public.role
@@ -200,10 +274,10 @@ ALTER TABLE ONLY public.status
     ADD CONSTRAINT status_pkey PRIMARY KEY (status);
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_email_key UNIQUE (email);
+ALTER TABLE ONLY public.user_group
+    ADD CONSTRAINT user_group_pkey PRIMARY KEY (user_id, "group", role);
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.user_role
-    ADD CONSTRAINT user_role_pkey PRIMARY KEY (user_id, role_id);
 CREATE INDEX search_gin_idx ON public.ipa_pa USING gin ((((des_amm || ' '::text) || "Comune")) public.gin_trgm_ops);
 CREATE TRIGGER audit_node AFTER INSERT OR UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.audit_node();
 CREATE TRIGGER compute_ipa_column BEFORE INSERT OR UPDATE ON public.ipa_pa FOR EACH ROW EXECUTE PROCEDURE public.compute_ipa_column();
@@ -212,14 +286,22 @@ CREATE TRIGGER force_serial_id BEFORE UPDATE ON public."user" FOR EACH ROW EXECU
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.trigger_updated_at();
 CREATE TRIGGER set_version BEFORE UPDATE ON public.node FOR EACH ROW EXECUTE PROCEDURE public.increment_version();
 ALTER TABLE ONLY public.node
+    ADD CONSTRAINT node_group_fkey FOREIGN KEY ("group") REFERENCES public."group"("group") ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_language_fkey FOREIGN KEY (language) REFERENCES public.language(language) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_status_fkey FOREIGN KEY (status) REFERENCES public.status(status) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_type_fkey FOREIGN KEY (type) REFERENCES public.node_type(node_type) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.node_type_perm
+    ADD CONSTRAINT node_type_perm_node_type_fkey FOREIGN KEY (node_type) REFERENCES public.node_type(node_type) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.node_type_perm
+    ADD CONSTRAINT node_type_perm_role_fkey FOREIGN KEY (role) REFERENCES public.role(role) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.node
     ADD CONSTRAINT node_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.user_role
-    ADD CONSTRAINT user_role_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.role(role) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.user_role
-    ADD CONSTRAINT user_role_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_group
+    ADD CONSTRAINT user_group_group_fkey FOREIGN KEY ("group") REFERENCES public."group"("group") ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_group
+    ADD CONSTRAINT user_group_role_fkey FOREIGN KEY (role) REFERENCES public.role(role) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_group
+    ADD CONSTRAINT user_group_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;

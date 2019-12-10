@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."node_type" DROP COLUMN "select" CASCADE
-  type: run_sql

@@ -1,6 +1,0 @@
-- args:
-    relationship: user_ipa_ou
-    table:
-      name: user
-      schema: public
-  type: drop_relationship

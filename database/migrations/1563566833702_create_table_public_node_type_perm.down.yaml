@@ -1,3 +1,0 @@
-- args:
-    sql: DROP TABLE "public"."node_type_perm"
-  type: run_sql

@@ -1,5 +1,0 @@
-- args:
-    cascade: false
-    sql: "ALTER TABLE public.group ADD CONSTRAINT group_snake_case CHECK (\"group\"
-      ~ '^([a-z\\_])+$'::text);\r\n"
-  type: run_sql

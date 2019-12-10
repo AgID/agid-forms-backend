@@ -1,0 +1,631 @@
+- args:
+    allowlist: []
+    functions:
+    - search_ipa
+    query_collections: []
+    remote_schemas: []
+    tables:
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - cod_ou
+          - cod_aoo
+          - des_ou
+          - comune
+          - Cap
+          - provincia
+          - Regione
+          - Indirizzo
+          - Tel
+          - nome_resp
+          - cogn_resp
+          - mail_resp
+          - tel_resp
+          - cod_amm
+          - cod_ou_padre
+          - Fax
+          - cod_uni_ou
+          - mail1
+          - tipo_mail1
+          - mail2
+          - tipo_mail2
+          - mail3
+          - tipo_mail3
+          computed_fields: []
+          filter: {}
+          limit: 100
+        role: anonymous
+      table: ipa_ou
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: node_revision_group
+        using:
+          manual_configuration:
+            column_mapping:
+              group: group
+            remote_table: group
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - version
+          - content
+          - group
+          - language
+          - status
+          - title
+          - type
+          - created_at
+          - updated_at
+          - id
+          - user_id
+          computed_fields: []
+          filter:
+            user_id:
+              _eq: X-Hasura-User-Id
+        role: authenticated
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - created_at
+          - updated_at
+          - type
+          - version
+          - title
+          - content
+          - status
+          - language
+          - user_id
+          - id
+          - group
+          computed_fields: []
+          filter:
+            _and:
+            - status:
+                _eq: published
+        role: anonymous
+      table: node_revision
+      update_permissions: []
+    - array_relationships:
+      - comment: null
+        name: node_type_perms
+        using:
+          foreign_key_constraint_on:
+            column: role
+            table: node_type_perm
+      - comment: null
+        name: user_groups
+        using:
+          foreign_key_constraint_on:
+            column: role
+            table: user_group
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions: []
+      table: role
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions: []
+      table: language
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - created_at
+          - updated_at
+          - type
+          - version
+          - title
+          - content
+          - status
+          - language
+          - user_id
+          - id
+          - group
+          computed_fields: []
+          filter:
+            user_id:
+              _eq: X-Hasura-User-Id
+        role: authenticated
+      table: last_published_or_draft
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - cod_amm
+          - des_amm
+          - Comune
+          - nome_resp
+          - cogn_resp
+          - Cap
+          - Provincia
+          - Regione
+          - sito_istituzionale
+          - Indirizzo
+          - titolo_resp
+          - tipologia_istat
+          - tipologia_amm
+          - acronimo
+          - cf_validato
+          - Cf
+          - mail1
+          - tipo_mail1
+          - mail2
+          - tipo_mail2
+          - mail3
+          - tipo_mail3
+          - mail4
+          - tipo_mail4
+          - mail5
+          - tipo_mail5
+          - url_facebook
+          - url_twitter
+          - url_googleplus
+          - url_youtube
+          - liv_accessibili
+          - des_amm_Comune
+          computed_fields: []
+          filter: {}
+          limit: 100
+        role: anonymous
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - acronimo
+          - Cap
+          - Cf
+          - cf_validato
+          - cod_amm
+          - cogn_resp
+          - Comune
+          - des_amm
+          - des_amm_Comune
+          - Indirizzo
+          - liv_accessibili
+          - mail1
+          - mail2
+          - mail3
+          - mail4
+          - mail5
+          - nome_resp
+          - Provincia
+          - Regione
+          - sito_istituzionale
+          - tipologia_amm
+          - tipologia_istat
+          - tipo_mail1
+          - tipo_mail2
+          - tipo_mail3
+          - tipo_mail4
+          - tipo_mail5
+          - titolo_resp
+          - url_facebook
+          - url_googleplus
+          - url_twitter
+          - url_youtube
+          computed_fields: []
+          filter: {}
+        role: authenticated
+      table: ipa_pa
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions: []
+      table: status
+      update_permissions: []
+    - array_relationships:
+      - comment: null
+        name: user_groups
+        using:
+          foreign_key_constraint_on:
+            column: user_id
+            table: user_group
+      - comment: null
+        name: nodes
+        using:
+          foreign_key_constraint_on:
+            column: user_id
+            table: node
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: user_ipa_ou
+        using:
+          manual_configuration:
+            column_mapping:
+              email: mail_resp
+            remote_table: ipa_ou
+      select_permissions: []
+      table: user
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: user_group_role
+        using:
+          foreign_key_constraint_on: role
+      - comment: null
+        name: user_group_group
+        using:
+          foreign_key_constraint_on: group
+      - comment: null
+        name: user_group_user
+        using:
+          foreign_key_constraint_on: user_id
+      select_permissions: []
+      table: user_group
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: node_type_perm_role
+        using:
+          foreign_key_constraint_on: role
+      select_permissions: []
+      table: node_type_perm
+      update_permissions: []
+    - array_relationships: []
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: group_ipa_pa
+        using:
+          manual_configuration:
+            column_mapping:
+              group: cod_amm
+            remote_table: ipa_pa
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - group
+          computed_fields: []
+          filter: {}
+        role: anonymous
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - group
+          computed_fields: []
+          filter: {}
+        role: authenticated
+      table: group
+      update_permissions: []
+    - array_relationships:
+      - comment: null
+        name: node_type_perms
+        using:
+          foreign_key_constraint_on:
+            column: node_type
+            table: node_type_perm
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers: []
+      insert_permissions: []
+      is_enum: false
+      object_relationships: []
+      select_permissions: []
+      table: node_type
+      update_permissions: []
+    - array_relationships:
+      - comment: null
+        name: revisions
+        using:
+          manual_configuration:
+            column_mapping:
+              id: id
+            remote_table: node_revision
+      configuration:
+        custom_column_names: {}
+        custom_root_fields:
+          delete: null
+          insert: null
+          select: null
+          select_aggregate: null
+          select_by_pk: null
+          update: null
+      delete_permissions: []
+      event_triggers:
+      - definition:
+          enable_manual: true
+          insert:
+            columns: '*'
+          update:
+            columns:
+            - version
+            - status
+            - title
+            - updated_at
+            - id
+            - user_id
+            - language
+            - content
+            - type
+            - created_at
+        headers:
+        - name: X-Webhook-token
+          value_from_env: HASURA_WEBHOOK_SECRET
+        name: send_node_mutation_to_backend
+        retry_conf:
+          interval_sec: 10
+          num_retries: 10
+          timeout_sec: 60
+        webhook_from_env: EVENTS_WEBHOOK_URL
+      insert_permissions:
+      - comment: null
+        permission:
+          check:
+            _and:
+            - user:
+                user_groups:
+                  user_id:
+                    _eq: X-Hasura-User-Id
+            - user:
+                user_groups:
+                  user_group_group:
+                    group:
+                      _eq: X-Hasura-Group-Id
+            - node_type:
+                node_type_perms:
+                  _and:
+                  - insert:
+                      _eq: true
+                  - node_type_perm_role:
+                      user_groups:
+                        user_id:
+                          _eq: X-Hasura-User-Id
+          columns:
+          - content
+          - id
+          - language
+          - status
+          - title
+          - type
+          - version
+          set:
+            group: x-hasura-group-id
+            user_id: x-hasura-user-id
+        role: authenticated
+      is_enum: false
+      object_relationships:
+      - comment: null
+        name: user
+        using:
+          foreign_key_constraint_on: user_id
+      - comment: null
+        name: node_group
+        using:
+          foreign_key_constraint_on: group
+      - comment: null
+        name: node_type
+        using:
+          foreign_key_constraint_on: type
+      select_permissions:
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - created_at
+          - updated_at
+          - version
+          - title
+          - content
+          - user_id
+          - id
+          - status
+          - type
+          - language
+          computed_fields: []
+          filter:
+            _and:
+            - status:
+                _eq: published
+        role: anonymous
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
+          - version
+          - content
+          - group
+          - language
+          - status
+          - title
+          - type
+          - created_at
+          - updated_at
+          - id
+          - user_id
+          computed_fields: []
+          filter:
+            _or:
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - status:
+                _eq: published
+        role: authenticated
+      table: node
+      update_permissions:
+      - comment: null
+        permission:
+          columns:
+          - content
+          - status
+          - title
+          - version
+          filter:
+            user_id:
+              _eq: X-Hasura-User-Id
+          set:
+            group: x-hasura-group-id
+            user_id: x-hasura-user-id
+        role: authenticated
+  type: replace_metadata

@@ -1,9 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."node_type" ADD COLUMN "select" bool
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."node_type" ALTER COLUMN "select" DROP NOT NULL
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."node_type" ALTER COLUMN "select" SET DEFAULT false
-  type: run_sql

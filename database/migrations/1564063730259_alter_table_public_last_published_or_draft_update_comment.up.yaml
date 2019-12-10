@@ -1,4 +1,0 @@
-- args:
-    sql: COMMENT ON VIEW "public"."last_published_or_draft" IS 'helper view to show
-      list of nodes in users dashboards'
-  type: run_sql

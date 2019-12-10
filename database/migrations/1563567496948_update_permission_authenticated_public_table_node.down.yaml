@@ -1,6 +1,0 @@
-- args:
-    role: authenticated
-    table:
-      name: node
-      schema: public
-  type: drop_insert_permission

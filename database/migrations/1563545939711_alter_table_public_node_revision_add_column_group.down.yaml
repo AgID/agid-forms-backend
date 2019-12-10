@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."node_revision" DROP COLUMN "group"
-  type: run_sql

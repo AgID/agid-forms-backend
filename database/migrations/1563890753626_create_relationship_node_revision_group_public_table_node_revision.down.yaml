@@ -1,6 +1,0 @@
-- args:
-    relationship: node_revision_group
-    table:
-      name: node_revision
-      schema: public
-  type: drop_relationship

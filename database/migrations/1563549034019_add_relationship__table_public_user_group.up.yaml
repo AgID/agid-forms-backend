@@ -1,8 +1,0 @@
-- args:
-    name: user_group_role
-    table:
-      name: user_group
-      schema: public
-    using:
-      foreign_key_constraint_on: role
-  type: create_object_relationship

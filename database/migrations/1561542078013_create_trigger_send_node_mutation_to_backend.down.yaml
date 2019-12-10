@@ -1,3 +1,0 @@
-- args:
-    name: send_node_mutation_to_backend
-  type: delete_event_trigger

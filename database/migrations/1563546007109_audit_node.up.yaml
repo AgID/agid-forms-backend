@@ -1,9 +1,0 @@
-- args:
-    cascade: false
-    sql: "CREATE OR REPLACE FUNCTION public.audit_node() RETURNS trigger\r\n    LANGUAGE
-      plpgsql\r\n    AS $$\r\n    BEGIN\r\n        INSERT INTO node_revision(id, created_at,
-      updated_at, user_id, type, version, title, content, status, language, \"group\")\r\n
-      \           VALUES (NEW.id, NEW.created_at, NEW.updated_at, NEW.user_id, NEW.type,
-      NEW.version, NEW.title, NEW.content, NEW.status, NEW.language, NEW.group);\r\n
-      \       RETURN NEW;\r\n    END;\r\n$$;\r\n"
-  type: run_sql
