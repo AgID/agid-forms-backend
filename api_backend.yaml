@@ -118,7 +118,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         "500":
-          description: There was an error retrieving the organization.
+          description: Generic error processing the request.
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
@@ -150,7 +150,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         "500":
-          description: There was an error retrieving the organization.
+          description: Generic error processing the request.
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
