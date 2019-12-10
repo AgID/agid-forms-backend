@@ -18,6 +18,8 @@ e un [webhook](../src/controllers/graphql_webhook.ts) per reagire alle modifiche
 il download dei file caricati
 - alcuni [worker NodeJS](../src/workers/) per il processamento asincrono
 
+![Componenti dell'infrastruttura](./components.svg)
+
 Nell'infrastruttura sono presenti inoltre:
 
 - un server [PostgreSQL](https://www.postgresql.org/) per la persistenza dei dati
