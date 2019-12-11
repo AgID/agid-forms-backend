@@ -72,6 +72,55 @@ INFO hasura cli is up to date                      version=1.0.0-rc.1
 INFO console running at: http://localhost:9695/
 ```
 
+## Modello dati
+
+### Tabelle SQL
+
+`ipa_ou`: dati sulle unità organizzative [importati da IPA](../scripts/ipa-import.sh)
+`ipa_pa`: dati sulle pubbliche amministrazioni [importati da IPA](../scripts/ipa-import.sh)
+
+`group`: i nomi dei gruppi ai quali può appartenere un utente
+`language`: tabella di lookup con i possibili identificativi degli idiomi usati per le traduzioni dei contenuti
+`last_published_or_draft`: vista (view sql) che elenca l'ultima bozza di un nodo _o_, se presente, la sua ultima versione pubblicata
+`node`: nodi con il loro contenuto (content::jsonb)
+`node_revision`: revisioni dei nodi
+`node_type`: tabella di lookup con l'elenco dei possibili tipi di nodo (1-a-1 con i form del frontend)
+`node_type_perm`: associazione di un nodo con i permessi (es. insert) per singolo ruolo
+`role`: tabella di lookup con i nomi dei ruoli utente
+`status`: tabella di lookup con gli stati di un nodo per il workflow di pubblicazione
+`user`: utenti del sistema che hanno effettuato almeno un login
+`user_group`: tabella di associazione utenti / gruppi
+
+### Nodi e autorizzazioni
+
+I contenuti sono salvati nel sistema nella tabella `node`. Oltre ai metadati
+(es. data di creazione / modifica, utente che ha creato il nodo, ...) viene salvato
+il contenuto in forma destrutturata (_schemaless_) in un campo [JSONB](https://www.postgresql.org/docs/9.5/functions-json.html).
+
+Cioè permette di gestire programmaticamente i contenuti di un nodo tramite query GraphQL
+grazie al [meccanismo di traduzione delle query implementato da Hasura](https://blog.hasura.io/postgres-json-and-jsonb-type-support-on-graphql-41f586e47536/).
+
+A ogni salvataggio di un nodo viene creata una entry con il contenuto salvato nella tabella `node_revision`
+tramite una _stored procedure_ PostegreSQL, in maniera quindi trasparente all'applicazione. In questo
+modo è possibile conservare e reperire tutte le vecchie versioni di un certo contenuto.
+
+I permessi (CRUD) sui nodi sono assegnati tramite la console di Hasura; vengono salvati automaticamente
+nei file di configurazione contenuti nella directory [../database/migrations/*_init](../database/migrations/)
+quando si lancia la console dalla directory `database`.
+
+Per approfondire: https://docs.hasura.io/1.0/graphql/manual/auth/authorization/index.html
+
+Attualmente i permessi sui nodi sono impostati in modo da garantire che:
+
+- solo gli utenti autenticati possono effettuare insert sul database (al momento non è quindi possibile avere dei form "anonimi")
+- per poter effettuare una insert deve esistere una entry nella tabella `node_type_perm`
+che associa il ruolo dell'utente autenticato al permesso corrispondente (es. `insert`) sulla tabella `node`
+- solo gli utenti che hanno creato un nodo possono aggiornarlo (_update_)
+- gli utenti anonimi possono visualizzare solo i nodi con `status = published`
+- gli utenti autenticati possono visualizzare tutti i contenuti da loro creati oltre ai nodi con `status = published`
+- gli stessi permessi si applicano alla tabella `node_revision` (non è pertanto possibile al momento nascondere
+una vecchia revisione pubblicata)
+
 ## API di autenticazione
 
 Le API di autenticazione sono descritte nel file [`api_backend.yaml`](../api_backend.yaml):
