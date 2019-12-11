@@ -60,7 +60,8 @@ A tal fine è necessario scaricare il binario e impostare il secret in un file
 
 ```yaml
 admin_secret: <HASURA ADMIN SECRET>
-endpoint: https://database.form.agid.gov.it/
+endpoint: https://localhost:<HASURA LOCAL PORT>/
+# endpoint: https://database.form.agid.gov.it/
 ```
 
 dopodiché sarà possibile lanciare l'applicazione web:
@@ -70,6 +71,13 @@ $ cd database
 $ hasura console
 INFO hasura cli is up to date                      version=1.0.0-rc.1
 INFO console running at: http://localhost:9695/
+```
+
+Per caricare la configurazione su Hasura:
+
+```shell
+$ cd database
+$ hasura console migrate
 ```
 
 ## Modello dati
