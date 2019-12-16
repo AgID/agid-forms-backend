@@ -121,7 +121,7 @@ CREATE TABLE public.node (
 );
 CREATE TABLE public."group" (
     "group" text NOT NULL,
-    CONSTRAINT group_snake_case CHECK (("group" ~ '^([a-z\_])+$'::text))
+    CONSTRAINT group_snake_case CHECK (("group" ~ '^([A-Za-z0-9\_])+$'::text))
 );
 COMMENT ON TABLE public."group" IS 'snake case group names';
 CREATE TABLE public.ipa_ou (
