@@ -78,9 +78,9 @@ export function NodeEventsDispatcher(
             OMBUDSMAN_EMAIL &&
             payload.event.data.new &&
             !payload.event.data.old &&
-            isNodeOfType(payload, "segnalazione_accessibilita")
+            isNodeOfType(payload, "procedura_attuazione")
           ) {
-            log.info("nuova segnalazione di accessibilita");
+            log.info("nuova procedura di attuazione");
 
             const userInfo = await getUserInfo(payload.event.data.new.user_id);
             if (!userInfo || !EmailString.is(userInfo.user[0].email)) {
