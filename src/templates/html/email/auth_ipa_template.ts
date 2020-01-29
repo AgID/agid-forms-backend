@@ -7,12 +7,12 @@ export const emailAuthCode = (
 ) => ({
   html: `
   <p>All’attenzione dell’RTD dell’Amministrazione '${ipaName}',
-  in data ${format(new Date(), "DD/MM/YYYY")} 
-  è stata effettuata una richiesta di accesso al servizio eForm
-  di AGID che permette la compilazione di moduli online.
+  in data ${format(new Date(), "DD/MM/YYYY")}
+  è stata effettuata una richiesta di accesso al servizio Form
+  AGID che permette la compilazione di moduli online.
   </p>
   <p>
-  Per accedere al servizio è necessario collegarsi alla seguente pagina 
+  Per accedere al servizio è necessario collegarsi alla seguente pagina
   <a href="https://form.agid.gov.it/?ipa=${ipaCode}">form.agid.gov.it</a>
   inserendo la chiave di accesso:
   </p>
@@ -20,5 +20,5 @@ export const emailAuthCode = (
   <p>Distinti saluti,</p>
   <p>AGID</p>
   `,
-  title: `eForm AGID - codice d'accesso`
+  title: `Form AGID - codice d'accesso`
 });
