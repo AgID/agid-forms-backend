@@ -1,4 +1,4 @@
-FROM circleci/node:8.11.3 as builder
+FROM circleci/node:10.18.1 as builder
 
 ARG HASURA_GRAPHQL_ENDPOINT
 ARG HASURA_GRAPHQL_ADMIN_SECRET
@@ -22,7 +22,7 @@ COPY /apollo.config.js /usr/src/app/apollo.config.js
 RUN sudo chmod -R 777 /usr/src/app/src
 RUN yarn generate && yarn build
 
-FROM node:8.11.3-alpine
+FROM node:10.18.1-alpine
 LABEL maintainer="https://www.agid.gov.it"
 
 WORKDIR /usr/src/app
