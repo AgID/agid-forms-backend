@@ -3,7 +3,7 @@ FROM circleci/node:10.18.1 as builder
 ARG HASURA_GRAPHQL_ENDPOINT
 ARG HASURA_GRAPHQL_ADMIN_SECRET
 
-RUN sudo apt-get -y install --no-install-recommends libunwind8=1.1-3.2
+RUN sudo apt-get -y install --no-install-recommends libunwind8
 
 WORKDIR /usr/src/app
 
