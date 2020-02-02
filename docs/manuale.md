@@ -1,8 +1,8 @@
-# eForm AGID - backend
+# Form AGID - backend
 
 ## Funzionalità
 
-Il backend del progetto eForm AGID implementa funzionalità quali:
+Il backend del progetto Form AGID implementa funzionalità quali:
 
 - autenticazione di un utente generico tramite un codice inviato all'indirizzo email immesso
 - autenticazione di un utente Responsabile per la Transizione Digitale (RTD) tramite un codice inviato all'indirizzo email trovato su [IPA](https://indicepa.gov.it)
