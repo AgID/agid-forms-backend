@@ -13,5 +13,5 @@ export const emailAuthCode = (secretCode: string) => ({
   <p>Distinti saluti,</p>
   <p>AGID</p>
   `,
-  title: `form.agid.gov.it`
+  title: `Form AGID – codice di verifica email`
 });
