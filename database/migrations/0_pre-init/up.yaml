@@ -1,5 +1,0 @@
-- type: run_sql
-  args:
-    sql: |
-      CREATE EXTENSION pg_trgm;
-      CREATE EXTENSION citext;

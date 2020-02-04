@@ -1,3 +1,5 @@
+CREATE EXTENSION pg_trgm;
+CREATE EXTENSION citext;
 CREATE FUNCTION public.audit_node() RETURNS trigger
     LANGUAGE plpgsql
     AS $$

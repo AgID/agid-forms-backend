@@ -1,5 +1,0 @@
-- type: run_sql
-  args:
-    sql: |
-      DROP EXTENSION pg_trgm;
-      DROP EXTENSION citext;
