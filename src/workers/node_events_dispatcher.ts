@@ -93,18 +93,20 @@ export function NodeEventsDispatcher(
             }
 
             // dispatch published event to email processor
-            const declPublishedContent = emailReportPublished(
+            const reportPublishedContent = emailReportPublished(
               payload.event.data.new,
               userInfo.user[0].email
             );
 
             const reportPublishedMessage = {
-              attachments: declPublishedContent.attachments,
-              content: declPublishedContent.html,
-              subject: declPublishedContent.title,
+              attachments: reportPublishedContent.attachments,
+              content: reportPublishedContent.content,
+              subject: reportPublishedContent.title,
+              replyTo: reportPublishedContent.replyTo,
+              isText: true,
               to: OMBUDSMAN_EMAIL
             };
-            log.debug(
+            log.info(
               "dispatching report-published message to sendmail processor (%s)",
               JSON.stringify(reportPublishedMessage)
             );
