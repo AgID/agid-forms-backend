@@ -4,7 +4,7 @@
       INSERT INTO "public"."node_type" (node_type) VALUES ('dichiarazione_linee_guida');
       INSERT INTO "public"."node_type" (node_type) VALUES ('dichiarazione_accessibilita');
       INSERT INTO "public"."node_type" (node_type) VALUES ('file');
-      INSERT INTO "public"."node_type" (node_type) VALUES ('segnalazione_accessibilita');
+      INSERT INTO "public"."node_type" (node_type) VALUES ('procedura_attuazione');
       INSERT INTO "public"."node_type" (node_type) VALUES ('feedback_accessibilita');
 
       INSERT INTO "public"."role" (role) VALUES ('admin');
@@ -14,9 +14,9 @@
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_accessibilita', 'rtd', true);
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_linee_guida', 'rtd', true);
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('file', 'rtd', true);
-      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('segnalazione_accessibilita', 'authenticated', true);
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('procedura_attuazione', 'authenticated', true);
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('file', 'authenticated', true);
-      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('segnalazione_accessibilita', 'rtd', true);
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('procedura_attuazione', 'rtd', true);
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('feedback_accessibilita', 'authenticated', true);
       INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('feedback_accessibilita', 'rtd', true);
 

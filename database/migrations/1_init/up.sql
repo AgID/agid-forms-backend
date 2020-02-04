@@ -34,10 +34,10 @@ BEGIN
         RAISE EXCEPTION 'Cannot update an old revision (latest=%)', OLD.version
         USING ERRCODE = 'check_violation';
     ELSIF NEW.version > OLD.version + 1 THEN
-        RAISE EXCEPTION 'Cannot update the current revision with a wrong version (latest=%)', OLD.version 
+        RAISE EXCEPTION 'Cannot update the current revision with a wrong version (latest=%)', OLD.version
         USING ERRCODE = 'check_violation';
     ELSIF NEW.version IS NULL THEN
-        RAISE EXCEPTION 'Cannot update the current revision without provinding a version (latest=%)', OLD.version 
+        RAISE EXCEPTION 'Cannot update the current revision without provinding a version (latest=%)', OLD.version
         USING ERRCODE = 'check_violation';
     END IF;
     RETURN NEW;
