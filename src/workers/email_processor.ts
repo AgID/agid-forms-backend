@@ -21,6 +21,9 @@ export const SendmailProcessorInputT = t.intersection([
     to: t.string
   }),
   t.partial({
+    from: t.string,
+    replyTo: t.string,
+    isText: t.boolean,
     attachments: t.array(
       t.interface({
         filename: t.string,
@@ -56,11 +59,11 @@ export function SendmailProcessor(queueClient: Bull.Queue): void {
         ).replace("''", "'");
         const message = {
           attachments: sendmailProcessorInput.attachments,
-          from: AUTHMAIL_FROM || "",
-          html: emailHtml,
-          replyTo: AUTHMAIL_REPLY_TO || "",
+          from: sendmailProcessorInput.from || AUTHMAIL_FROM || "",
+          html: sendmailProcessorInput.isText ? undefined : emailHtml,
+          replyTo: sendmailProcessorInput.replyTo || AUTHMAIL_REPLY_TO || "",
           subject: sendmailProcessorInput.subject.replace("''", "'"),
-          text: htmlToText.fromString(emailHtml),
+          text: sendmailProcessorInput.isText ? sendmailProcessorInput.content : htmlToText.fromString(emailHtml),
           to: AUTHMAIL_TEST_ADDRESS || sendmailProcessorInput.to
         };
         log.debug("** sending email: %s", JSON.stringify(message));
