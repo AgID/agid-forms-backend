@@ -50,7 +50,7 @@ export function NodeEventsDispatcher(
             );
 
             const declPublishedMessage = {
-              content: declPublishedContent.html,
+              content: declPublishedContent.content,
               subject: declPublishedContent.title,
               to: userInfo.user[0].email
             };

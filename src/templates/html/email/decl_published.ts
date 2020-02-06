@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 export const emailDeclPublished = (id: string, title: string) => ({
-  html: `
+  content: `
     <p>Ciao,<br />
     il ${format(new Date(), "DD/MM/YYYY")} alle ore ${format(
     new Date(),
