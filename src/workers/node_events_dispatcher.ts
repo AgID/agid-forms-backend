@@ -7,6 +7,7 @@ import { OMBUDSMAN_EMAIL } from "../config";
 import { WebhookPayload } from "../controllers/graphql_webhook";
 import { emailDeclPublished } from "../templates/html/email/decl_published";
 import { emailReportPublished } from "../templates/html/email/report_published";
+import { emailAckReportPublished } from "../templates/html/email/ack_report_published";
 import { log } from "../utils/logger";
 import { queueEmail } from "../utils/queue_client";
 import { getUserInfo, isNodeOfType, transitionedTo } from "./utils";
@@ -114,6 +115,24 @@ export function NodeEventsDispatcher(
               queueClient,
               reportPublishedMessage,
               `publish:${payload.event.data.new.id}_${payload.event.data.new.version}`
+            );
+
+            // dispatch published event to email processor
+            const ackReportPublishedContent = emailAckReportPublished();
+
+            const ackReportPublishedMessage = {
+              content: ackReportPublishedContent.content,
+              subject: ackReportPublishedContent.title,
+              to: userInfo.user[0].email
+            };
+            log.info(
+              "dispatching ack-report-published message to sendmail processor (%s)",
+              JSON.stringify(ackReportPublishedMessage)
+            );
+            await queueEmail(
+              queueClient,
+              ackReportPublishedMessage,
+              `publish:${payload.event.data.new.id}_${payload.event.data.new.version}_ack`
             );
           }
         })
