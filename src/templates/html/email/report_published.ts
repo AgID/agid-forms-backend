@@ -23,6 +23,7 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
   const dummyAttachment = { filename: "", path: "", httpHeaders: undefined };
 
   return {
+    from: userEmail,
     replyTo: userEmail,
     attachments: [
       feedbackAttachment && feedbackAttachment.id

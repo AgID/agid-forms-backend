@@ -104,6 +104,7 @@ export function NodeEventsDispatcher(
               content: reportPublishedContent.content,
               subject: reportPublishedContent.title,
               replyTo: reportPublishedContent.replyTo,
+              from: reportPublishedContent.from,
               isText: true,
               to: OMBUDSMAN_EMAIL
             };
