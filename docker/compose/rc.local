@@ -20,12 +20,12 @@ sysctl net.core.somaxconn=512
 
 # import data from indicepa
 
-cat << __EOF__ 
+cat << __EOF__
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-0 0 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./ipa-import-local.sh
-0 2 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./backup-db.sh
-0 5 * * * cd /home/ubuntu/agid-forms-backend && /usr/local/bin/docker-compose -T exec postgresql ./cleanup-hasura-events.sh
+0 0 * * * cd /home/ubuntu/agid-forms-backend && docker-compose exec -T postgresql sh -c ./ipa-import-local.sh >> /var/log/agid-forms.log 2>&1
+0 2 * * * cd /home/ubuntu/agid-forms-backend && docker-compose exec -T postgresql sh -c ./backup-db.sh >> /var/log/agid-forms.log 2>&1
+0 5 * * * cd /home/ubuntu/agid-forms-backend && docker-compose exec -T postgresql sh -c ./cleanup-hasura-events.sh >> /var/log/agid-forms.log 2>&1
 
 __EOF__ | crontab
 
