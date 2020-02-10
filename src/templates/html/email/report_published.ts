@@ -21,6 +21,9 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
     "X-Hasura-Admin-Secret": HASURA_GRAPHQL_ADMIN_SECRET
   };
   const dummyAttachment = { filename: "", path: "", httpHeaders: undefined };
+  const serviceAddress = values["device-type"] === "website"
+    ? values["website-url"]
+    : values["app-url"];
 
   return {
     from: userEmail,
@@ -46,15 +49,12 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
       Nome Utente ${values.name}
       Email ${userEmail}
       Soggetto erogatore segnalato ${values["reported-pa"]}
-      Indirizzo Web del Servizio ${values["device-type"] === "website"
-        ? values["website-url"]
-        : values["app-url"]
-      }
+      Indirizzo Web del Servizio ${serviceAddress}
       Oggetto (DCD-ACCESSIBILITA) Reclamo ${values.name} / ${values["reported-pa"]}
       Messaggio ${values["report-text"]}
       Risposta soggetto erogatore ${values["report-has-answer"]}
       Descrizione reclamo ${values["notified-answer-reason"]}
     `,
-    title: `(DCD-ACCESSIBILITA) Reclamo ${values.name} / ${values["reported-pa"]}`
+    title: `(DCD-ACCESSIBILITA) Reclamo ${serviceAddress} - ${values.name} / ${values["reported-pa"]}`
   };
 };
