@@ -44,7 +44,7 @@
     "apollo-cache-inmemory": "^1.6.1",
     "apollo-client": "^2.6.1",
     "apollo-link-http": "^1.5.14",
-    "apollo-server": "^2.9.7",
+    "apollo-server": "^2.14.2",
     "body-parser": "^1.18.3",
     "bull": "^3.10.0",
     "cors": "^2.8.5",
