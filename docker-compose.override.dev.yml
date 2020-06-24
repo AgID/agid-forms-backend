@@ -1,4 +1,4 @@
-version: "3"
+version: "3.4"
 
 services:
   minio:
@@ -23,22 +23,26 @@ services:
       - ./scripts/backup-db.sh:/backup-db.sh
       - ./scripts/cleanup-hasura-events.sh:/cleanup-hasura-events.sh
 
+  hasura:
+    ports:
+      - ${HASURA_EXTERNAL_PORT}:${HASURA_PORT}
+
   agid-forms-backend:
-    image: node:8.11.3-alpine
+    image: node:10.18.1-alpine
     volumes:
       - .:/usr/src/app
     command: ["yarn", "hot-reload"]
     working_dir: "/usr/src/app"
 
   agid-forms-backend-processor:
-    image: node:8.11.3-alpine
+    image: node:10.18.1-alpine
     volumes:
       - .:/usr/src/app
     command: ["yarn", "run-processor:reload"]
     working_dir: "/usr/src/app"
 
   agid-forms-backend-uploads:
-    image: node:8.11.3-alpine
+    image: node:10.18.1-alpine
     volumes:
       - .:/usr/src/app
     command: ["yarn", "run-uploads:reload"]

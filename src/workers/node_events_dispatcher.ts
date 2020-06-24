@@ -7,6 +7,7 @@ import { OMBUDSMAN_EMAIL } from "../config";
 import { WebhookPayload } from "../controllers/graphql_webhook";
 import { emailDeclPublished } from "../templates/html/email/decl_published";
 import { emailReportPublished } from "../templates/html/email/report_published";
+import { emailAckReportPublished } from "../templates/html/email/ack_report_published";
 import { log } from "../utils/logger";
 import { queueEmail } from "../utils/queue_client";
 import { getUserInfo, isNodeOfType, transitionedTo } from "./utils";
@@ -49,7 +50,7 @@ export function NodeEventsDispatcher(
             );
 
             const declPublishedMessage = {
-              content: declPublishedContent.html,
+              content: declPublishedContent.content,
               subject: declPublishedContent.title,
               to: userInfo.user[0].email
             };
@@ -78,9 +79,9 @@ export function NodeEventsDispatcher(
             OMBUDSMAN_EMAIL &&
             payload.event.data.new &&
             !payload.event.data.old &&
-            isNodeOfType(payload, "segnalazione_accessibilita")
+            isNodeOfType(payload, "procedura_attuazione")
           ) {
-            log.info("nuova segnalazione di accessibilita");
+            log.info("nuova procedura di attuazione");
 
             const userInfo = await getUserInfo(payload.event.data.new.user_id);
             if (!userInfo || !EmailString.is(userInfo.user[0].email)) {
@@ -93,18 +94,21 @@ export function NodeEventsDispatcher(
             }
 
             // dispatch published event to email processor
-            const declPublishedContent = emailReportPublished(
+            const reportPublishedContent = emailReportPublished(
               payload.event.data.new,
               userInfo.user[0].email
             );
 
             const reportPublishedMessage = {
-              attachments: declPublishedContent.attachments,
-              content: declPublishedContent.html,
-              subject: declPublishedContent.title,
+              attachments: reportPublishedContent.attachments,
+              content: reportPublishedContent.content,
+              subject: reportPublishedContent.title,
+              replyTo: reportPublishedContent.replyTo,
+              from: reportPublishedContent.from,
+              isText: true,
               to: OMBUDSMAN_EMAIL
             };
-            log.debug(
+            log.info(
               "dispatching report-published message to sendmail processor (%s)",
               JSON.stringify(reportPublishedMessage)
             );
@@ -112,6 +116,24 @@ export function NodeEventsDispatcher(
               queueClient,
               reportPublishedMessage,
               `publish:${payload.event.data.new.id}_${payload.event.data.new.version}`
+            );
+
+            // dispatch published event to email processor
+            const ackReportPublishedContent = emailAckReportPublished();
+
+            const ackReportPublishedMessage = {
+              content: ackReportPublishedContent.content,
+              subject: ackReportPublishedContent.title,
+              to: userInfo.user[0].email
+            };
+            log.info(
+              "dispatching ack-report-published message to sendmail processor (%s)",
+              JSON.stringify(ackReportPublishedMessage)
+            );
+            await queueEmail(
+              queueClient,
+              ackReportPublishedMessage,
+              `publish:${payload.event.data.new.id}_${payload.event.data.new.version}_ack`
             );
           }
         })

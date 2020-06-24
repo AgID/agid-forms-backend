@@ -11,7 +11,8 @@ import morgan = require("morgan");
 import {
   GET_NODE_REVISION,
   GraphqlClient,
-  INSERT_NODE
+  INSERT_NODE,
+  DELETE_NODE
 } from "../clients/graphql";
 import {
   MAX_FILE_SIZE,
@@ -22,7 +23,7 @@ import {
   MINIO_SERVER_HOST,
   MINIO_SERVER_PORT_NUMBER,
   TRAEFIK_DOMAIN,
-  UPLOAD_SERVER_HOST,
+  UPLOAD_SERVER_BASE_URL,
   UPLOAD_SERVER_PORT
 } from "../config";
 import {
@@ -33,6 +34,10 @@ import {
   InsertNode,
   InsertNodeVariables
 } from "../generated/graphql/InsertNode";
+import {
+  DeleteNode,
+  DeleteNodeVariables
+} from "../generated/graphql/DeleteNode";
 import { log } from "../utils/logger";
 
 export function getDownloadPath(
@@ -41,7 +46,7 @@ export function getDownloadPath(
   fieldName: string,
   fieldIndex: number
 ): string {
-  return `https://${UPLOAD_SERVER_HOST}/file/${nodeId}/${nodeVersion}/${fieldName}/${fieldIndex}`;
+  return `${UPLOAD_SERVER_BASE_URL}/file/${nodeId}/${nodeVersion}/${fieldName}/${fieldIndex}`;
 }
 
 export interface IFileType {
@@ -305,7 +310,69 @@ const getStoreUpload = (minioClient: Minio.Client) => async (
   }
 };
 
+/**
+ * Delete a GraphQL file upload.
+ */
+const getDeleteUploaded = (minioClient: Minio.Client) => async (
+  jwt: string,
+  id: string
+): Promise<Boolean> => {
+  try {
+    log.debug("deleteUploaded: using jwt=%s", jwt);
+
+    // we forward the jwt passed from client (browser)
+    // to check required rights against the node table
+    const deleteResult = await GraphqlClient.mutate<
+      DeleteNode,
+      DeleteNodeVariables
+    >({
+      context: {
+        clientName: "forwarding",
+        headers: {
+          Authorization: jwt
+        }
+      },
+      mutation: DELETE_NODE,
+      variables: { id }
+    });
+
+    if (deleteResult.errors) {
+      throw new Error(
+        "Cannot delete node for file attachment: " +
+          JSON.stringify(deleteResult.errors)
+      );
+    }
+
+    if (
+      !deleteResult.data ||
+      !deleteResult.data.delete_node ||
+      deleteResult.data.delete_node.affected_rows !== 1
+    ) {
+      throw new Error("Cannot delete node for file attachment");
+    }
+
+    const node = deleteResult.data.delete_node.returning[0];
+
+    const computedBucketName = node.user_id;
+
+    log.info("getDeleteUploaded: handling '%s' %s", computedBucketName, node.title);
+
+    // delete the file in minio
+    // object name id the node.id
+    await minioClient.removeObject(
+      computedBucketName,
+      node.id
+    );
+
+    return true;
+  } catch (e) {
+    log.error("deleteUploaded error: %s", e.message);
+    throw e;
+  }
+};
+
 export type StoreUploadT = ReturnType<typeof getStoreUpload>;
+export type DeleteUploadedT = ReturnType<typeof getDeleteUploaded>;
 
 const typeDefs = gql`
   type File {
@@ -317,6 +384,7 @@ const typeDefs = gql`
 
   type Mutation {
     singleUpload(file: Upload!): File!
+    deleteUploaded(id: String!): Boolean!
   }
 
   type Query {
@@ -327,6 +395,7 @@ const typeDefs = gql`
 interface IGraphqlUploadContext {
   jwt: string;
   storeUpload: StoreUploadT;
+  deleteUploaded: DeleteUploadedT;
 }
 
 const resolvers = {
@@ -338,6 +407,14 @@ const resolvers = {
       { jwt, storeUpload }: IGraphqlUploadContext
     ): Promise<IFileType> => {
       return storeUpload(jwt, await file);
+    },
+    deleteUploaded: async(
+      // tslint:disable-next-line: no-any
+      _: any,
+      { id }: { id: string },
+      { jwt, deleteUploaded }: IGraphqlUploadContext
+    ): Promise<Boolean> => {
+      return deleteUploaded(jwt, id);
     }
   },
   Query: {
@@ -350,7 +427,8 @@ const apolloUploadServer = new ApolloServerExpress({
   context: ({ req }) => {
     return {
       jwt: req.header("Authorization"),
-      storeUpload: getStoreUpload(globalMinioClient)
+      storeUpload: getStoreUpload(globalMinioClient),
+      deleteUploaded: getDeleteUploaded(globalMinioClient)
     };
   },
   resolvers,

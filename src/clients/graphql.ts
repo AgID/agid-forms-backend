@@ -150,6 +150,20 @@ export const UPDATE_NODE = gql`
   }
 `;
 
+export const DELETE_NODE = gql`
+  mutation DeleteNode($id: uuid!) {
+    delete_node(where: { id: { _eq: $id } }) {
+      affected_rows
+      returning {
+        id
+        version
+        title
+        user_id
+      }
+    }
+  }
+`;
+
 export const NodeRevisionFragment = gql`
   fragment NodeRevisionFragment on node_revision {
     id

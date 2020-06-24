@@ -150,15 +150,21 @@ del layer di persistenza.
 ### Procedura di installazione
 
 1. installare [git](https://git-scm.com/downloads)
-1. installare [docker-compose](https://docs.docker.com/compose/install/) 
+1. installare [docker-compose](https://docs.docker.com/compose/install/)
+1. installare [hasura cli](https://docs.hasura.io/1.0/graphql/manual/hasura-cli/install-hasura-cli.html)
 1. eseguire i seguenti comandi:
 
 ```shell
 git clone https://github.com/AgID/agid-forms-backend
-cp env.example .env 
+cd agid-forms-backend
+cp env.example .env
 # editare il file di configurazione del backend
 # e impostare i valori delle variabili di configurazione.
-cd agid-forms-backend && docker-compose up -d
+docker-compose up -d hasura postgresql
+cd database
+hasura migrate apply
+cd ..
+docker-compose up -d
 cd ..
 git clone https://github.com/AgID/agid-forms-frontend
 cp env.example .env

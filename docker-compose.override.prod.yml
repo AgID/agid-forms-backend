@@ -1,7 +1,6 @@
-version: "3"
+version: "3.4"
 
 services:
-
   agid-forms-backend:
     image: docker.io/agid/agid-forms-backend:${BACKEND_VERSION}
     environment:

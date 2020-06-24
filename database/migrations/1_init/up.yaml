@@ -94,8 +94,14 @@
           - user_id
           computed_fields: []
           filter:
-            user_id:
-              _eq: X-Hasura-User-Id
+            _or:
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - _and:
+              - group:
+                  _eq: X-Hasura-Group-Id
+              - group:
+                  _ne: user
         role: authenticated
       - comment: null
         permission:
@@ -201,8 +207,14 @@
           - group
           computed_fields: []
           filter:
-            user_id:
-              _eq: X-Hasura-User-Id
+            _or:
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - _and:
+              - group:
+                  _eq: X-Hasura-Group-Id
+              - group:
+                  _ne: user
         role: authenticated
       table: last_published_or_draft
       update_permissions: []
@@ -492,7 +504,32 @@
           select_aggregate: null
           select_by_pk: null
           update: null
-      delete_permissions: []
+      delete_permissions:
+      - comment: null
+        permission:
+          filter:
+            _and:
+            - user:
+                user_groups:
+                  user_id:
+                    _eq: X-Hasura-User-Id
+            - user:
+                user_groups:
+                  user_group_group:
+                    group:
+                      _eq: X-Hasura-Group-Id
+            - node_type:
+                node_type_perms:
+                  _and:
+                  - insert:
+                      _eq: true
+                  - node_type_perm_role:
+                      user_groups:
+                        user_id:
+                          _eq: X-Hasura-User-Id
+            - type:
+                _eq: file
+        role: authenticated
       event_triggers:
       - definition:
           enable_manual: true
@@ -611,6 +648,11 @@
                 _eq: X-Hasura-User-Id
             - status:
                 _eq: published
+            - _and:
+              - group:
+                  _eq: X-Hasura-Group-Id
+              - group:
+                  _ne: user
         role: authenticated
       table: node
       update_permissions:
@@ -622,8 +664,14 @@
           - title
           - version
           filter:
-            user_id:
-              _eq: X-Hasura-User-Id
+            _or:
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - _and:
+              - group:
+                  _eq: X-Hasura-Group-Id
+              - group:
+                  _ne: user
           set:
             group: x-hasura-group-id
             user_id: x-hasura-user-id

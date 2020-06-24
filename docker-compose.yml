@@ -30,7 +30,8 @@ services:
     env_file:
       - .env
     environment:
-      - PORT=${REDIS_PORT}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=redis
     ports:
       - ${REDIS_COMMANDER_PORT}
     networks:
@@ -79,7 +80,6 @@ services:
       - .env
     build:
       context: .
-      network: ${COMPOSE_PROJECT_NAME}_app-tier
       args:
         - HASURA_GRAPHQL_ENDPOINT
         - HASURA_GRAPHQL_ADMIN_SECRET
@@ -147,7 +147,7 @@ services:
       --docker.watch=true
       --docker.exposedbydefault=false
       --acme
-      --acme.email=${TRAEFIK_ACME_EMAIL} 
+      --acme.email=${TRAEFIK_ACME_EMAIL}
       --acme.entrypoint=https
       --acme.httpchallenge.entrypoint=http
       --acme.storage=acme.json

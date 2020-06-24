@@ -109,7 +109,7 @@ export const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || "";
 export const MINIO_DEFAULT_BUCKETS = process.env.MINIO_DEFAULT_BUCKETS || "";
 export const MINIO_DEFAULT_REGION = "eu-west-1";
 
-export const UPLOAD_SERVER_HOST = process.env.UPLOAD_SERVER_HOST;
+export const UPLOAD_SERVER_BASE_URL = process.env.UPLOAD_SERVER_BASE_URL;
 export const UPLOAD_SERVER_PORT = parseInt(
   process.env.UPLOAD_SERVER_PORT || "8888",
   10

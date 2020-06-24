@@ -17,6 +17,8 @@ if [ $? -ne 0 ]; then
   rm $DUMP_FILE_NAME
   echo "Back up not created, check db connection settings"
   exit 1
+else
+  find . -name "*.dump" -type f -mtime +90 -exec rm -f {} \;
 fi
 
 echo 'Successfully Backed Up'
