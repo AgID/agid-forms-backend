@@ -1,4 +1,4 @@
-export const emailAckReportPublished = () => ({
+export const emailAckPublished = () => ({
   content: `
     <p>Ciao,<br />
     <p>la tua richiesta è stata inoltrata correttamente.</p>

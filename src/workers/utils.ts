@@ -9,7 +9,7 @@ import { WebhookPayload } from "../controllers/graphql_webhook";
 import { log } from "../utils/logger";
 
 type StatusT = "draft" | "needs_review" | "published" | "archived";
-type NodeTypeT = "dichiarazione_accessibilita" | "procedura_attuazione";
+type NodeTypeT = "dichiarazione_accessibilita" | "procedura_attuazione" | "feedback_accessibilita";
 
 export const transitionedTo = (
   payload: WebhookPayload,

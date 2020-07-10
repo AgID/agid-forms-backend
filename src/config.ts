@@ -120,5 +120,6 @@ export const MAX_FILE_SIZE = 10000000;
 export const MAX_UPLOADED_FILES = 10;
 
 export const OMBUDSMAN_EMAIL = process.env.OMBUDSMAN_EMAIL;
+export const FEEDBACK_EMAIL = process.env.FEEDBACK_EMAIL;
 
 export const TRAEFIK_DOMAIN = process.env.TRAEFIK_DOMAIN || "localhost";

@@ -7,7 +7,7 @@ export const emailDeclPublished = (id: string, title: string) => ({
     new Date(),
     "HH:mm"
   )} è stata pubblicata la seguente dichiarazione di accessibilità:
-  <a href="https://form.agid.gov.it/view/${id}">${title}</a></p>.
+  <a href="https://form.agid.gov.it/view/${id}">${title}</a>.</p>
   <p>Distinti saluti,</p>
   <p>AGID</p>
 `,
