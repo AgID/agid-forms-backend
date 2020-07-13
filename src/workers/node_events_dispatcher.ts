@@ -167,6 +167,7 @@ export function NodeEventsDispatcher(
               subject: feedbackPublishedContent.title,
               replyTo: feedbackPublishedContent.replyTo,
               from: feedbackPublishedContent.from,
+              isText: true,
               to: FEEDBACK_EMAIL
             };
             log.info(

@@ -19,14 +19,14 @@ export const emailFeedbackPublished = (node: NodeT, userEmail: EmailString) => {
     from: userEmail,
     replyTo: userEmail,
     content: `
-      <p>Utente:<br>${values.name}</p>
-      <p>Email:<br>${userEmail}</p>
-      <p>Codice fiscale:<br>${values["tax-number"]}</p>
-      <p>Oggetto della richiesta di feedback:<br>${serviceType}: ${serviceAddress}</p>
-      <p>Pagine web/sezioni dell’app mobile segnalate:<br>${values["feedback-text"]}</p>
-      <p>Pagine web/sezioni dell’app mobile non conformi:<br>${values["feedback-text-compliance"]}</p>
-      <p>Strumenti in dotazione:<br>${values["feedback-tools"]}</p>
+      Utente: ${values.name}
+      Email: ${userEmail}
+      Codice fiscale: ${values["tax-number"]}
+      Oggetto della richiesta di feedback: ${serviceType}: ${serviceAddress}
+      Pagine web/sezioni dell’app mobile segnalate: ${values["feedback-text"]}
+      Pagine web/sezioni dell’app mobile non conformi: ${values["feedback-text-compliance"]}
+      Strumenti in dotazione: ${values["feedback-tools"]}
     `,
-    title: `Feedback accessibilità ${serviceAddress} - ${values.name}`
+    title: `(FEEDBACK-ACCESSIBILITA) Feedback ${values.name} / AGID`
   };
 };
