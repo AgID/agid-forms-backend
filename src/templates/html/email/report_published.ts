@@ -55,6 +55,6 @@ export const emailReportPublished = (node: NodeT, userEmail: EmailString) => {
       Risposta soggetto erogatore ${values["report-has-answer"]}
       Descrizione reclamo ${values["notified-answer-reason"]}
     `,
-    title: `(DCD-ACCESSIBILITA) Reclamo ${serviceAddress} - ${values.name} / ${values["reported-pa"]}`
+    title: `(DCD-ACCESSIBILITA) Reclamo ${values.name} / ${values["reported-pa"]}`
   };
 };
