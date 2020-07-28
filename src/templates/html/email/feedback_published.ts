@@ -27,6 +27,6 @@ export const emailFeedbackPublished = (node: NodeT, userEmail: EmailString) => {
       Pagine web/sezioni dell’app mobile non conformi: ${values["feedback-text-compliance"]}
       Strumenti in dotazione: ${values["feedback-tools"]}
     `,
-    title: `(FEEDBACK-ACCESSIBILITA) Feedback ${values.name} / AGID`
+    title: `(FEEDBACK-ACCESSIBILITA) Feedback ${values.name} / AGID: ${serviceAddress}`
   };
 };
