@@ -171,7 +171,7 @@ export function NodeEventsDispatcher(
               to: FEEDBACK_EMAIL
             };
             log.info(
-              "dispatching ffedback-published message to sendmail processor (%s)",
+              "dispatching feedback-published message to sendmail processor (%s)",
               JSON.stringify(feedbackPublishedMessage)
             );
             await queueEmail(
