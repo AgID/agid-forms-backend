@@ -32,7 +32,7 @@ paths:
       summary: Send an email with a secret code to the RTD.
       description: |
         Send an email with a secret code to the RTD of the Public Administration
-        (organization) identified by the IPA code. 
+        (organization) identified by the IPA code.
         Gets the information on the organization from the
         [IPA](https://indicepa.gov.it) catalogue using the provided IPA code.
         The secret code will be used by the client to login into the backend.
@@ -106,7 +106,7 @@ paths:
     post:
       summary: Send an email with a secret code to the email address provided.
       description: |
-        Send an email with a secret code to the email address provided in input. 
+        Send an email with a secret code to the email address provided in input.
         The secret code will be used by the client to login into the backend.
       responses:
         "200":
@@ -193,7 +193,7 @@ definitions:
     minimum: 100
     maximum: 600
     exclusiveMaximum: true
-    example: 200  
+    example: 200
   ProblemJson:
     type: object
     properties:
@@ -241,12 +241,19 @@ definitions:
       cod_amm:
         type: string
         description: "IPA code."
+      tipologia_istat:
+        type: string
+        description: "Tipology."
+      mail2:
+        type: string
+        description: "Email address"
     required:
       - comune
       - provincia
       - regione
       - des_amm
       - cod_amm
+      - tipologia_istat
   GetPaFromIpa_ipa_ou:
     type: object
     properties:

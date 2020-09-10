@@ -27,7 +27,11 @@ import * as Bull from "bull";
 import { isLeft } from "fp-ts/lib/Either";
 import { EmailString } from "italia-ts-commons/lib/strings";
 import { GET_RTD_FROM_IPA, GraphqlClient } from "../clients/graphql";
-import { DUMB_IPA_VALUE_FOR_NULL, RTD_ROLE_NAME } from "../config";
+import {
+  DUMB_IPA_VALUE_FOR_NULL,
+  RTD_ROLE_NAME,
+  ISTAT_SCHOOL_TIPOLOGY
+} from "../config";
 import { DecodeBodyMiddleware } from "../middlewares/decode_body";
 import { RequiredParamMiddleware } from "../middlewares/required_param";
 
@@ -98,14 +102,20 @@ export function SendEmailToRtdHandler(
     if (!isPaFound(errorOrPaInfo)) {
       return ResponseErrorNotFound("Not found", "PA not found in catalogue");
     }
+
     const paInfo = errorOrPaInfo.data;
     const rtdEmail = paInfo.ipa_ou[0].mail_resp;
+    const isSchool = paInfo.ipa_pa[0].tipologia_istat === ISTAT_SCHOOL_TIPOLOGY;
+    // Filter out "da_indicare@x.it"
+    const hasRtd = DUMB_IPA_VALUE_FOR_NULL === rtdEmail;
+    const schoolHasMail = paInfo.ipa_pa[0].mail2 !== "null";
+    const schoolMail = paInfo.ipa_pa[0].mail2;
+    const canSendMail = (hasRtd && !isSchool) || (isSchool && schoolHasMail);
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
-    // Filter out "da_indicare@x.it"
-    if (DUMB_IPA_VALUE_FOR_NULL === rtdEmail) {
-      return ResponseErrorNotFound("Not found", "RTD not set yet.");
+    if (!canSendMail) {
+      return ResponseErrorNotFound("Not found", "Mail address not set.");
     }
 
     const secretCode = generateCode();
@@ -124,13 +134,14 @@ export function SendEmailToRtdHandler(
     const emailAuthCodeContent = emailAuthCode(
       secretCode,
       paInfo.ipa_pa[0].des_amm,
-      paInfo.ipa_pa[0].cod_amm
+      paInfo.ipa_pa[0].cod_amm,
+      isSchool
     );
 
     const message: SendmailProcessorInputT = {
       content: emailAuthCodeContent.html,
       subject: emailAuthCodeContent.title,
-      to: rtdEmail
+      to: !isSchool ? rtdEmail : schoolMail
     };
 
     log.debug(
@@ -155,7 +166,9 @@ export function SendEmailToRtdHandler(
         comune: pa.Comune,
         des_amm: pa.des_amm,
         provincia: pa.Provincia,
-        regione: pa.Regione
+        regione: pa.Regione,
+        tipologia_istat: pa.tipologia_istat,
+        mail2: pa.mail2
       }
     });
   };
@@ -235,13 +248,15 @@ export function LoginHandler(
     }
     const paInfo = errorOrPaInfo.data;
     const rtdEmail = paInfo.ipa_ou[0].mail_resp;
+    const isSchool = paInfo.ipa_pa[0].tipologia_istat === ISTAT_SCHOOL_TIPOLOGY;
+    const schoolMail = paInfo.ipa_pa[0].mail2;
 
     log.debug("Get PA info: (%s)", JSON.stringify(paInfo));
 
     // Make user object
     const user: AppUser = {
       created_at: new Date().getTime(),
-      email: rtdEmail as EmailString,
+      email: (!isSchool ? rtdEmail : schoolMail) as EmailString,
       group: ipaCode,
       // this kind of login (via rtd email)
       // assigns the "RTD" role to the user
@@ -275,7 +290,7 @@ export function LoginHandler(
       backend_token: token,
       graphql_token: metadata.jwt,
       user: {
-        email: rtdEmail,
+        email: !isSchool ? rtdEmail : schoolMail,
         id: metadata.id,
         roles: user.roles
       }
