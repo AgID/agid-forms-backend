@@ -107,7 +107,7 @@ export function SendEmailToRtdHandler(
     const rtdEmail = paInfo.ipa_ou[0].mail_resp;
     const isSchool = paInfo.ipa_pa[0].tipologia_istat === ISTAT_SCHOOL_TIPOLOGY;
     // Filter out "da_indicare@x.it"
-    const hasRtd = DUMB_IPA_VALUE_FOR_NULL === rtdEmail;
+    const hasRtd = DUMB_IPA_VALUE_FOR_NULL !== rtdEmail;
     const schoolHasMail = paInfo.ipa_pa[0].mail2 !== "null";
     const schoolMail = paInfo.ipa_pa[0].mail2;
     const canSendMail = (hasRtd && !isSchool) || (isSchool && schoolHasMail);
