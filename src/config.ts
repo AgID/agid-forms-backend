@@ -65,6 +65,7 @@ export const HASURA_GRAPHQL_ADMIN_SECRET =
 export const HASURA_WEBHOOK_SECRET = process.env.HASURA_WEBHOOK_SECRET || "";
 
 export const DUMB_IPA_VALUE_FOR_NULL = "da_indicare@x.it";
+export const ISTAT_SCHOOL_TIPOLOGY = "Istituti di Istruzione Statale di Ogni Ordine e Grado"
 
 export const SESSION_PREFIX = "SESSION-";
 export const SECRET_PREFIX = "SECRET-";

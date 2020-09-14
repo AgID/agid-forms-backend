@@ -102,6 +102,8 @@ export const GET_RTD_FROM_IPA = gql`
       Regione
       des_amm
       cod_amm
+      tipologia_istat
+      mail2
     }
     ipa_ou(
       where: {

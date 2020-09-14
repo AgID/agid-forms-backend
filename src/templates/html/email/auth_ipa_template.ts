@@ -3,10 +3,12 @@ import { format } from "date-fns";
 export const emailAuthCode = (
   secretCode: string,
   ipaName: string,
-  ipaCode: string
+  ipaCode: string,
+  isSchool: boolean
 ) => ({
   html: `
-  <p>All’attenzione dell’RTD dell’Amministrazione '${ipaName}',
+  <p>All’attenzione ${!isSchool ? 'dell’RTD dell’amministrazione' : 'del DS presso'} '${ipaName}',
+  <br>
   in data ${format(new Date(), "DD/MM/YYYY")}
   è stata effettuata una richiesta di accesso al servizio Form
   AGID che permette la compilazione di moduli online.
