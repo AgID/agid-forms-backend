@@ -81,6 +81,26 @@
         permission:
           allow_aggregations: false
           columns:
+          - created_at
+          - updated_at
+          - type
+          - version
+          - title
+          - content
+          - status
+          - language
+          - user_id
+          - id
+          - group
+          computed_fields: []
+          filter:
+            status:
+              _eq: published
+        role: anonymous
+      - comment: null
+        permission:
+          allow_aggregations: false
+          columns:
           - version
           - content
           - group
@@ -102,28 +122,9 @@
                   _eq: X-Hasura-Group-Id
               - group:
                   _ne: user
-        role: authenticated
-      - comment: null
-        permission:
-          allow_aggregations: false
-          columns:
-          - created_at
-          - updated_at
-          - type
-          - version
-          - title
-          - content
-          - status
-          - language
-          - user_id
-          - id
-          - group
-          computed_fields: []
-          filter:
-            _and:
             - status:
                 _eq: published
-        role: anonymous
+        role: authenticated
       table: node_revision
       update_permissions: []
     - array_relationships:
