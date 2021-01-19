@@ -1,0 +1,7 @@
+- type: run_sql
+  args:
+    sql: |
+      DELETE FROM "public"."node_type" WHERE node_type = 'comunicazione_modello_sviluppo_web';
+      DELETE FROM "public"."node_type_perm" WHERE node_type = 'comunicazione_modello_sviluppo_web';
+      INSERT INTO "public"."node_type" (node_type) VALUES ('dichiarazione_linee_guida');
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('dichiarazione_linee_guida', 'rtd', true);

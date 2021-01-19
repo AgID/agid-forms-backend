@@ -1,0 +1,5 @@
+- type: run_sql
+  args:
+    sql: |
+      INSERT INTO "public"."node_type" (node_type) VALUES ('comunicazione_esiti_test_usabilita');
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('comunicazione_esiti_test_usabilita', 'rtd', true);
