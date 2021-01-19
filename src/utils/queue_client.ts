@@ -18,7 +18,7 @@ export function makeQueueClient(): Bull.Queue {
       attempts: QUEUE_MAX_ATTEMPTS,
       backoff: {
         delay: QUEUE_INITIAL_DELAY_MS,
-        type: "exponential"
+        type: "fixed"
       }
       // removeOnComplete: true,
       // removeOnFail: true
