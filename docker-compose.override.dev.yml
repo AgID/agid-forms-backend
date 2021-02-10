@@ -49,6 +49,20 @@ services:
     working_dir: "/usr/src/app"
 
   traefik:
+    command: |-
+      --api
+      --api.dashboard=true
+      --debug=false
+      --loglevel=ERROR
+      --retry
+      --defaultentrypoints=http
+      --entryPoints='Name:traefik Address::${TRAEFIK_DASHBOARD_PORT} Auth.Basic.Users:${TRAEFIK_DASHBOARD_USER}:${TRAEFIK_DASHBOARD_PASSWORD}'
+      --entryPoints='Name:http Address::80'
+      --docker
+      --docker.endpoint="unix:///var/run/docker.sock"
+      --docker.domain=${TRAEFIK_DOMAIN}
+      --docker.watch=true
+      --docker.exposedbydefault=false
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./local/acme.json:/acme.json
