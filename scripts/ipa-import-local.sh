@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ ! -f "amministrazioni.txt" ]; then
-  curl 'https://www.indicepa.gov.it/public-services/opendata-read-service.php?dstype=FS&filename=amministrazioni.txt' -o /tmp/amministrazioni.txt
+  curl -fsSL 'https://www.indicepa.gov.it/ipa-dati/dataset/502ff370-1b2c-4310-94c7-f39ceb7500e3/resource/3ed63523-ff9c-41f6-a6fe-980f3d9e501f/download/amministrazioni.txt' -o amministrazioni.txt
 fi
 
 export PGPASSWORD=$POSTGRESQL_PASSWORD
