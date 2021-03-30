@@ -43,7 +43,7 @@ kubectl run postgresql-postgresql-client --rm $PSQL_KUBECTL_OPTS -i --restart='N
     ; COMMIT;" < amministrazioni.txt
 
 if [ ! -f "ou.txt" ]; then
-  curl 'https://www.indicepa.gov.it/public-services/opendata-read-service.php?dstype=FS&filename=ou.txt' -o ou.txt
+  curl curl -fsSL 'https://www.indicepa.gov.it:443/ipa-dati/dataset/7a2db7d8-4123-41b4-a1d6-d7b712a193f1/resource/4740588c-eb09-4ce8-92b0-86626508ad49/download/ou.txt' -o ou.txt
 fi
 
 kubectl run postgresql-postgresql-client --rm $PSQL_KUBECTL_OPTS -i --restart='Never' --namespace default \
