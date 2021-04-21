@@ -18,7 +18,7 @@ export const emailAuthCode = (
   <a href="https://form.agid.gov.it/?ipa=${ipaCode}">form.agid.gov.it</a>
   inserendo la chiave di accesso:
   </p>
-  <h2>${secretCode}</h2>
+  <strong>${secretCode}</strong>
   <p>Distinti saluti,</p>
   <p>AGID</p>
   `,

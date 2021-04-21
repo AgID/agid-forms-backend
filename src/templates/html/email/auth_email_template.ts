@@ -9,7 +9,7 @@ export const emailAuthCode = (secretCode: string) => ({
   <p>
   Il codice di verifica email è il seguente:
   </p>
-  <h2>${secretCode}</h2>
+  <strong>${secretCode}</strong>
   <p>Distinti saluti,</p>
   <p>AGID</p>
   `,
