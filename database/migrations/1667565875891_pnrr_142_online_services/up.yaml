@@ -1,0 +1,5 @@
+- type: run_sql
+  args:
+    sql: |-
+      INSERT INTO "public"."node_type" (node_type) VALUES ('servizi_online_pnrr');
+      INSERT INTO "public"."node_type_perm" (node_type, role, insert) VALUES ('servizi_online_pnrr', 'rtd', true);
