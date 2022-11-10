@@ -1,0 +1,5 @@
+- type: run_sql
+  args:
+    sql: |
+      DELETE FROM "public"."node_type" WHERE node_type = 'servizi_online_pnrr';
+      DELETE FROM "public"."node_type_perm" WHERE node_type = 'servizi_online_pnrr';
