@@ -50,7 +50,7 @@
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "email-templates": "^5.0.5",
-    "express": "^4.16.2",
+    "express": "^4.17.3",
     "fp-ts": "^1.18.2",
     "graphql": "^14.3.1",
     "graphql-tag": "^2.10.1",
