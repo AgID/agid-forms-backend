@@ -59,7 +59,7 @@
     "io-ts-types": "^0.3.14",
     "italia-ts-commons": "^5.0.0",
     "json-set-map": "^1.0.2",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "minio": "^7.0.12",
     "morgan": "^1.9.1",
     "node-fetch": "^2.2.0",
