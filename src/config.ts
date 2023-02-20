@@ -75,7 +75,7 @@ export const DEFAULT_ROLE_NAME = "authenticated";
 export const DEFAULT_GROUP_NAME = "user";
 
 // maximum retries over duration
-export const RATE_LIMIT_POINTS = 30;
+export const RATE_LIMIT_POINTS = 3600;
 
 // 1 hour
 export const RATE_LIMIT_DURATION = 3600;
